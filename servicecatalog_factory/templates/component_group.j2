@@ -1,0 +1,11 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: {{friendly_uid}} {{ version.Description }}
+Resources:
+{% for chain in version.Chains %}
+  {{ chain.Name|striptags|title|replace("-", "") }}{{ chain.Version|striptags|title|replace("", "") }}:
+    Type: AWS::ServiceCatalog::CloudFormationProvisionedProduct
+    Properties:
+      ProductName: {{ chain.Name }}
+      ProvisionedProductName: {{chain.Name}}
+      ProvisioningArtifactName: {{ chain.Version }}
+{% endfor %}

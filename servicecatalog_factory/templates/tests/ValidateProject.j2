@@ -1,0 +1,22 @@
+  ValidateProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub "${AWS::StackName}-ValidateProject"
+      ServiceRole: !Sub "arn:aws:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodeRole"
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: linuxContainer
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/ruby:2.3.1
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: |
+            version: 0.2
+            phases:
+              build:
+                commands:
+                  - aws cloudformation validate-template --template-body file://$(pwd)/product.template.yaml
+            artifacts:
+              files: '**/*'
+      TimeoutInMinutes: 20

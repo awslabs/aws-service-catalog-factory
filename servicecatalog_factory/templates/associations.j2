@@ -1,0 +1,10 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: Associations for {{portfolio.DisplayName}}
+Resources:
+{% for association in portfolio.Associations %}
+  {{ association.split(":")[-1]|replace("/"," ")|title|replace(" ","") }}:
+    Type: AWS::ServiceCatalog::PortfolioPrincipalAssociation
+    Properties:
+      PrincipalARN: !Sub "{{ association }}"
+      PortfolioId: {{ portfolio_id }}
+      PrincipalType: IAM{% endfor %}

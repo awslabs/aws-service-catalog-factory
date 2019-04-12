@@ -1,0 +1,170 @@
+# Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+schema;seq_tags:
+  type: map
+  mapping:
+    Key:
+      type: str
+    Value:
+      type: str
+
+schema;map_componentgroups:
+  type: map
+  mapping:
+    Name:
+      type: str
+    Owner:
+      type: str
+    Description:
+      type: str
+    Distributor:
+      type: str
+    SupportDescription:
+      type: str
+    SupportEmail:
+      type: str
+      pattern: .+@.+
+    SupportUrl:
+      type: str
+      pattern: https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+
+    Tags:
+      type: seq
+      sequence:
+        - include: seq_tags
+    Versions:
+      type: seq
+      sequence:
+        - type: map
+          mapping:
+            Name:
+              type: str
+            Description:
+              type: str
+            Tags:
+              type: seq
+              sequence:
+                - include: seq_tags
+            Chains:
+              type: seq
+              sequence:
+                - type: map
+                  mapping:
+                    Name:
+                      type: str
+                    Version:
+                      type: str
+
+schema;map_component:
+  type: map
+  mapping:
+    Name:
+      type: str
+    Owner:
+      type: str
+    Description:
+      type: str
+    Distributor:
+      type: str
+    SupportDescription:
+      type: str
+    SupportEmail:
+      type: str
+      pattern: .+@.+
+    SupportUrl:
+      type: str
+      pattern: https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+
+    BuildSpec:
+      type: str
+    Source:
+      type: map
+      mapping:
+        Provider:
+          type: str
+        Configuration:
+          type: map
+          mapping:
+            RepositoryName:
+              type: str
+            BranchName:
+              type: str
+    Options:
+      type: map
+      mapping:
+        ShouldCFNNag:
+          type: bool
+        ShouldCloudformationRSpec:
+          type: bool
+    Tags:
+      type: seq
+      sequence:
+        - include: seq_tags
+    Versions:
+      type: seq
+      sequence:
+        - type: map
+          mapping:
+            Name:
+              type: str
+            Description:
+              type: str
+            Tags:
+              type: seq
+              sequence:
+                - include: seq_tags
+            Options:
+              type: map
+              mapping:
+                ShouldCFNNag:
+                  type: bool
+                ShouldCloudformationRSpec:
+                  type: bool
+            BuildSpec:
+              type: str
+            Source:
+              type: map
+              mapping:
+                Provider:
+                  type: str
+                Configuration:
+                  type: map
+                  mapping:
+                    RepositoryName:
+                      type: str
+                    BranchName:
+                      type: str
+type: map
+mapping:
+  Schema:
+    type: str
+    enum: ['factory-2019-04-01']
+    required: yes
+  Portfolios:
+    type: seq
+    sequence:
+      - type: map
+        mapping:
+          DisplayName:
+            type: str
+            required: yes
+          Description:
+            type: str
+            required: yes
+          ProviderName:
+            type: str
+            required: yes
+          Associations:
+            type: seq
+            sequence:
+              - type: str
+          Tags:
+            type: seq
+            sequence:
+              - include: seq_tags
+          ComponentGroups:
+            type: seq
+            sequence:
+              - include: map_componentgroups
+          Components:
+            type: seq
+            sequence:
+              - include: map_component

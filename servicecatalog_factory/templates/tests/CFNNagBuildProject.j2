@@ -1,0 +1,26 @@
+  CFNNagProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub "${AWS::StackName}-CFNNagProject"
+      ServiceRole: !Sub "arn:aws:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodeRole"
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: linuxContainer
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/ruby:2.3.1
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: |
+            version: 0.2
+            phases:
+              install:
+                commands:
+                  - gem install cfn-nag
+                  - cfn_nag_rules # Show all cfn_nag_rules that will be used in the scan
+              build:
+                commands:
+                  - cfn_nag_scan --input-path ./product.template.yaml
+            artifacts:
+              files: '**/*'
+      TimeoutInMinutes: 20

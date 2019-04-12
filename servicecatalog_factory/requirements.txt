@@ -1,0 +1,6 @@
+pyyaml==3.13
+click==7.0
+Jinja2==2.10
+boto3==1.9.102
+pykwalify==1.7.0
+better-boto==0.6.8

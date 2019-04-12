@@ -1,0 +1,220 @@
+# Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+AWSTemplateFormatVersion: "2010-09-09"
+
+Parameters:
+  Version:
+    Type: String
+    Default: "{{ VERSION }}"
+
+Resources:
+  Param:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: service-catalog-factory-version
+      Type: String
+      Value: !Ref Version
+
+  SourceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: SourceRole
+      Path: /servicecatalog-product-factory/
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "codepipeline.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+          - Effect: "Allow"
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+
+  CodeRepo:
+    Type: AWS::CodeCommit::Repository
+    Properties:
+      RepositoryDescription: Repo to store the product factory config
+      RepositoryName: ServiceCatalogFactory
+
+  BuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: CodeRole
+      Path: /servicecatalog-product-factory/
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "codebuild.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+
+  BuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: servicecatalog-product-factory-build
+      Description: "Converts the portfolios dir into pipelines"
+      ServiceRole: !GetAtt BuildRole.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: linuxContainer
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/python:3.7.1
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: !Sub |
+          version: 0.2
+          phases:
+            install:
+              commands:
+                - pip install aws-service-catalog-factory=={{ VERSION }}
+            build:
+              commands:
+                - servicecatalog-factory --info generate portfolios/
+            post_build:
+              commands:
+                - servicecatalog-factory --info deploy portfolios/
+      TimeoutInMinutes: 20
+
+  PipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: CodePipelineRole
+      Path: /servicecatalog-product-factory/
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "codepipeline.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+
+  FactoryPipelineArtifactBucket:
+    Type: AWS::S3::Bucket
+
+  CatalogBucket:
+    Type: AWS::S3::Bucket
+
+  Pipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !GetAtt PipelineRole.Arn
+      Name: !Sub "${AWS::StackName}-pipeline"
+      ArtifactStore:
+        Location: !Ref FactoryPipelineArtifactBucket
+        Type: S3
+      RestartExecutionOnUpdate: true
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: CodeCommit
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: 1
+                Provider: CodeCommit
+              Configuration:
+                RepositoryName: !GetAtt CodeRepo.Name
+                BranchName: master
+              OutputArtifacts:
+                - Name: Source
+              RunOrder: 1
+              RoleArn: !GetAtt SourceRole.Arn
+        - Name: Build
+          Actions:
+            - Name: Build
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref BuildProject
+              RunOrder: 1
+              InputArtifacts:
+                - Name: Source
+              OutputArtifacts:
+                - Name: Build
+
+  DeliverySourceRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: DeliverySourceRole
+      Path: /servicecatalog-product-factory/
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "codepipeline.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+          - Effect: "Allow"
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+
+  DeliveryBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: DeliveryCodeRole
+      Path: /servicecatalog-product-factory/
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "codebuild.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+
+  DeliveryPipelineRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: DeliveryCodePipelineRole
+      Path: /servicecatalog-product-factory/
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "codepipeline.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+
+Outputs:
+  CatalogBucketUrl:
+    Value: !GetAtt CatalogBucket.WebsiteURL
+
+  CatalogBucketName:
+    Value: !Ref CatalogBucket
+
+  Version:
+    Value: !GetAtt Param.Value

@@ -1,0 +1,112 @@
+# Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+Schema: factory-2019-04-01
+Portfolios:
+  - DisplayName: account-inflation
+    Description: hello world
+    ProviderName: ccoe
+    Associations:
+      - arn:aws:iam::${AWS::AccountId}:role/Admin
+    Tags:
+    - Key: team
+      Value: ccoe
+    Components:
+      - Name: guardduty-master-enabler
+        Owner: ccoe@some-customer.com
+        Description: build out a master account for guard duty and add all child accounts from an ou or path
+        Distributor: ccoe
+        SupportDescription: email us with the issue
+        SupportEmail: ccoe-support@some-customer.com
+        SupportUrl: http://jira.ccoe-support.some-customer.com
+        Tags:
+        - Key: account-type
+          Value: development
+        - Key: product-type
+          Value: iam
+        Versions:
+          - Name: v1
+            Description: MVP for iam development account.
+            Source:
+              Provider: CodeCommit
+              Configuration:
+                RepositoryName: guardduty-master-enabler
+                BranchName: v1
+            BuildSpec: |
+              version: 0.2
+              phases:
+                build:
+                  commands:
+                  {% for region in ALL_REGIONS %}
+                    - aws cloudformation package --template $(pwd)/product.template.yaml --s3-bucket sc-factory-artifacts-${ACCOUNT_ID}-{{ region }} --s3-prefix ${STACK_NAME} --output-template-file product.template-{{ region }}.yaml
+                  {% endfor %}
+              artifacts:
+                files:
+                  - '*'
+                  - '**/*'
+      - Name: development-account-iam
+        Owner: ccoe@some-customer.com
+        Description: the iam resources needed to create a development account
+        Distributor: ccoe
+        SupportDescription: email us with the issue
+        SupportEmail: ccoe-support@some-customer.com
+        SupportUrl: http://jira.ccoe-support.some-customer.com
+        Tags:
+        - Key: account-type
+          Value: development
+        - Key: product-type
+          Value: iam
+        Versions:
+          - Name: v1
+            Description: MVP for iam development account.
+            Source:
+              Provider: CodeCommit
+              Configuration:
+                RepositoryName: development-account-iam
+                BranchName: v1
+      - Name: development-account-networking
+        Owner: ccoe@some-customer.com
+        Description: the networking resources needed to create a development account
+        Distributor: ccoe
+        SupportDescription: email us with the issue
+        SupportEmail: ccoe-support@some-customer.com
+        SupportUrl: http://jira.ccoe-support.some-customer.com
+        Source:
+          Provider: CodeCommit
+          Configuration:
+            RepositoryName: development-account-networking
+        Options:
+          ShouldCFNNag: True
+          ShouldCloudformationRSpec: True
+        Tags:
+        - Key: account-type
+          Value: development
+        - Key: product-type
+          Value: networking
+        Versions:
+          - Name: v1
+            Description: MVP for networking development account.
+            Tags:
+              - Key: networking-type
+                Value: transit-vpc
+            Source:
+              Configuration:
+                BranchName: v1
+    ComponentGroups:
+      - Name: development-account
+        Owner: ccoe@some-customer.com
+        Description: the resources resources needed to create a development account
+        Distributor: ccoe
+        SupportDescription: email us with the issue
+        SupportEmail: ccoe-support@some-customer.com
+        SupportUrl: http://jira.ccoe-support.some-customer.com
+        Tags:
+        - Key: account-type
+          Value: development
+        Versions:
+          - Name: v1
+            Description: MVP for a development account.
+            Chains:
+              - Name: development-account-iam
+                Version: v1
+              - Name: development-account-networking
+                Version: v1

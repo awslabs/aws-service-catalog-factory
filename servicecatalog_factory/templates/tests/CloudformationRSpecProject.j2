@@ -1,0 +1,25 @@
+  CloudformationRSpecProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub "${AWS::StackName}-CloudformationRSpecProject"
+      ServiceRole: !Sub "arn:aws:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodeRole"
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: linuxContainer
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/ruby:2.3.1
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: |
+            version: 0.2
+            phases:
+              install:
+                commands:
+                  - gem install cloudformation_rspec
+              build:
+                commands:
+                  - rspec
+            artifacts:
+              files: '**/*'
+      TimeoutInMinutes: 20
