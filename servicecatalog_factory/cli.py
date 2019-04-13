@@ -667,15 +667,16 @@ def bootstrap():
 @click.argument('complexity', default='simple')
 @click.argument('p', type=click.Path(exists=True))
 def seed(complexity, p):
-    if not os.path.exists('portfolios'):
-        os.makedirs('portfolios')
+    target = os.path.sep.join([p, 'portfolios'])
+    if not os.path.exists(target):
+        os.makedirs(target)
 
     example = "example-{}.yaml".format(complexity)
     shutil.copy2(
         resolve_from_site_packages(
             os.path.sep.join(['portfolios', example])
         ),
-        os.path.sep.join([p, 'portfolios', example])
+        os.path.sep.join([target, example])
     )
 
 
