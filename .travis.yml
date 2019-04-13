@@ -5,8 +5,10 @@ python:
 - '3.6'
 install:
   - pip install -r servicecatalog_factory/requirements.txt
+  - pip install .
 script:
 - pip install pytest==4.4.0
+- pip install codecov
 - pytest servicecatalog_factory
 before_deploy:
 - python setup.py sdist
@@ -22,3 +24,6 @@ deploy:
       tags: true
       repo: awslabs/aws-service-catalog-factory
       all_branches: true
+after_success:
+  - codecov --token=${CODECOV_TOKEN}
+
