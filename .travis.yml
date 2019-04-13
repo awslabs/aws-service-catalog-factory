@@ -3,6 +3,8 @@ git:
 language: python
 python:
 - '3.6'
+install:
+  - pip install -r servicecatalog_factory/requirements.txt
 script:
 - pip install pytest==4.4.0
 - pytest servicecatalog_factory
