@@ -4,3 +4,5 @@ venv
 ServiceCatalogFactory
 repos
 portfolios
+aws_service_catalog_factory.egg-info/
+dist

@@ -26,13 +26,13 @@ source venv/bin/activate
 
 Install the package:
 ```bash
-pip install aws-service-catalog-factory==0.1.15
+pip install aws-service-catalog-factory
 ```
 
 ### Bootstrap your account
 Create the AWS CodeCommit repo and AWS CodePipeline resources to run the factory:
 ```bash
-servicecatalog-factory bootstrap 0.1.15
+servicecatalog-factory bootstrap
 ```
 
 ### Setup your factory
