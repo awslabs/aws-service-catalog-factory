@@ -1,0 +1,22 @@
+git:
+  depth: 1
+language: python
+python:
+- '3.6'
+script:
+- pip install pytest==4.4.0
+- pytest servicecatalog_factory
+before_deploy:
+- python setup.py sdist
+deploy:
+  - provider: pypi
+    user:
+      secure: a8wokUSTZEg7t172kxMRvpoc9NJoTk+tuowBV7QMmKB7iuihbF2PKFvLr9nn7k6+IYRYRwpZLHTc55jeqAVkGBjlhstMfKop65ZoB/4Mn4biLVXoJkbsNTv9/AZ4C/sgIXU+cBym5mxh+UVmtvx7Ew5O1Qj06ze9dofTod0TDX5Y6qIPcRMkcK2WgGJuQYCgcP8rIMSHaIE9uHPK5bGJtONY9zsp6B4P5kW//zMGvaH8m56zYVtuta4G6BKKTnUtxNXZcb6KeHbyKQOiQe++4kDzNvQujkNUWuK2s5FIQzztNzRnqkTAjW4sEqRrv2kmvVLQc3MV6+iwAunBJNCusHgnvwhUl8O7Tnbkx9Ni1+HhaOqmQ4fud6jSsUBgNIDwVC3+Bky+BwESLhB9WVaB15Wqk9jV14yu69LaQaOjs4ZevDsDkcgAwzLFO5fATD7Fn/Cj+G1ZJXGS71vjgcfdJihG1h8gwZ3B5JzbLP01iWaGLyue54D+bPDWCRepnW4SShctyTkR7ju9Ss5wdN5M7BUeVUiUs3W6njKgO0+9TipydyVdIGN9bXDfOANJjblDDP+hcwAvgsbXiejUaHcAWP5KQTvc9O4y/IlKkdMgyYIR7jNR+NI3SgCjfID3h2YCDXGfZjvaYHjoo8WQ9Y+/YHZtr1rMhu91IwGzdy3KCfY=
+    password:
+      secure: lmR1xusOUDNUxUaWNzozykRT+TQXTzkTSYObdoejaQS+mLnqkBOY1QCQy8GqqO4midZXAeADEdp/CAHpcSa7VA5T/7rdBL/ynu/WLGFVH7piX1lhyXAOjptxm/fdOVFINX+AT8Is1qVs/FC7axYxV2uHt7mL44xjFXxFMTab8G3TDDgxtS3eaDTIRxHr/1MFRUelg4EH99wNdNaiCaRUPHMtj5wOIL2BE8zoJjZRGvAekwaQXsC/Aap8w2UIpPCwhcoT/dLZ9ClyBDb95IR9FlbUW0vzJ/0p1ek17uMiEYE2/qlx5A0nP2arlkV+SB9Pu/JCRBVrRGJhFSf1Ft9DQbx0fflyuZ898xO9v+gpUj4MSTJgw6i/ixt3cZqybCoDodBS9PAQ/+20FzU1YkcymAM4goN+EpD0BW/YCjsDzUQ90O6jVY+qqBwW9GUTTFeUli8+3Exw/C6qHGp5RAbFIT6ng+ma9HxU56tTz3DVMCUtzSxSfvNGGGwXg8kVYO07CTrDKT4vGb53+yvh40XkjlKQowSzBlxDnY2YOsMdHxQsBRCFaLGSktLZST2EweFITeFNl45LEYDO4vnd20L+85ymwtpLVuZ8VhQZ8dohVWYtvwcfMPTYAfA3W9EaEwk7Z96GXtew8yUgG7YjiVNgWmhRyp+3U5kRlfVJLSaBn2I=
+    skip_cleanup: true
+    distributions: sdist bdist_wheel
+    on:
+      tags: true
+      repo: awslabs/aws-service-catalog-factory
+      all_branches: true
