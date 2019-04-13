@@ -8,8 +8,9 @@ install:
   - pip install .
 script:
 - pip install pytest==4.4.0
+- pip install pytest-cov==2.6.1
 - pip install codecov
-- pytest servicecatalog_factory
+- pytest --cov=./ servicecatalog_factory
 before_deploy:
 - python setup.py sdist
 deploy:
