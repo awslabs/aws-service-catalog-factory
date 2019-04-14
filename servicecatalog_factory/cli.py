@@ -635,7 +635,8 @@ def nuke_product_version(portfolio_group, portfolio_display_name, product, versi
 
 @cli.command()
 def bootstrap():
-    LOGGER.info('Starting bootstrap')
+    click.echo('Starting bootstrap')
+    click.echo('Starting regional deployments')
     with betterboto_client.MultiRegionClientContextManager(
             'cloudformation', ALL_REGIONS
     ) as clients:
@@ -664,13 +665,14 @@ def bootstrap():
         for process in threads:
             process.join()
         LOGGER.info('Finished creating {}-regional'.format(BOOTSTRAP_STACK_NAME))
+    click.echo('Completed regional deployments')
 
+    click.echo('Starting main deployment')
     s3_bucket_name = None
     with betterboto_client.ClientContextManager('cloudformation') as cloudformation:
         LOGGER.info('Creating {}'.format(BOOTSTRAP_STACK_NAME))
         template = read_from_site_packages('{}.template.yaml'.format(BOOTSTRAP_STACK_NAME))
         template = Template(template).render(VERSION=VERSION)
-        print(template)
         args = {
             'StackName': BOOTSTRAP_STACK_NAME,
             'TemplateBody': template,
