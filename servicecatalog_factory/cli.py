@@ -24,8 +24,8 @@ VERSION = pkg_resources.require("aws-service-catalog-factory")[0].version
 BOOTSTRAP_STACK_NAME = 'servicecatalog-factory'
 SERVICE_CATALOG_FACTORY_REPO_NAME = 'ServiceCatalogFactory'
 
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
+LOGGER = logging.getLogger()
+LOGGER.setLevel(logging.INFO)
 
 HOME_REGION = os.environ.get('AWS_DEFAULT_REGION', 'eu-west-1')
 
@@ -60,9 +60,9 @@ def read_from_site_packages(what):
     ).read()
 
 
-template_dir = resolve_from_site_packages('templates')
-env = Environment(
-    loader=FileSystemLoader(template_dir),
+TEMPLATE_DIR = resolve_from_site_packages('templates')
+ENV = Environment(
+    loader=FileSystemLoader(TEMPLATE_DIR),
     extensions=['jinja2.ext.do'],
 )
 
@@ -96,17 +96,17 @@ def merge(dict1, dict2):
 
 
 def find_portfolio(service_catalog, portfolio_searching_for):
-    logger.info('Searching for portfolio for: {}'.format(portfolio_searching_for))
+    LOGGER.info('Searching for portfolio for: {}'.format(portfolio_searching_for))
     response = service_catalog.list_portfolios_single_page()
     for detail in response.get('PortfolioDetails'):
         if detail.get('DisplayName') == portfolio_searching_for:
-            logger.info('Found portfolio: {}'.format(portfolio_searching_for))
+            LOGGER.info('Found portfolio: {}'.format(portfolio_searching_for))
             return detail
     return {}
 
 
 def create_portfolio(service_catalog, portfolio_searching_for, portfolios_groups_name, portfolio):
-    logger.info('Creating portfolio: {}'.format(portfolio_searching_for))
+    LOGGER.info('Creating portfolio: {}'.format(portfolio_searching_for))
     args = {
         'DisplayName': portfolio_searching_for,
         'ProviderName': portfolios_groups_name,
@@ -118,22 +118,21 @@ def create_portfolio(service_catalog, portfolio_searching_for, portfolios_groups
     ).get('PortfolioDetail').get('Id')
 
 
-# TODO add checks for portfolio matching - to allow dupe product names across portfolios
 def product_exists(service_catalog, product, **kwargs):
     product_to_find = product.get('Name')
-    logger.info('Searching for product for: {}'.format(product_to_find))
+    LOGGER.info('Searching for product for: {}'.format(product_to_find))
     response = service_catalog.search_products_as_admin_single_page(
         Filters={'FullTextSearch': [product_to_find]}
     )
     for product_view_details in response.get('ProductViewDetails'):
         product_view = product_view_details.get('ProductViewSummary')
         if product_view.get('Name') == product_to_find:
-            logger.info('Found product: {}'.format(product_view))
+            LOGGER.info('Found product: {}'.format(product_view))
             return product_view
 
 
 def create_product(service_catalog, portfolio, product, s3_bucket_name):
-    logger.info('Creating a product: {}'.format(product.get('Name')))
+    LOGGER.info('Creating a product: {}'.format(product.get('Name')))
     args = product.copy()
     args.update({
         'ProductType': 'CLOUD_FORMATION_TEMPLATE',
@@ -156,7 +155,7 @@ def create_product(service_catalog, portfolio, product, s3_bucket_name):
     if args.get('Source'):
         del args['Source']
 
-    logger.info("Creating a product: {}".format(args))
+    LOGGER.info("Creating a product: {}".format(args))
     response = service_catalog.create_product(
         **args
     )
@@ -164,7 +163,7 @@ def create_product(service_catalog, portfolio, product, s3_bucket_name):
     product_id = product_view.get('ProductId')
 
     # create_product is not a synchronous request and describe product doesnt work here
-    logger.info('Waiting for the product to register: {}'.format(product.get('Name')))
+    LOGGER.info('Waiting for the product to register: {}'.format(product.get('Name')))
     found = False
     while not found:
         response = service_catalog.search_products_as_admin_single_page(
@@ -204,7 +203,7 @@ def ensure_portfolio(portfolios_groups_name, portfolio, service_catalog):
     portfolio_searching_for = "{}-{}".format(portfolios_groups_name, portfolio.get('DisplayName'))
     remote_portfolio = find_portfolio(service_catalog, portfolio_searching_for)
     if remote_portfolio.get('Id') is None:
-        logger.info("Couldn't find portfolio, creating one for: {}".format(portfolio_searching_for))
+        LOGGER.info("Couldn't find portfolio, creating one for: {}".format(portfolio_searching_for))
         portfolio['Id'] = create_portfolio(
             service_catalog,
             portfolio_searching_for,
@@ -230,10 +229,10 @@ def ensure_product(product, portfolio, service_catalog):
 
 
 def generate_and_run(portfolios_groups_name, portfolio, what, stack_name, region, portfolio_id):
-    logger.info("Generating: {} for: {} in region: {}".format(
+    LOGGER.info("Generating: {} for: {} in region: {}".format(
         what, portfolio.get('DisplayName'), region
     ))
-    template = env.get_template(what).render(
+    template = ENV.get_template(what).render(
         portfolio=portfolio, portfolio_id=portfolio_id
     )
     stack_name = "-".join([portfolios_groups_name, portfolio.get('DisplayName'), stack_name])
@@ -245,11 +244,11 @@ def generate_and_run(portfolios_groups_name, portfolio, what, stack_name, region
             TemplateBody=template,
             Capabilities=['CAPABILITY_IAM'],
         )
-        logger.info("Finished creating/updating: {}".format(stack_name))
+        LOGGER.info("Finished creating/updating: {}".format(stack_name))
 
 
 def generate_pipeline(template, portfolios_groups_name, output_path, version, product, portfolio):
-    logger.info('Generating pipeline for {}:{}'.format(
+    LOGGER.info('Generating pipeline for {}:{}'.format(
         portfolios_groups_name, product.get('Name')
     ))
     product_ids_by_region = {}
@@ -297,21 +296,21 @@ def generate_pipeline(template, portfolios_groups_name, output_path, version, pr
     )
 
     output_file_path = os.path.sep.join([output_path, friendly_uid + ".template.yaml"])
-    with open(output_file_path, 'w') as f:
-        f.write(rendered)
+    with open(output_file_path, 'w') as output_file:
+        output_file.write(rendered)
 
     return portfolio_ids_by_region, product_ids_by_region
 
 
 def generate_pipelines(portfolios_groups_name, portfolios, output_path):
-    logger.info('Generating pipelines for {}'.format(portfolios_groups_name))
+    LOGGER.info('Generating pipelines for {}'.format(portfolios_groups_name))
     os.makedirs(output_path)
     for portfolio in portfolios.get('Portfolios'):
         portfolio_ids_by_region = {}
         for product in portfolio.get('Components', []):
             for version in product.get('Versions'):
                 portfolio_ids_by_region_for_component, product_ids_by_region = generate_pipeline(
-                    env.get_template(COMPONENT),
+                    ENV.get_template(COMPONENT),
                     portfolios_groups_name,
                     output_path,
                     version,
@@ -322,7 +321,7 @@ def generate_pipelines(portfolios_groups_name, portfolios, output_path):
         for product in portfolio.get('ComponentGroups', []):
             for version in product.get('Versions'):
                 portfolio_ids_by_region_for_group, product_ids_by_region = generate_pipeline(
-                    env.get_template(COMPONENT_GROUP),
+                    ENV.get_template(COMPONENT_GROUP),
                     portfolios_groups_name,
                     output_path,
                     version,
@@ -370,14 +369,14 @@ def cli(info, info_line_numbers):
 @cli.command()
 @click.argument('p', type=click.Path(exists=True))
 def validate(p):
-    for f in os.listdir(p):
-        portfolios_file_path = os.path.sep.join([p, f])
-        logger.info('Validating {}'.format(portfolios_file_path))
-        c = Core(
+    for portfolio_file_name in os.listdir(p):
+        portfolios_file_path = os.path.sep.join([p, portfolio_file_name])
+        LOGGER.info('Validating {}'.format(portfolios_file_path))
+        core = Core(
             source_file=portfolios_file_path,
             schema_files=[resolve_from_site_packages('schema.yaml')]
         )
-        c.validate(raise_exception=True)
+        core.validate(raise_exception=True)
         click.echo("Finished validating: {}".format(portfolios_file_path))
     click.echo("Finished validating: OK")
 
@@ -385,11 +384,11 @@ def validate(p):
 @cli.command()
 @click.argument('p', type=click.Path(exists=True))
 def generate(p):
-    logger.info('Generating')
-    for f in os.listdir(p):
-        p_name = f.split(".")[0]
+    LOGGER.info('Generating')
+    for porfolio_file_name in os.listdir(p):
+        p_name = porfolio_file_name.split(".")[0]
         output_path = os.path.sep.join(["output", p_name])
-        portfolios_file_path = os.path.sep.join([p, f])
+        portfolios_file_path = os.path.sep.join([p, porfolio_file_name])
         with open(portfolios_file_path) as portfolios_file:
             portfolios_file_contents = portfolios_file.read()
             portfolios = yaml.safe_load(portfolios_file_contents)
@@ -439,10 +438,10 @@ def get_stacks():
 @click.argument('p', type=click.Path(exists=True))
 def deploy(p):
     stacks = get_stacks()
-    for f in os.listdir(p):
-        p_name = f.split(".")[0]
+    for portfolio_file_name in os.listdir(p):
+        p_name = portfolio_file_name.split(".")[0]
         output_path = os.path.sep.join(["output", p_name])
-        portfolios_file_path = os.path.sep.join([p, f])
+        portfolios_file_path = os.path.sep.join([p, portfolio_file_name])
         with open(portfolios_file_path) as portfolios_file:
             portfolios_file_contents = portfolios_file.read()
             portfolios = yaml.safe_load(portfolios_file_contents)
@@ -480,7 +479,7 @@ def run_deploy_for_component_groups(group_name, path, portfolio, product, versio
         group_name, portfolio.get('DisplayName'), product.get('Name'), version.get('Name')
     ])
     first_run_of_stack = stacks.get(friendly_uid, False) is False
-    logger.info('Running deploy for: {}. Is first run: {}'.format(
+    LOGGER.info('Running deploy for: {}. Is first run: {}'.format(
         friendly_uid, first_run_of_stack
     ))
 
@@ -503,7 +502,7 @@ def run_deploy_for_component_groups(group_name, path, portfolio, product, versio
         for product_view_details in response.get('ProductViewDetails'):
             product_view = product_view_details.get('ProductViewSummary')
             if product_view.get('Name') == product_to_find:
-                logger.info('Found product: {}'.format(product_view))
+                LOGGER.info('Found product: {}'.format(product_view))
                 product_id = product_view.get("ProductId")
                 break
 
@@ -516,7 +515,7 @@ def run_deploy_for_component_groups(group_name, path, portfolio, product, versio
                 found = True
 
         if not found:
-            logger.info("Creating version: {}. It didn't exist".format(version.get("Name")))
+            LOGGER.info("Creating version: {}. It didn't exist".format(version.get("Name")))
             create_args = {
                 "ProductId": product_id,
                 "Parameters": {
@@ -533,7 +532,7 @@ def run_deploy_for_component_groups(group_name, path, portfolio, product, versio
                 create_args['Parameters']['Description'] = version.get("Description")
             service_catalog.create_provisioning_artifact(**create_args)
         else:
-            logger.info(
+            LOGGER.info(
                 'Skipped creating version: {}. It already exists'.format(version.get("Name"))
             )
 
@@ -546,7 +545,7 @@ def run_deploy_for_component(group_name, path, portfolio, product, version, stac
         version.get('Name')
     ])
     first_run_of_stack = stacks.get(friendly_uid, False) is False
-    logger.info(
+    LOGGER.info(
         'Running deploy for: {}. Is first run: {}'.format(friendly_uid, first_run_of_stack)
     )
 
@@ -559,7 +558,7 @@ def run_deploy_for_component(group_name, path, portfolio, product, version, stac
             StackName=friendly_uid,
             TemplateBody=staging_template_contents,
         )
-        logger.info('Finished stack: {}'.format(friendly_uid))
+        LOGGER.info('Finished stack: {}'.format(friendly_uid))
 
 
 @cli.command()
@@ -568,7 +567,7 @@ def run_deploy_for_component(group_name, path, portfolio, product, version, stac
 @click.argument('product')
 @click.argument('version')
 def nuke_product_version(portfolio_group, portfolio_display_name, product, version):
-    logger.info('Looking for portfolio_id')
+    LOGGER.info('Looking for portfolio_id')
     with betterboto_client.ClientContextManager('servicecatalog') as servicecatalog:
         response = servicecatalog.list_portfolios(PageSize=20)
         assert response.get('NextPageToken', None) is None, "Pagination not supported"
@@ -579,14 +578,14 @@ def nuke_product_version(portfolio_group, portfolio_display_name, product, versi
                 portfolio_id = portfolio_detail.get('Id')
                 break
         if portfolio_id is None:
-            logger.warning("Portfolio {} could not be found".format(portfolio_id))
+            LOGGER.warning("Portfolio {} could not be found".format(portfolio_id))
         else:
-            logger.info('Portfolio_id found: {}'.format(portfolio_id))
+            LOGGER.info('Portfolio_id found: {}'.format(portfolio_id))
             product_name = "-".join([product, version])
-            logger.info('Looking for product: {}'.format(product_name))
+            LOGGER.info('Looking for product: {}'.format(product_name))
             result = product_exists(servicecatalog, {'Name': product}, PortfolioId=portfolio_id)
             product_id = result.get('ProductId')
-            logger.info('Looking for version: {}'.format(version))
+            LOGGER.info('Looking for version: {}'.format(version))
             response = servicecatalog.list_provisioning_artifacts(
                 ProductId=product_id,
             )
@@ -596,20 +595,20 @@ def nuke_product_version(portfolio_group, portfolio_display_name, product, versi
                 if provisioning_artifact_detail.get('Name') == version:
                     version_id = provisioning_artifact_detail.get('Id')
             if version_id is None:
-                logger.warning("Version {} could not be found".format(version))
+                LOGGER.warning("Version {} could not be found".format(version))
             else:
-                logger.info('Found version: {}'.format(version_id))
-                logger.info('Deleting version: {}'.format(version_id))
+                LOGGER.info('Found version: {}'.format(version_id))
+                LOGGER.info('Deleting version: {}'.format(version_id))
                 servicecatalog.delete_provisioning_artifact(
                     ProductId=product_id,
                     ProvisioningArtifactId=version_id
                 )
-                logger.info('Deleted version: {}'.format(version_id))
+                LOGGER.info('Deleted version: {}'.format(version_id))
 
-        logger.info('Starting to delete pipeline stack')
+        LOGGER.info('Starting to delete pipeline stack')
         with betterboto_client.ClientContextManager('cloudformation') as cloudformation:
             stack_name = "-".join([portfolio_group, portfolio_display_name, product, version])
-            logger.info('Emptying the pipeline bucket first')
+            LOGGER.info('Emptying the pipeline bucket first')
             response = cloudformation.list_stack_resources(
                 StackName=stack_name
             )
@@ -623,24 +622,24 @@ def nuke_product_version(portfolio_group, portfolio_display_name, product, versi
             s3 = boto3.resource('s3')
             bucket = s3.Bucket(bucket_name)
             bucket.objects.all().delete()
-            logger.info('Finished emptying the pipeline bucket')
+            LOGGER.info('Finished emptying the pipeline bucket')
 
-            logger.info('Deleting the stack {}'.format(stack_name))
+            LOGGER.info('Deleting the stack {}'.format(stack_name))
             cloudformation.delete_stack(
                 StackName=stack_name
             )
             waiter = cloudformation.get_waiter('stack_delete_complete')
             waiter.wait(StackName=stack_name)
-            logger.info('Finished deleting pipeline stack')
+            LOGGER.info('Finished deleting pipeline stack')
 
 
 @cli.command()
 def bootstrap():
-    logger.info('Starting bootstrap')
+    LOGGER.info('Starting bootstrap')
     with betterboto_client.MultiRegionClientContextManager(
             'cloudformation', ALL_REGIONS
     ) as clients:
-        logger.info('Creating {}-regional'.format(BOOTSTRAP_STACK_NAME))
+        LOGGER.info('Creating {}-regional'.format(BOOTSTRAP_STACK_NAME))
         threads = []
         template = read_from_site_packages(
             '{}.template.yaml'.format('{}-regional'.format(BOOTSTRAP_STACK_NAME))
@@ -664,11 +663,11 @@ def bootstrap():
             threads.append(process)
         for process in threads:
             process.join()
-        logger.info('Finished creating {}-regional'.format(BOOTSTRAP_STACK_NAME))
+        LOGGER.info('Finished creating {}-regional'.format(BOOTSTRAP_STACK_NAME))
 
     s3_bucket_name = None
     with betterboto_client.ClientContextManager('cloudformation') as cloudformation:
-        logger.info('Creating {}'.format(BOOTSTRAP_STACK_NAME))
+        LOGGER.info('Creating {}'.format(BOOTSTRAP_STACK_NAME))
         template = read_from_site_packages('{}.template.yaml'.format(BOOTSTRAP_STACK_NAME))
         template = Template(template).render(VERSION=VERSION)
         print(template)
@@ -692,19 +691,19 @@ def bootstrap():
             if stack_output.get('OutputKey') == 'CatalogBucketName':
                 s3_bucket_name = stack_output.get('OutputValue')
                 break
-        logger.info(
+        LOGGER.info(
             'Finished creating {}. CatalogBucketName is: {}'.format(
                 BOOTSTRAP_STACK_NAME, s3_bucket_name
             )
         )
 
-    logger.info('Adding empty product template to s3')
+    LOGGER.info('Adding empty product template to s3')
     template = open(resolve_from_site_packages('empty.template.yaml')).read()
     s3 = boto3.resource('s3')
     obj = s3.Object(s3_bucket_name, 'empty.template.yaml')
     obj.put(Body=template)
-    logger.info('Finished adding empty product template to s3')
-    logger.info('Finished bootstrap')
+    LOGGER.info('Finished adding empty product template to s3')
+    LOGGER.info('Finished bootstrap')
 
     with betterboto_client.ClientContextManager('codecommit') as codecommit:
         response = codecommit.get_repository(repositoryName=SERVICE_CATALOG_FACTORY_REPO_NAME)
