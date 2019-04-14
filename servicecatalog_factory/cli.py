@@ -122,7 +122,9 @@ def create_portfolio(service_catalog, portfolio_searching_for, portfolios_groups
 def product_exists(service_catalog, product, **kwargs):
     product_to_find = product.get('Name')
     logger.info('Searching for product for: {}'.format(product_to_find))
-    response = service_catalog.search_products_as_admin_single_page(Filters={'FullTextSearch': [product_to_find]})
+    response = service_catalog.search_products_as_admin_single_page(
+        Filters={'FullTextSearch': [product_to_find]}
+    )
     for product_view_details in response.get('ProductViewDetails'):
         product_view = product_view_details.get('ProductViewSummary')
         if product_view.get('Name') == product_to_find:
@@ -140,7 +142,9 @@ def create_product(service_catalog, portfolio, product, s3_bucket_name):
             'Type': 'CLOUD_FORMATION_TEMPLATE',
             'Description': 'Placeholder version, do not provision',
             "Info": {
-                "LoadTemplateFromURL": "https://s3.amazonaws.com/{}/{}".format(s3_bucket_name, "empty.template.yaml")
+                "LoadTemplateFromURL": "https://s3.amazonaws.com/{}/{}".format(
+                    s3_bucket_name, "empty.template.yaml"
+                )
             }
         }
     })
@@ -163,7 +167,9 @@ def create_product(service_catalog, portfolio, product, s3_bucket_name):
     logger.info('Waiting for the product to register: {}'.format(product.get('Name')))
     found = False
     while not found:
-        response = service_catalog.search_products_as_admin_single_page(Filters={'FullTextSearch': [args.get("Name")]})
+        response = service_catalog.search_products_as_admin_single_page(
+            Filters={'FullTextSearch': [args.get("Name")]}
+        )
         time.sleep(1)
         product_view_details = response.get('ProductViewDetails')
         for product_view_detail in product_view_details:
@@ -179,7 +185,9 @@ def create_product(service_catalog, portfolio, product, s3_bucket_name):
 
 def get_bucket_name():
     s3_bucket_url = None
-    with betterboto_client.ClientContextManager('cloudformation', region_name=HOME_REGION) as cloudformation:
+    with betterboto_client.ClientContextManager(
+            'cloudformation', region_name=HOME_REGION
+    ) as cloudformation:
         response = cloudformation.describe_stacks(
             StackName=BOOTSTRAP_STACK_NAME
         )
@@ -222,12 +230,16 @@ def ensure_product(product, portfolio, service_catalog):
 
 
 def generate_and_run(portfolios_groups_name, portfolio, what, stack_name, region, portfolio_id):
-    logger.info("Generating: {} for: {} in region: {}".format(what, portfolio.get('DisplayName'), region))
+    logger.info("Generating: {} for: {} in region: {}".format(
+        what, portfolio.get('DisplayName'), region
+    ))
     template = env.get_template(what).render(
         portfolio=portfolio, portfolio_id=portfolio_id
     )
     stack_name = "-".join([portfolios_groups_name, portfolio.get('DisplayName'), stack_name])
-    with betterboto_client.ClientContextManager('cloudformation', region_name=region) as cloudformation:
+    with betterboto_client.ClientContextManager(
+            'cloudformation', region_name=region
+    ) as cloudformation:
         cloudformation.create_or_update(
             StackName=stack_name,
             TemplateBody=template,
@@ -237,22 +249,34 @@ def generate_and_run(portfolios_groups_name, portfolio, what, stack_name, region
 
 
 def generate_pipeline(template, portfolios_groups_name, output_path, version, product, portfolio):
-    logger.info('Generating pipeline for {}:{}'.format(portfolios_groups_name, product.get('Name')))
-
+    logger.info('Generating pipeline for {}:{}'.format(
+        portfolios_groups_name, product.get('Name')
+    ))
     product_ids_by_region = {}
     portfolio_ids_by_region = {}
     for region in ALL_REGIONS:
-        with betterboto_client.ClientContextManager('servicecatalog', region_name=region) as service_catalog:
+        with betterboto_client.ClientContextManager(
+                'servicecatalog', region_name=region
+        ) as service_catalog:
             ensure_portfolio(portfolios_groups_name, portfolio, service_catalog)
             portfolio_ids_by_region[region] = portfolio.get('Id')
             ensure_product(product, portfolio, service_catalog)
             product_ids_by_region[region] = product.get('Id')
     friendly_uid = "-".join(
-        [portfolios_groups_name, portfolio.get('DisplayName'), product.get('Name'), version.get('Name')])
+        [
+            portfolios_groups_name,
+            portfolio.get('DisplayName'),
+            product.get('Name'),
+            version.get('Name')
+        ]
+    )
 
     rendered = template.render(
         friendly_uid=friendly_uid,
-        portfolios_groups_name=portfolios_groups_name, version=version, product=product, portfolio=portfolio,
+        portfolios_groups_name=portfolios_groups_name,
+        version=version,
+        product=product,
+        portfolio=portfolio,
         Options=merge(product.get('Options', {}), version.get('Options', {})),
         Source=merge(product.get('Source', {}), version.get('Source', {})),
         ProductIdsByRegion=product_ids_by_region,
@@ -261,7 +285,10 @@ def generate_pipeline(template, portfolios_groups_name, output_path, version, pr
     )
     rendered = Template(rendered).render(
         friendly_uid=friendly_uid,
-        portfolios_groups_name=portfolios_groups_name, version=version, product=product, portfolio=portfolio,
+        portfolios_groups_name=portfolios_groups_name,
+        version=version,
+        product=product,
+        portfolio=portfolio,
         Options=merge(product.get('Options', {}), version.get('Options', {})),
         Source=merge(product.get('Source', {}), version.get('Source', {})),
         ProductIdsByRegion=product_ids_by_region,
@@ -294,7 +321,7 @@ def generate_pipelines(portfolios_groups_name, portfolios, output_path):
                 portfolio_ids_by_region.update(portfolio_ids_by_region_for_component)
         for product in portfolio.get('ComponentGroups', []):
             for version in product.get('Versions'):
-                portfolio_ids_by_region_for_component_group, product_ids_by_region = generate_pipeline(
+                portfolio_ids_by_region_for_group, product_ids_by_region = generate_pipeline(
                     env.get_template(COMPONENT_GROUP),
                     portfolios_groups_name,
                     output_path,
@@ -302,7 +329,7 @@ def generate_pipelines(portfolios_groups_name, portfolios, output_path):
                     product,
                     portfolio,
                 )
-                portfolio_ids_by_region.update(portfolio_ids_by_region_for_component_group)
+                portfolio_ids_by_region.update(portfolio_ids_by_region_for_group)
         threads = []
         for region in ALL_REGIONS:
             process = Thread(
@@ -346,7 +373,10 @@ def validate(p):
     for f in os.listdir(p):
         portfolios_file_path = os.path.sep.join([p, f])
         logger.info('Validating {}'.format(portfolios_file_path))
-        c = Core(source_file=portfolios_file_path, schema_files=[resolve_from_site_packages('schema.yaml')])
+        c = Core(
+            source_file=portfolios_file_path,
+            schema_files=[resolve_from_site_packages('schema.yaml')]
+        )
         c.validate(raise_exception=True)
         click.echo("Finished validating: {}".format(portfolios_file_path))
     click.echo("Finished validating: OK")
@@ -446,9 +476,13 @@ def get_hash_for_template(template):
 
 
 def run_deploy_for_component_groups(group_name, path, portfolio, product, version, stacks):
-    friendly_uid = "-".join([group_name, portfolio.get('DisplayName'), product.get('Name'), version.get('Name')])
+    friendly_uid = "-".join([
+        group_name, portfolio.get('DisplayName'), product.get('Name'), version.get('Name')
+    ])
     first_run_of_stack = stacks.get(friendly_uid, False) is False
-    logger.info('Running deploy for: {}. Is first run: {}'.format(friendly_uid, first_run_of_stack))
+    logger.info('Running deploy for: {}. Is first run: {}'.format(
+        friendly_uid, first_run_of_stack
+    ))
 
     staging_template_path = os.path.sep.join([path, "{}.template.yaml".format(friendly_uid)])
     with open(staging_template_path) as staging_template:
@@ -462,7 +496,9 @@ def run_deploy_for_component_groups(group_name, path, portfolio, product, versio
     with betterboto_client.ClientContextManager('servicecatalog') as service_catalog:
         product_to_find = product.get('Name')
 
-        response = service_catalog.search_products_as_admin_single_page(Filters={'FullTextSearch': [product_to_find]})
+        response = service_catalog.search_products_as_admin_single_page(
+            Filters={'FullTextSearch': [product_to_find]}
+        )
         product_id = None
         for product_view_details in response.get('ProductViewDetails'):
             product_view = product_view_details.get('ProductViewSummary')
@@ -486,7 +522,9 @@ def run_deploy_for_component_groups(group_name, path, portfolio, product, versio
                 "Parameters": {
                     'Name': version.get('Name'),
                     'Info': {
-                        "LoadTemplateFromURL": "https://s3.amazonaws.com/{}/{}".format(s3_bucket_name, template_path)
+                        "LoadTemplateFromURL": "https://s3.amazonaws.com/{}/{}".format(
+                            s3_bucket_name, template_path
+                        )
                     },
                     'Type': 'CLOUD_FORMATION_TEMPLATE'
                 }
@@ -495,13 +533,22 @@ def run_deploy_for_component_groups(group_name, path, portfolio, product, versio
                 create_args['Parameters']['Description'] = version.get("Description")
             service_catalog.create_provisioning_artifact(**create_args)
         else:
-            logger.info('Skipped creating version: {}. It already exists'.format(version.get("Name")))
+            logger.info(
+                'Skipped creating version: {}. It already exists'.format(version.get("Name"))
+            )
 
 
 def run_deploy_for_component(group_name, path, portfolio, product, version, stacks):
-    friendly_uid = "-".join([group_name, portfolio.get('DisplayName'), product.get('Name'), version.get('Name')])
+    friendly_uid = "-".join([
+        group_name,
+        portfolio.get('DisplayName'),
+        product.get('Name'),
+        version.get('Name')
+    ])
     first_run_of_stack = stacks.get(friendly_uid, False) is False
-    logger.info('Running deploy for: {}. Is first run: {}'.format(friendly_uid, first_run_of_stack))
+    logger.info(
+        'Running deploy for: {}. Is first run: {}'.format(friendly_uid, first_run_of_stack)
+    )
 
     staging_template_path = os.path.sep.join([path, "{}.template.yaml".format(friendly_uid)])
     with open(staging_template_path) as staging_template:
@@ -590,10 +637,14 @@ def nuke_product_version(portfolio_group, portfolio_display_name, product, versi
 @cli.command()
 def bootstrap():
     logger.info('Starting bootstrap')
-    with betterboto_client.MultiRegionClientContextManager('cloudformation', ALL_REGIONS) as clients:
+    with betterboto_client.MultiRegionClientContextManager(
+            'cloudformation', ALL_REGIONS
+    ) as clients:
         logger.info('Creating {}-regional'.format(BOOTSTRAP_STACK_NAME))
         threads = []
-        template = read_from_site_packages('{}.template.yaml'.format('{}-regional'.format(BOOTSTRAP_STACK_NAME)))
+        template = read_from_site_packages(
+            '{}.template.yaml'.format('{}-regional'.format(BOOTSTRAP_STACK_NAME))
+        )
         template = Template(template).render(VERSION=VERSION)
         args = {
             'StackName': '{}-regional'.format(BOOTSTRAP_STACK_NAME),
@@ -641,7 +692,11 @@ def bootstrap():
             if stack_output.get('OutputKey') == 'CatalogBucketName':
                 s3_bucket_name = stack_output.get('OutputValue')
                 break
-        logger.info('Finished creating {}.  CatalogBucketName is: {}'.format(BOOTSTRAP_STACK_NAME, s3_bucket_name))
+        logger.info(
+            'Finished creating {}. CatalogBucketName is: {}'.format(
+                BOOTSTRAP_STACK_NAME, s3_bucket_name
+            )
+        )
 
     logger.info('Adding empty product template to s3')
     template = open(resolve_from_site_packages('empty.template.yaml')).read()
@@ -654,10 +709,11 @@ def bootstrap():
     with betterboto_client.ClientContextManager('codecommit') as codecommit:
         response = codecommit.get_repository(repositoryName=SERVICE_CATALOG_FACTORY_REPO_NAME)
         clone_url = response.get('repositoryMetadata').get('cloneUrlHttp')
-        clone_command = "git clone --config 'credential.helper=!aws codecommit credential-helper $@' " \
-                        "--config 'credential.UseHttpPath=true' {}".format(clone_url)
+        clone_command = "git clone --config 'credential.helper=!aws codecommit " \
+                        "credential-helper $@' --config 'credential.UseHttpPath=true' " \
+                        "{}".format(clone_url)
         click.echo(
-            'You need to clone your newly created repo now and will then need to seed it: \n{}'.format(
+            'You need to clone your newly created repo and then seed it: \n{}'.format(
                 clone_command
             )
         )
