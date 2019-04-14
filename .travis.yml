@@ -7,9 +7,7 @@ install:
   - pip install -r servicecatalog_factory/requirements.txt
   - pip install .
 script:
-- pip install pytest==4.4.0
-- pip install pytest-cov==2.6.1
-- pip install codecov
+- pip install -r servicecatalog_factory/requirements-test.txt
 - pytest --cov=./ servicecatalog_factory
 before_deploy:
 - python setup.py sdist
