@@ -47,7 +47,7 @@ Portfolios:
                 Branch: v1
 ```
 The secret must be named: ```example-simple-central-it-team-portfolio-account-iam-v1``` and must have secret keys 
-for ```SecretToken``` and ```OAuthToken```
+for ```SecretToken``` and ```OAuthToken```.  Please note it must be in the same region as the AWS CodePipeline.
 
 ## Tests
 Each product pipeline will run aws cloudformation validate-template on your product.template.yaml.
