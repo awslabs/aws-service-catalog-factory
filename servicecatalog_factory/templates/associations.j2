@@ -2,7 +2,7 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: Associations for {{portfolio.DisplayName}}
 Resources:
 {% for association in portfolio.Associations %}
-  {{ association.split(":")[-1]|replace("/"," ")|title|replace(" ","") }}:
+  {{ association.split(":")[-1]|replace("/"," ")|title|replace(" ","")|replace("_","") }}:
     Type: AWS::ServiceCatalog::PortfolioPrincipalAssociation
     Properties:
       PrincipalARN: !Sub "{{ association }}"
