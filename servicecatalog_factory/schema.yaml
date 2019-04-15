@@ -87,6 +87,13 @@ schema;map_component:
               type: str
             BranchName:
               type: str
+            Branch:
+              type: str
+            Owner:
+              type: str
+            Repo:
+              type: str
+
     Options:
       type: map
       mapping:
@@ -131,6 +138,12 @@ schema;map_component:
                     RepositoryName:
                       type: str
                     BranchName:
+                      type: str
+                    Branch:
+                      type: str
+                    Owner:
+                      type: str
+                    Repo:
                       type: str
 type: map
 mapping:

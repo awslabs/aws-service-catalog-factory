@@ -33,11 +33,11 @@ Resources:
                 RepositoryName: {{ Source.Configuration.RepositoryName }}
                 BranchName: {{ Source.Configuration.BranchName }}{% endif %}
               {% if Source.Provider.lower() == 'github' %}Configuration:
-                Owner: {{ Source.Configuration.Owner }}
-                Repo: {{ Source.Configuration.Repo }}
-                Branch: {{ Source.Configuration.Branch }}
-                OAuthToken: {{ Source.Configuration.OauthToken }}
-                PollForSourceChanges: {{ Source.Configuration.PollForSourceChanges }}{% endif %}
+                Owner: {{ Source['Configuration']['Owner'] }}
+                Repo: {{ Source['Configuration']['Repo'] }}
+                Branch: {{ Source['Configuration']['Branch'] }}
+                OAuthToken: !Sub "{{ '{% raw %}{{{% endraw %}' }} resolve:secretsmanager:${friendly_uid}:SecretString:OAuthToken {{ '{% raw %}}}{% endraw %}' }}"
+                PollForSourceChanges: {{ Source['Configuration']['PollForSourceChanges'] }}{% endif %}
               OutputArtifacts:
                 - Name: Source
               RunOrder: 1
@@ -89,7 +89,7 @@ Resources:
     Type: 'AWS::CodePipeline::Webhook'
     Properties:
       AuthenticationConfiguration:
-        SecretToken: {{ Source.Configuration.WebhookSecret }}
+        SecretToken: !Sub "{{ '{% raw %}{{{% endraw %}' }}resolve:secretsmanager:${friendly_uid}:SecretString:SecretToken{{ '{% raw %}}}{% endraw %}' }}"
       Filters:
       - JsonPath: "$.ref"
         MatchEquals: "refs/heads/{{ Source.Configuration.Branch }}"

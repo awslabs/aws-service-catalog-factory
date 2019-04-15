@@ -55,7 +55,13 @@ Please note ```git clone``` command above includes an AWS Region in it.  You may
 command the bootstrap command prints to the terminal upon completion for the correct command.
 
 The seed command takes two parameters.  The first is the name of the example file you would like to use.  At the moment
-here is only a _simple_ option.  More will be coming soon to show the flexibility of the Factory.
+here is only a _simple_ option.  You can also specify a simple github see using:
+
+```bash
+servicecatalog-factory seed simple-github ServiceCatalogFactory
+``` 
+
+More will be coming soon to show the flexibility of the Factory.
 
 Once the pipeline has completed you have a working factory!  You will now need to configure at least one product.
 

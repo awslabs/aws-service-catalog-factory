@@ -26,9 +26,29 @@ Source:
         Owner: your-github-user-or-org
         Repo: your-github-repo
         Branch: v1
-        WebhookSecret: 3986y9hfsidfhdhfdkfhds
-        OauthToken: djoif0c3cm-4c0m4
 ```
+
+Your pipeline will expect a JSON secret in AWS Secrets Manager of the name:
+```<portfolio_file_name>-<portfolio_display_name>-<product_name>_<product_version_name>```
+
+For example if you have the following in a file named example-simple.yaml:
+```yaml
+Portfolios:
+  - DisplayName: central-it-team-portfolio
+    Components:
+      - Name: account-iam
+        Versions:
+          - Name: v1
+            Source:
+              Provider: Github
+              Configuration:
+                Owner: eamonnfaherty
+                Repo: account-iam
+                Branch: v1
+```
+The secret must be named: ```example-simple-central-it-team-portfolio-account-iam-v1``` and must have secret keys 
+for ```SecretToken``` and ```OAuthToken```.  Please note it must be in the same region as the AWS CodePipeline.
+
 ## Tests
 Each product pipeline will run aws cloudformation validate-template on your product.template.yaml.
 You can optionally run CFNNag on your template.  You can enable it using the Options configuration for your product or
