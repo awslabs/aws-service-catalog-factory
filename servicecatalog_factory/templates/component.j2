@@ -36,7 +36,7 @@ Resources:
                 Owner: {{ Source.Configuration.Owner }}
                 Repo: {{ Source.Configuration.Repo }}
                 Branch: {{ Source.Configuration.Branch }}
-                OAuthToken: {{ Source.Configuration.OauthToken }}
+                OAuthToken: !Sub "{{resolve:secretsmanager:${friendly_uid}:SecretString:OAuthToken}}"
                 PollForSourceChanges: {{ Source.Configuration.PollForSourceChanges }}{% endif %}
               OutputArtifacts:
                 - Name: Source
@@ -89,7 +89,7 @@ Resources:
     Type: 'AWS::CodePipeline::Webhook'
     Properties:
       AuthenticationConfiguration:
-        SecretToken: {{ Source.Configuration.WebhookSecret }}
+        SecretToken: !Sub "{{resolve:secretsmanager:${friendly_uid}:SecretString:SecretToken}}"
       Filters:
       - JsonPath: "$.ref"
         MatchEquals: "refs/heads/{{ Source.Configuration.Branch }}"
