@@ -378,10 +378,10 @@ def validate(p):
 @click.argument('p', type=click.Path(exists=True))
 def generate(p):
     LOGGER.info('Generating')
-    for porfolio_file_name in os.listdir(p):
-        p_name = porfolio_file_name.split(".")[0]
+    for portfolio_file_name in os.listdir(p):
+        p_name = portfolio_file_name.split(".")[0]
         output_path = os.path.sep.join(["output", p_name])
-        portfolios_file_path = os.path.sep.join([p, porfolio_file_name])
+        portfolios_file_path = os.path.sep.join([p, portfolio_file_name])
         with open(portfolios_file_path) as portfolios_file:
             portfolios_file_contents = portfolios_file.read()
             portfolios = yaml.safe_load(portfolios_file_contents)
@@ -774,6 +774,51 @@ def upload_config(p):
             Overwrite=True,
         )
     click.echo("Uploaded config")
+
+
+@cli.command()
+@click.argument('p')
+def fix_issues(p, type=click.Path(exists=True)):
+    fix_issues_for_portfolio(p)
+
+
+def fix_issues_for_portfolio(p):
+    click.echo('Fixing issues for portfolios')
+    for portfolio_file_name in os.listdir(p):
+        p_name = portfolio_file_name.split(".")[0]
+        with open(os.path.sep.join([p,portfolio_file_name]), 'r') as portfolio_file:
+            portfolio = yaml.safe_load(portfolio_file.read())
+            for portfolio in portfolio.get('Portfolios', []):
+                for component in portfolio.get('Components', []):
+                    for version in component.get('Versions', []):
+                        stack_name = "-".join([
+                            p_name,
+                            portfolio.get('DisplayName'),
+                            component.get('Name'),
+                            version.get('Name'),
+                        ])
+                        LOGGER.info('looking at stack: {}'.format(stack_name))
+                        with betterboto_client.ClientContextManager('cloudformation') as cloudformation:
+                            response = {'Stacks': []}
+                            try:
+                                response = cloudformation.describe_stacks(StackName=stack_name)
+                            except cloudformation.exceptions.ClientError as e:
+                                if "Stack with id {} does not exist".format(stack_name) in str(e):
+                                    click.echo("There is no pipeline for: {}".format(stack_name))
+                                else:
+                                    raise e
+
+                            for stack in response.get('Stacks'):
+                                if stack.get('StackStatus') == "ROLLBACK_COMPLETE":
+                                    if click.confirm(
+                                            'Found a stack: {} in status: "ROLLBACK_COMPLETE".  '
+                                            'Should it be deleted?'.format(stack_name)
+                                    ):
+                                        cloudformation.delete_stack(StackName=stack_name)
+                                        waiter = cloudformation.get_waiter('stack_delete_complete')
+                                        waiter.wait(StackName=stack_name)
+
+    click.echo('Finished fixing issues for portfolios')
 
 
 if __name__ == "__main__":
