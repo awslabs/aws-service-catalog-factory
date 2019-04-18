@@ -21,3 +21,13 @@ You can delete a stack from every region using the following command:
 servicecatalog-factory delete-stack-from-all-regions stack-name
 ```
 Please note, this will only delete the stack from the regions you have specifed in your config.
+
+
+## fix-issues
+Whilst developing your products you may find AWS CloudFormation stacks in states you cannot work with.  
+If this happens the fix-issues command will try to resolve it for you.  It will prompt you to confirm
+anything it does within your account before it does it so give it a try when you get stuck.
+
+```bash
+servicecatalog-factory fix-issues ServiceCatalogFactory/portfolios
+``` 
