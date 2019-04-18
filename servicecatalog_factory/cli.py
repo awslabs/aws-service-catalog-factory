@@ -237,6 +237,27 @@ def generate_and_run(portfolios_groups_name, portfolio, what, stack_name, region
         LOGGER.info("Finished creating/updating: {}".format(stack_name))
 
 
+def ensure_product_versions_active_is_correct(product, service_catalog):
+    product_id = product.get('Id')
+    response = service_catalog.list_provisioning_artifacts(
+        ProductId=product_id
+    )
+    for version in product.get('Versions'):
+        active = version.get('Active', True)
+        for provisioning_artifact_detail in response.get('ProvisioningArtifactDetails', []):
+            if provisioning_artifact_detail.get('Name') == version.get('Name'):
+                logging.debug('-----1-----')
+                logging.debug(type(provisioning_artifact_detail.get('Active')))
+                logging.debug(type(active))
+                logging.debug('-----end of 1-----')
+                if provisioning_artifact_detail.get('Active') != active:
+                    update_response = service_catalog.update_provisioning_artifact(
+                        ProductId=product_id,
+                        ProvisioningArtifactId=provisioning_artifact_detail.get('Id'),
+                        Active=active,
+                    )
+
+
 def generate_pipeline(template, portfolios_groups_name, output_path, version, product, portfolio):
     LOGGER.info('Generating pipeline for {}:{}'.format(
         portfolios_groups_name, product.get('Name')
@@ -251,6 +272,7 @@ def generate_pipeline(template, portfolios_groups_name, output_path, version, pr
             ensure_portfolio(portfolios_groups_name, portfolio, service_catalog)
             portfolio_ids_by_region[region] = portfolio.get('Id')
             ensure_product(product, portfolio, service_catalog)
+            ensure_product_versions_active_is_correct(product, service_catalog)
             product_ids_by_region[region] = product.get('Id')
     friendly_uid = "-".join(
         [

@@ -24,6 +24,7 @@ Portfolios:
         Versions:
           - Name: v1
             Description: The iam roles needed for you to do your jobs
+            Active: True
             Source:
               Provider: CodeCommit
               Configuration:
