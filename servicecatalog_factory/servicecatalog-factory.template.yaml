@@ -80,7 +80,11 @@ Resources:
           phases:
             install:
               commands:
+  {% if 'http' in VERSION %}
+                - pip install {{ VERSION }}
+  {% else %}
                 - pip install aws-service-catalog-factory=={{ VERSION }}
+  {% endif %}
             build:
               commands:
                 - servicecatalog-factory --info generate portfolios/

@@ -636,14 +636,19 @@ def nuke_product_version(portfolio_group, portfolio_display_name, product, versi
 
 
 @cli.command()
-@click.argument('branch')
-def bootstrap_for_dev(branch):
-    VERSION = "https://github.com/user/repository/archive/{}.zip".format(branch)
-    bootstrap()
+@click.argument('branch-name')
+def bootstrap_branch(branch_name):
+    global VERSION
+    VERSION = "https://github.com/awslabs/aws-service-catalog-factory/archive/{}.zip".format(branch_name)
+    do_bootstrap()
 
 
 @cli.command()
 def bootstrap():
+    do_bootstrap()
+
+
+def do_bootstrap():
     click.echo('Starting bootstrap')
     click.echo('Starting regional deployments')
     with betterboto_client.MultiRegionClientContextManager(
