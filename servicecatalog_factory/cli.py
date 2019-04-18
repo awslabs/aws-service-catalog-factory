@@ -248,13 +248,11 @@ def ensure_product_versions_active_is_correct(product, service_catalog):
         active = version.get('Active', True)
         LOGGER.info("Checking through: {}".format(response))
         for provisioning_artifact_detail in response.get('ProvisioningArtifactDetails', []):
-            logging.debug('-----1-----')
-            logging.debug(type(provisioning_artifact_detail.get('Active')))
-            logging.debug(type(active))
-            logging.debug('-----end of 1-----')
             if provisioning_artifact_detail.get('Name') == version.get('Name'):
+                LOGGER.info("Found matching")
                 if provisioning_artifact_detail.get('Active') != active:
-                    update_response = service_catalog.update_provisioning_artifact(
+                    LOGGER.info("Active status needs to change")
+                    service_catalog.update_provisioning_artifact(
                         ProductId=product_id,
                         ProvisioningArtifactId=provisioning_artifact_detail.get('Id'),
                         Active=active,
