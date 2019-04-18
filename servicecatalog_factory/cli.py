@@ -19,7 +19,9 @@ import shutil
 import pkg_resources
 
 
-VERSION = pkg_resources.require("aws-service-catalog-factory")[0].version
+CONFIG_PARAM_NAME = "/servicecatalog-factory/config"
+PUBLISHED_VERSION = pkg_resources.require("aws-service-catalog-factory")[0].version
+VERSION = PUBLISHED_VERSION
 
 BOOTSTRAP_STACK_NAME = 'servicecatalog-factory'
 SERVICE_CATALOG_FACTORY_REPO_NAME = 'ServiceCatalogFactory'
@@ -66,24 +68,12 @@ ENV = Environment(
     extensions=['jinja2.ext.do'],
 )
 
-ALL_REGIONS = [
-    'us-east-2',
-    'us-east-1',
-    'us-west-1',
-    'us-west-2',
-    'ap-south-1',
-    'ap-northeast-2',
-    'ap-southeast-1',
-    'ap-southeast-2',
-    'ap-northeast-1',
-    'ca-central-1',
-    'eu-central-1',
-    'eu-west-1',
-    'eu-west-2',
-    'eu-west-3',
-    'eu-north-1',
-    'sa-east-1',
-]
+
+def get_regions():
+    with betterboto_client.ClientContextManager('ssm', region_name=HOME_REGION) as ssm:
+        response = ssm.get_parameter(Name=CONFIG_PARAM_NAME)
+        config = yaml.safe_load(response.get('Parameter').get('Value'))
+        return config.get('regions')
 
 
 def merge(dict1, dict2):
@@ -254,7 +244,8 @@ def generate_pipeline(template, portfolios_groups_name, output_path, version, pr
     ))
     product_ids_by_region = {}
     portfolio_ids_by_region = {}
-    for region in ALL_REGIONS:
+    all_regions = get_regions()
+    for region in all_regions:
         with betterboto_client.ClientContextManager(
                 'servicecatalog', region_name=region
         ) as service_catalog:
@@ -281,7 +272,7 @@ def generate_pipeline(template, portfolios_groups_name, output_path, version, pr
         Source=merge(product.get('Source', {}), version.get('Source', {})),
         ProductIdsByRegion=product_ids_by_region,
         PortfolioIdsByRegion=portfolio_ids_by_region,
-        ALL_REGIONS=ALL_REGIONS,
+        ALL_REGIONS=all_regions,
     )
     rendered = Template(rendered).render(
         friendly_uid=friendly_uid,
@@ -293,7 +284,7 @@ def generate_pipeline(template, portfolios_groups_name, output_path, version, pr
         Source=merge(product.get('Source', {}), version.get('Source', {})),
         ProductIdsByRegion=product_ids_by_region,
         PortfolioIdsByRegion=portfolio_ids_by_region,
-        ALL_REGIONS=ALL_REGIONS,
+        ALL_REGIONS=all_regions,
     )
 
     output_file_path = os.path.sep.join([output_path, friendly_uid + ".template.yaml"])
@@ -306,6 +297,7 @@ def generate_pipeline(template, portfolios_groups_name, output_path, version, pr
 def generate_pipelines(portfolios_groups_name, portfolios, output_path):
     LOGGER.info('Generating pipelines for {}'.format(portfolios_groups_name))
     os.makedirs(output_path)
+    all_regions = get_regions()
     for portfolio in portfolios.get('Portfolios'):
         portfolio_ids_by_region = {}
         for product in portfolio.get('Components', []):
@@ -331,7 +323,7 @@ def generate_pipelines(portfolios_groups_name, portfolios, output_path):
                 )
                 portfolio_ids_by_region.update(portfolio_ids_by_region_for_group)
         threads = []
-        for region in ALL_REGIONS:
+        for region in all_regions:
             process = Thread(
                 name=region,
                 target=generate_and_run,
@@ -635,11 +627,24 @@ def nuke_product_version(portfolio_group, portfolio_display_name, product, versi
 
 
 @cli.command()
+@click.argument('branch-name')
+def bootstrap_branch(branch_name):
+    global VERSION
+    VERSION = "https://github.com/awslabs/aws-service-catalog-factory/archive/{}.zip".format(branch_name)
+    do_bootstrap()
+
+
+@cli.command()
 def bootstrap():
+    do_bootstrap()
+
+
+def do_bootstrap():
     click.echo('Starting bootstrap')
     click.echo('Starting regional deployments')
+    all_regions = get_regions()
     with betterboto_client.MultiRegionClientContextManager(
-            'cloudformation', ALL_REGIONS
+            'cloudformation', all_regions
     ) as clients:
         LOGGER.info('Creating {}-regional'.format(BOOTSTRAP_STACK_NAME))
         threads = []
@@ -759,6 +764,20 @@ def reseed(p):
 @cli.command()
 def version():
     click.echo(VERSION)
+
+
+@cli.command()
+@click.argument('p', type=click.Path(exists=True))
+def upload_config(p):
+    content = open(p, 'r').read()
+    with betterboto_client.ClientContextManager('ssm') as ssm:
+        ssm.put_parameter(
+            Name=CONFIG_PARAM_NAME,
+            Type='String',
+            Value=content,
+            Overwrite=True,
+        )
+    click.echo("Uploaded config")
 
 
 if __name__ == "__main__":

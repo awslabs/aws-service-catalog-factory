@@ -34,6 +34,38 @@ configuration for it to run smoothly.
 
 
 ### Bootstrapping the Factory
+There are two parts to bootstrapping the factory.  The first is concerned with setting the global configurations.  To do 
+this we use AWS SSM Parameters.  To get setup you need to create a configuration file with a list of regions you want to 
+use - for example config.yaml:
+
+```yaml
+regions: [
+  'us-east-2',
+  'us-east-1',
+  'us-west-1',
+  'us-west-2',
+  'ap-south-1',
+  'ap-northeast-2',
+  'ap-southeast-1',
+  'ap-southeast-2',
+  'ap-northeast-1',
+  'ca-central-1',
+  'eu-central-1',
+  'eu-west-1',
+  'eu-west-2',
+  'eu-west-3',
+  'eu-north-1',
+  'sa-east-1',
+]
+```
+Once you have this file you need to upload the config:
+```bash
+servicecatalog-factory upload-config config.yaml
+```
+
+Once that has completed you are ready to bring up the rest of the factory.
+
+
 Use the cli tool to create the AWS CodeCommit repo and AWS CodePipeline resources that run the factory:
 ```bash
 servicecatalog-factory bootstrap
