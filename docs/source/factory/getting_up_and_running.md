@@ -54,7 +54,6 @@ regions: [
   'eu-west-1',
   'eu-west-2',
   'eu-west-3',
-  'eu-north-1',
   'sa-east-1',
 ]
 ```
@@ -62,6 +61,8 @@ Once you have this file you need to upload the config:
 ```bash
 servicecatalog-factory upload-config config.yaml
 ```
+
+If you make changes to this you will need to run upload-config and bootstrap commands again for the changes to occur.
 
 Once that has completed you are ready to bring up the rest of the factory.
 

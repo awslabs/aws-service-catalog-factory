@@ -11,6 +11,8 @@ Welcome to aws-service-catalog-factory's documentation!
    factory/designing_your_product
    factory/diving_into_the_pipeline
 
+   factory/utils
+
 
 
 Indices and tables

@@ -18,7 +18,6 @@ from threading import Thread
 import shutil
 import pkg_resources
 
-
 CONFIG_PARAM_NAME = "/servicecatalog-factory/config"
 PUBLISHED_VERSION = pkg_resources.require("aws-service-catalog-factory")[0].version
 VERSION = PUBLISHED_VERSION
@@ -238,6 +237,28 @@ def generate_and_run(portfolios_groups_name, portfolio, what, stack_name, region
         LOGGER.info("Finished creating/updating: {}".format(stack_name))
 
 
+def ensure_product_versions_active_is_correct(product, service_catalog):
+    LOGGER.info("Ensuring product version active setting is in sync for: {}".format(product.get('Name')))
+    product_id = product.get('Id')
+    response = service_catalog.list_provisioning_artifacts(
+        ProductId=product_id
+    )
+    for version in product.get('Versions', []):
+        LOGGER.info('Checking for version: {}'.format(version.get('Name')))
+        active = version.get('Active', True)
+        LOGGER.info("Checking through: {}".format(response))
+        for provisioning_artifact_detail in response.get('ProvisioningArtifactDetails', []):
+            if provisioning_artifact_detail.get('Name') == version.get('Name'):
+                LOGGER.info("Found matching")
+                if provisioning_artifact_detail.get('Active') != active:
+                    LOGGER.info("Active status needs to change")
+                    service_catalog.update_provisioning_artifact(
+                        ProductId=product_id,
+                        ProvisioningArtifactId=provisioning_artifact_detail.get('Id'),
+                        Active=active,
+                    )
+
+
 def generate_pipeline(template, portfolios_groups_name, output_path, version, product, portfolio):
     LOGGER.info('Generating pipeline for {}:{}'.format(
         portfolios_groups_name, product.get('Name')
@@ -252,6 +273,7 @@ def generate_pipeline(template, portfolios_groups_name, output_path, version, pr
             ensure_portfolio(portfolios_groups_name, portfolio, service_catalog)
             portfolio_ids_by_region[region] = portfolio.get('Id')
             ensure_product(product, portfolio, service_catalog)
+            ensure_product_versions_active_is_correct(product, service_catalog)
             product_ids_by_region[region] = product.get('Id')
     friendly_uid = "-".join(
         [
@@ -378,10 +400,10 @@ def validate(p):
 @click.argument('p', type=click.Path(exists=True))
 def generate(p):
     LOGGER.info('Generating')
-    for porfolio_file_name in os.listdir(p):
-        p_name = porfolio_file_name.split(".")[0]
+    for portfolio_file_name in os.listdir(p):
+        p_name = portfolio_file_name.split(".")[0]
         output_path = os.path.sep.join(["output", p_name])
-        portfolios_file_path = os.path.sep.join([p, porfolio_file_name])
+        portfolios_file_path = os.path.sep.join([p, portfolio_file_name])
         with open(portfolios_file_path) as portfolios_file:
             portfolios_file_contents = portfolios_file.read()
             portfolios = yaml.safe_load(portfolios_file_contents)
@@ -555,75 +577,71 @@ def run_deploy_for_component(group_name, path, portfolio, product, version, stac
 
 
 @cli.command()
-@click.argument('portfolio-group')
-@click.argument('portfolio-display-name')
+@click.argument('portfolio-name')
 @click.argument('product')
 @click.argument('version')
-def nuke_product_version(portfolio_group, portfolio_display_name, product, version):
-    LOGGER.info('Looking for portfolio_id')
+def nuke_product_version(portfolio_name, product, version):
+    click.echo("Nuking service catalog traces")
     with betterboto_client.ClientContextManager('servicecatalog') as servicecatalog:
-        response = servicecatalog.list_portfolios(PageSize=20)
-        assert response.get('NextPageToken', None) is None, "Pagination not supported"
+        response = servicecatalog.list_portfolios_single_page()
         portfolio_id = None
-        portfolio_name = "-".join([portfolio_group, portfolio_display_name])
         for portfolio_detail in response.get('PortfolioDetails'):
             if portfolio_detail.get('DisplayName') == portfolio_name:
                 portfolio_id = portfolio_detail.get('Id')
                 break
         if portfolio_id is None:
-            LOGGER.warning("Portfolio {} could not be found".format(portfolio_id))
+            raise Exception("Could not find your portfolio: {}".format(portfolio_name))
         else:
             LOGGER.info('Portfolio_id found: {}'.format(portfolio_id))
             product_name = "-".join([product, version])
             LOGGER.info('Looking for product: {}'.format(product_name))
             result = product_exists(servicecatalog, {'Name': product}, PortfolioId=portfolio_id)
-            product_id = result.get('ProductId')
-            LOGGER.info('Looking for version: {}'.format(version))
-            response = servicecatalog.list_provisioning_artifacts(
-                ProductId=product_id,
-            )
-            assert response.get('NextPageToken', None) is None, "Pagination not supported"
-            version_id = None
-            for provisioning_artifact_detail in response.get('ProvisioningArtifactDetails'):
-                if provisioning_artifact_detail.get('Name') == version:
-                    version_id = provisioning_artifact_detail.get('Id')
-            if version_id is None:
-                LOGGER.warning("Version {} could not be found".format(version))
+            if result is None:
+                click.echo("Could not find product: {}".format(product))
             else:
-                LOGGER.info('Found version: {}'.format(version_id))
-                LOGGER.info('Deleting version: {}'.format(version_id))
-                servicecatalog.delete_provisioning_artifact(
+                product_id = result.get('ProductId')
+                LOGGER.info("p: {}".format(product_id))
+
+                LOGGER.info('Looking for version: {}'.format(version))
+                response = servicecatalog.list_provisioning_artifacts(
                     ProductId=product_id,
-                    ProvisioningArtifactId=version_id
                 )
-                LOGGER.info('Deleted version: {}'.format(version_id))
 
-        LOGGER.info('Starting to delete pipeline stack')
-        with betterboto_client.ClientContextManager('cloudformation') as cloudformation:
-            stack_name = "-".join([portfolio_group, portfolio_display_name, product, version])
-            LOGGER.info('Emptying the pipeline bucket first')
-            response = cloudformation.list_stack_resources(
-                StackName=stack_name
-            )
-            assert response.get('NextPageToken', None) is None, "Pagination not supported"
-            bucket_name = None
-            for stack_resource_summary in response.get('StackResourceSummaries'):
-                if stack_resource_summary.get("LogicalResourceId") == "PipelineArtifactBucket":
-                    bucket_name = stack_resource_summary.get('PhysicalResourceId')
-                    break
-            assert bucket_name is not None, "Could not find bucket for the pipeline"
-            s3 = boto3.resource('s3')
-            bucket = s3.Bucket(bucket_name)
-            bucket.objects.all().delete()
-            LOGGER.info('Finished emptying the pipeline bucket')
+                version_id = None
+                for provisioning_artifact_detail in response.get('ProvisioningArtifactDetails'):
+                    if provisioning_artifact_detail.get('Name') == version:
+                        version_id = provisioning_artifact_detail.get('Id')
+                if version_id is None:
+                    click.echo('Could not find version: {}'.format(version))
+                else:
+                    LOGGER.info('Found version: {}'.format(version_id))
+                    LOGGER.info('Deleting version: {}'.format(version_id))
+                    servicecatalog.delete_provisioning_artifact(
+                        ProductId=product_id,
+                        ProvisioningArtifactId=version_id
+                    )
+                    click.echo('Deleted version: {}'.format(version_id))
+    click.echo("Finished nuking service catalog traces")
 
-            LOGGER.info('Deleting the stack {}'.format(stack_name))
-            cloudformation.delete_stack(
-                StackName=stack_name
-            )
+    click.echo('Nuking pipeline traces')
+    nuke_stack(portfolio_name, product, version)
+    click.echo('Finished nuking pipeline traces')
+
+
+def nuke_stack(portfolio_name, product, version):
+    with betterboto_client.ClientContextManager('cloudformation') as cloudformation:
+        stack_name = "-".join([portfolio_name, product, version])
+        click.echo("Nuking stack: {}".format(stack_name))
+        try:
+            cloudformation.describe_stacks(StackName=stack_name)
+            cloudformation.delete_stack(StackName=stack_name)
             waiter = cloudformation.get_waiter('stack_delete_complete')
             waiter.wait(StackName=stack_name)
-            LOGGER.info('Finished deleting pipeline stack')
+        except cloudformation.exceptions.ClientError as e:
+            if "Stack with id {} does not exist".format(stack_name) in str(e):
+                click.echo("Could not see stack")
+            else:
+                raise e
 
 
 @cli.command()
@@ -778,6 +796,85 @@ def upload_config(p):
             Overwrite=True,
         )
     click.echo("Uploaded config")
+
+
+@cli.command()
+@click.argument('p')
+def fix_issues(p, type=click.Path(exists=True)):
+    fix_issues_for_portfolio(p)
+
+
+def fix_issues_for_portfolio(p):
+    click.echo('Fixing issues for portfolios')
+    for portfolio_file_name in os.listdir(p):
+        p_name = portfolio_file_name.split(".")[0]
+        with open(os.path.sep.join([p, portfolio_file_name]), 'r') as portfolio_file:
+            portfolio = yaml.safe_load(portfolio_file.read())
+            for portfolio in portfolio.get('Portfolios', []):
+                for component in portfolio.get('Components', []):
+                    for version in component.get('Versions', []):
+                        stack_name = "-".join([
+                            p_name,
+                            portfolio.get('DisplayName'),
+                            component.get('Name'),
+                            version.get('Name'),
+                        ])
+                        LOGGER.info('looking at stack: {}'.format(stack_name))
+                        with betterboto_client.ClientContextManager('cloudformation') as cloudformation:
+                            response = {'Stacks': []}
+                            try:
+                                response = cloudformation.describe_stacks(StackName=stack_name)
+                            except cloudformation.exceptions.ClientError as e:
+                                if "Stack with id {} does not exist".format(stack_name) in str(e):
+                                    click.echo("There is no pipeline for: {}".format(stack_name))
+                                else:
+                                    raise e
+
+                            for stack in response.get('Stacks'):
+                                if stack.get('StackStatus') == "ROLLBACK_COMPLETE":
+                                    if click.confirm(
+                                            'Found a stack: {} in status: "ROLLBACK_COMPLETE".  '
+                                            'Should it be deleted?'.format(stack_name)
+                                    ):
+                                        cloudformation.delete_stack(StackName=stack_name)
+                                        waiter = cloudformation.get_waiter('stack_delete_complete')
+                                        waiter.wait(StackName=stack_name)
+
+    click.echo('Finished fixing issues for portfolios')
+
+
+@cli.command()
+@click.argument('stack-name')
+def delete_stack_from_all_regions(stack_name):
+    all_regions = get_regions()
+    if click.confirm(
+            "We are going to delete the stack: {} from all regions: {}.  Are you sure?".format(
+                stack_name, all_regions
+            )
+    ):
+        threads = []
+        for region in all_regions:
+            process = Thread(
+                name=region,
+                target=delete_stack_from_a_regions,
+                kwargs={
+                    'stack_name': stack_name,
+                    'region': region,
+                }
+            )
+            process.start()
+            threads.append(process)
+        for process in threads:
+            process.join()
+
+
+def delete_stack_from_a_regions(stack_name, region):
+    click.echo("Deleting stack: {} from region: {}".format(stack_name, region))
+    with betterboto_client.ClientContextManager('cloudformation', region_name=region) as cloudformation:
+        cloudformation.delete_stack(StackName=stack_name)
+        waiter = cloudformation.get_waiter('stack_delete_complete')
+        waiter.wait(StackName=stack_name)
+    click.echo("Finished")
 
 
 if __name__ == "__main__":

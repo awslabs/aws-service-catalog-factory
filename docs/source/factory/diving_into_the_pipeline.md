@@ -135,3 +135,33 @@ If you do decide to override the default build spec please ensure you capture th
 The deploy stage will push your templates into AWS Service Catalog for each region you are opperating in.  The deploy
 stage will look for files matching:
 ```product.template-{{ region }}.yaml```
+
+
+## Setting versions to be active or not 
+From the portfolio you can set a version to be active or not using the following syntax:
+```yaml
+    Components:
+      - Name: account-vending-machine
+        Owner: central-it@customer.com
+        Description: The iam roles needed for you to do your jobs
+        Distributor: central-it-team
+        SupportDescription: Contact us on Chime for help #central-it-team
+        SupportEmail: central-it-team@customer.com
+        SupportUrl: https://wiki.customer.com/central-it-team/self-service/account-iam
+        Tags:
+        - Key: product-type
+          Value: iam
+        Versions:
+          - Name: v1
+            Description: The iam roles needed for you to do your jobs
+            Active: False
+            Source:
+              Provider: CodeCommit
+              Configuration:
+                RepositoryName: account-vending-machine 
+                BranchName: v1
+```
+You set Versions[].Active to False to stop users from provisioning your product version.
+
+Please note the ```servicecatalog-factory-pipeline``` updates the active setting.  If you find the value is not in sync 
+run the pipeline. 

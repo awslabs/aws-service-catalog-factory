@@ -24,9 +24,9 @@ Portfolios:
         Versions:
           - Name: v1
             Description: The iam roles needed for you to do your jobs
-            Active: True
             Source:
-              Provider: CodeCommit
+              Provider: Github
               Configuration:
-                RepositoryName: account-iam
-                BranchName: v1
+                Owner: eamonnfaherty
+                Repo: account-iam
+                Branch: v1

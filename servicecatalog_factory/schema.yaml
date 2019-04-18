@@ -40,6 +40,8 @@ schema;map_componentgroups:
               type: str
             Description:
               type: str
+            Active:
+              type: bool
             Tags:
               type: seq
               sequence:
@@ -118,6 +120,8 @@ schema;map_component:
               type: seq
               sequence:
                 - include: seq_tags
+            Active:
+              type: bool
             Options:
               type: map
               mapping:
