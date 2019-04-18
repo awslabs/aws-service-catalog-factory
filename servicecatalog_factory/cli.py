@@ -555,75 +555,71 @@ def run_deploy_for_component(group_name, path, portfolio, product, version, stac
 
 
 @cli.command()
-@click.argument('portfolio-group')
-@click.argument('portfolio-display-name')
+@click.argument('portfolio-name')
 @click.argument('product')
 @click.argument('version')
-def nuke_product_version(portfolio_group, portfolio_display_name, product, version):
-    LOGGER.info('Looking for portfolio_id')
+def nuke_product_version(portfolio_name, product, version):
+    click.echo("Nuking service catalog traces")
     with betterboto_client.ClientContextManager('servicecatalog') as servicecatalog:
-        response = servicecatalog.list_portfolios(PageSize=20)
-        assert response.get('NextPageToken', None) is None, "Pagination not supported"
+        response = servicecatalog.list_portfolios_single_page()
         portfolio_id = None
-        portfolio_name = "-".join([portfolio_group, portfolio_display_name])
         for portfolio_detail in response.get('PortfolioDetails'):
             if portfolio_detail.get('DisplayName') == portfolio_name:
                 portfolio_id = portfolio_detail.get('Id')
                 break
         if portfolio_id is None:
-            LOGGER.warning("Portfolio {} could not be found".format(portfolio_id))
+            raise Exception("Could not find your portfolio: {}".format(portfolio_name))
         else:
             LOGGER.info('Portfolio_id found: {}'.format(portfolio_id))
             product_name = "-".join([product, version])
             LOGGER.info('Looking for product: {}'.format(product_name))
             result = product_exists(servicecatalog, {'Name': product}, PortfolioId=portfolio_id)
-            product_id = result.get('ProductId')
-            LOGGER.info('Looking for version: {}'.format(version))
-            response = servicecatalog.list_provisioning_artifacts(
-                ProductId=product_id,
-            )
-            assert response.get('NextPageToken', None) is None, "Pagination not supported"
-            version_id = None
-            for provisioning_artifact_detail in response.get('ProvisioningArtifactDetails'):
-                if provisioning_artifact_detail.get('Name') == version:
-                    version_id = provisioning_artifact_detail.get('Id')
-            if version_id is None:
-                LOGGER.warning("Version {} could not be found".format(version))
+            if result is None:
+                click.echo("Could not find product: {}".format(product))
             else:
-                LOGGER.info('Found version: {}'.format(version_id))
-                LOGGER.info('Deleting version: {}'.format(version_id))
-                servicecatalog.delete_provisioning_artifact(
+                product_id = result.get('ProductId')
+                LOGGER.info("p: {}".format(product_id))
+
+                LOGGER.info('Looking for version: {}'.format(version))
+                response = servicecatalog.list_provisioning_artifacts(
                     ProductId=product_id,
-                    ProvisioningArtifactId=version_id
                 )
-                LOGGER.info('Deleted version: {}'.format(version_id))
 
-        LOGGER.info('Starting to delete pipeline stack')
-        with betterboto_client.ClientContextManager('cloudformation') as cloudformation:
-            stack_name = "-".join([portfolio_group, portfolio_display_name, product, version])
-            LOGGER.info('Emptying the pipeline bucket first')
-            response = cloudformation.list_stack_resources(
-                StackName=stack_name
-            )
-            assert response.get('NextPageToken', None) is None, "Pagination not supported"
-            bucket_name = None
-            for stack_resource_summary in response.get('StackResourceSummaries'):
-                if stack_resource_summary.get("LogicalResourceId") == "PipelineArtifactBucket":
-                    bucket_name = stack_resource_summary.get('PhysicalResourceId')
-                    break
-            assert bucket_name is not None, "Could not find bucket for the pipeline"
-            s3 = boto3.resource('s3')
-            bucket = s3.Bucket(bucket_name)
-            bucket.objects.all().delete()
-            LOGGER.info('Finished emptying the pipeline bucket')
+                version_id = None
+                for provisioning_artifact_detail in response.get('ProvisioningArtifactDetails'):
+                    if provisioning_artifact_detail.get('Name') == version:
+                        version_id = provisioning_artifact_detail.get('Id')
+                if version_id is None:
+                    click.echo('Could not find version: {}'.format(version))
+                else:
+                    LOGGER.info('Found version: {}'.format(version_id))
+                    LOGGER.info('Deleting version: {}'.format(version_id))
+                    servicecatalog.delete_provisioning_artifact(
+                        ProductId=product_id,
+                        ProvisioningArtifactId=version_id
+                    )
+                    click.echo('Deleted version: {}'.format(version_id))
+    click.echo("Finished nuking service catalog traces")
 
-            LOGGER.info('Deleting the stack {}'.format(stack_name))
-            cloudformation.delete_stack(
-                StackName=stack_name
-            )
+    click.echo('Nuking pipeline traces')
+    nuke_stack(portfolio_name, product, version)
+    click.echo('Finished nuking pipeline traces')
+
+
+def nuke_stack(portfolio_name, product, version):
+    with betterboto_client.ClientContextManager('cloudformation') as cloudformation:
+        stack_name = "-".join([portfolio_name, product, version])
+        click.echo("Nuking stack: {}".format(stack_name))
+        try:
+            cloudformation.describe_stacks(StackName=stack_name)
+            cloudformation.delete_stack(StackName=stack_name)
             waiter = cloudformation.get_waiter('stack_delete_complete')
             waiter.wait(StackName=stack_name)
-            LOGGER.info('Finished deleting pipeline stack')
+        except cloudformation.exceptions.ClientError as e:
+            if "Stack with id {} does not exist".format(stack_name) in str(e):
+                click.echo("Could not see stack")
+            else:
+                raise e
 
 
 @cli.command()
