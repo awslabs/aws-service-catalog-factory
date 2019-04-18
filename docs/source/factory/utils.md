@@ -13,3 +13,11 @@ Once you have the details you can run the following command:
 ```bash
 servicecatalog-factory nuke-product-version example-simple-central-it-team-portfolio account-iam v1
 ```  
+
+
+## delete-stack-from-all-regions
+You can delete a stack from every region using the following command:
+```bash
+servicecatalog-factory delete-stack-from-all-regions stack-name
+```
+Please note, this will only delete the stack from the regions you have specifed in your config.

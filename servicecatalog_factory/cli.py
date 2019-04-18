@@ -18,7 +18,6 @@ from threading import Thread
 import shutil
 import pkg_resources
 
-
 CONFIG_PARAM_NAME = "/servicecatalog-factory/config"
 PUBLISHED_VERSION = pkg_resources.require("aws-service-catalog-factory")[0].version
 VERSION = PUBLISHED_VERSION
@@ -786,7 +785,7 @@ def fix_issues_for_portfolio(p):
     click.echo('Fixing issues for portfolios')
     for portfolio_file_name in os.listdir(p):
         p_name = portfolio_file_name.split(".")[0]
-        with open(os.path.sep.join([p,portfolio_file_name]), 'r') as portfolio_file:
+        with open(os.path.sep.join([p, portfolio_file_name]), 'r') as portfolio_file:
             portfolio = yaml.safe_load(portfolio_file.read())
             for portfolio in portfolio.get('Portfolios', []):
                 for component in portfolio.get('Components', []):
@@ -819,6 +818,40 @@ def fix_issues_for_portfolio(p):
                                         waiter.wait(StackName=stack_name)
 
     click.echo('Finished fixing issues for portfolios')
+
+
+@cli.command()
+@click.argument('stack-name')
+def delete_stack_from_all_regions(stack_name):
+    all_regions = get_regions()
+    if click.confirm(
+            "We are going to delete the stack: {} from all regions: {}.  Are you sure?".format(
+                stack_name, all_regions
+            )
+    ):
+        threads = []
+        for region in all_regions:
+            process = Thread(
+                name=region,
+                target=delete_stack_from_a_regions,
+                kwargs={
+                    'stack_name': stack_name,
+                    'region': region,
+                }
+            )
+            process.start()
+            threads.append(process)
+        for process in threads:
+            process.join()
+
+
+def delete_stack_from_a_regions(stack_name, region):
+    click.echo("Deleting stack: {} from region: {}".format(stack_name, region))
+    with betterboto_client.ClientContextManager('cloudformation', region_name=region) as cloudformation:
+        cloudformation.delete_stack(StackName=stack_name)
+        waiter = cloudformation.get_waiter('stack_delete_complete')
+        waiter.wait(StackName=stack_name)
+    click.echo("Finished")
 
 
 if __name__ == "__main__":
