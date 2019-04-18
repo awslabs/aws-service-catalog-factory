@@ -238,11 +238,13 @@ def generate_and_run(portfolios_groups_name, portfolio, what, stack_name, region
 
 
 def ensure_product_versions_active_is_correct(product, service_catalog):
+    LOGGER.info("Ensuring product version active setting is in sync for: {}".format(product.get('Name')))
     product_id = product.get('Id')
     response = service_catalog.list_provisioning_artifacts(
         ProductId=product_id
     )
-    for version in product.get('Versions'):
+    for version in product.get('Versions', []):
+        LOGGER.info('Checking for version: {}'.format(version.get('Name')))
         active = version.get('Active', True)
         for provisioning_artifact_detail in response.get('ProvisioningArtifactDetails', []):
             if provisioning_artifact_detail.get('Name') == version.get('Name'):
