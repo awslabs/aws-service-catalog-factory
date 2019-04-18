@@ -246,6 +246,7 @@ def ensure_product_versions_active_is_correct(product, service_catalog):
     for version in product.get('Versions', []):
         LOGGER.info('Checking for version: {}'.format(version.get('Name')))
         active = version.get('Active', True)
+        LOGGER.info("Checking through: {}".format(response))
         for provisioning_artifact_detail in response.get('ProvisioningArtifactDetails', []):
             if provisioning_artifact_detail.get('Name') == version.get('Name'):
                 logging.debug('-----1-----')
