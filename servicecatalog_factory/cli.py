@@ -19,7 +19,8 @@ import shutil
 import pkg_resources
 
 
-VERSION = pkg_resources.require("aws-service-catalog-factory")[0].version
+PUBLISHED_VERSION = pkg_resources.require("aws-service-catalog-factory")[0].version
+VERSION = PUBLISHED_VERSION
 
 BOOTSTRAP_STACK_NAME = 'servicecatalog-factory'
 SERVICE_CATALOG_FACTORY_REPO_NAME = 'ServiceCatalogFactory'
@@ -632,6 +633,13 @@ def nuke_product_version(portfolio_group, portfolio_display_name, product, versi
             waiter = cloudformation.get_waiter('stack_delete_complete')
             waiter.wait(StackName=stack_name)
             LOGGER.info('Finished deleting pipeline stack')
+
+
+@cli.command()
+@click.argument('branch')
+def bootstrap_for_dev(branch):
+    VERSION = "https://github.com/user/repository/archive/{}.zip".format(branch)
+    bootstrap()
 
 
 @cli.command()
