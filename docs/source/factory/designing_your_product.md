@@ -4,14 +4,12 @@ Designing your products
 Your products are AWS Service Catalog Products and so you are confined to the conventions of Service Catalog.
 
 ## Product Versions
-In Service Catalog, each product has one or more versions.  A consumer of your products will be able to provision each
-version of each product you provide but there are limitations.  You cannot share resources between the AWS Service
-Catalog product versions - for example if you create an IAM Policy in version one of a product you will not be able to
-modify it in version two.  Version two will have its own resources independent of version ones resources.
-
-Given this, the recommended approach is to make incremental changes to a product within the same version.  Versions are
-useful to provide alternative ways of achieving the same goal - for example you may want a networking product that has a
-transit-vpc version, a transit-gateway version or a standalone version.
+In Service Catalog, each product has one or more versions.  Versions represent changes to your products.  When you make 
+a change to a published product it is recommended to make a new version and make it available to your users. 
+  
+Users can provision multiple versions of your product at the same time or they may choose to update a product from one 
+version to another.  It is good to communicate to your users whether you would like them to update a product or provision
+a new product when you issue a change.
 
 ## Product Right-Sizing
 Right-sizing your product is difficult.  Try to create products that achieve a business outcome and that can be deployed
