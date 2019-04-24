@@ -17,6 +17,7 @@ from betterboto import client as betterboto_client
 from threading import Thread
 import shutil
 import pkg_resources
+import requests
 
 CONFIG_PARAM_NAME = "/servicecatalog-factory/config"
 PUBLISHED_VERSION = pkg_resources.require("aws-service-catalog-factory")[0].version
@@ -787,6 +788,10 @@ def version():
 @cli.command()
 @click.argument('p', type=click.Path(exists=True))
 def upload_config(p):
+    do_upload_config(p)
+
+
+def do_upload_config(p):
     content = open(p, 'r').read()
     with betterboto_client.ClientContextManager('ssm') as ssm:
         ssm.put_parameter(
@@ -875,6 +880,125 @@ def delete_stack_from_a_regions(stack_name, region):
         waiter = cloudformation.get_waiter('stack_delete_complete')
         waiter.wait(StackName=stack_name)
     click.echo("Finished")
+
+
+@cli.command()
+@click.argument('p')
+def demo(p, type=click.Path(exists=True)):
+    click.echo("Starting demo")
+    click.echo("Setting up your config")
+    config_yaml = 'config.yaml'
+    if os.path.exists(os.path.sep.join([p, config_yaml])):
+        click.echo('Using config.yaml')
+    else:
+        shutil.copy2(
+            resolve_from_site_packages(
+                'example-config-small.yaml'
+            ),
+            os.path.sep.join([p, config_yaml])
+        )
+    do_upload_config(os.path.sep.join([p, config_yaml]))
+    click.echo("Finished setting up your config")
+    do_bootstrap()
+    commit_id_to_wait_for = add_or_update_file_in_branch_for_repo(
+        'master',
+        'portfolios/demo.yaml',
+        read_from_site_packages('portfolios/example-simple.yaml'),
+        'ServiceCatalogFactory'
+    )
+    click.echo('Waiting for the pipeline to finish')
+    wait_for_pipeline(commit_id_to_wait_for, 'servicecatalog-factory-pipeline')
+    with betterboto_client.ClientContextManager('codecommit') as codecommit:
+        response = codecommit.list_repositories()
+        repo_name = 'account-iam'
+        if repo_name not in [r.get('repositoryName') for r in response.get('repositories', [])]:
+            click.echo('Creating {} repository'.format(repo_name))
+            codecommit.create_repository(
+                repositoryName=repo_name,
+            )
+        commit_id_to_wait_for = add_or_update_file_in_branch_for_repo(
+            'v1',
+            'product.template.yaml',
+            requests.get(
+                'https://raw.githubusercontent.com/eamonnfaherty/cloudformation-templates/master/iam_admin_role/product.template.yaml'
+            ).text,
+            repo_name
+        )
+    wait_for_pipeline(commit_id_to_wait_for, 'demo-central-it-team-portfolio-account-iam-v1-pipeline')
+    click.echo("Finished demo")
+
+
+def add_or_update_file_in_branch_for_repo(branch_name, file_path, contents, repo_name):
+    with betterboto_client.ClientContextManager('codecommit') as codecommit:
+        response = codecommit.list_branches(repositoryName=repo_name)
+        if len(response.get('branches')) == 0:
+            click.echo("Adding simple example portfolio")
+            response = codecommit.create_commit(
+                repositoryName=repo_name,
+                branchName=branch_name,
+                putFiles=[
+                    {
+                        'filePath': file_path,
+                        'fileMode': 'NORMAL',
+                        'fileContent': contents,
+                    },
+                ],
+            )
+            commit_id_to_wait_for = response.get('commitId')
+        else:
+            click.echo("Updating simple example portfolio")
+            response = codecommit.get_branch(
+                repositoryName=repo_name,
+                branchName=branch_name,
+            )
+            commitId = response.get('branch').get('commitId')
+            try:
+                response = codecommit.put_file(
+                    repositoryName=repo_name,
+                    branchName=branch_name,
+                    fileContent=contents,
+                    parentCommitId=commitId,
+                    filePath=file_path,
+                    fileMode='NORMAL',
+                    commitMessage='adding',
+                )
+                commit_id_to_wait_for = response.get('commitId')
+                click.echo("Finished updating simple example portfolio")
+            except codecommit.exceptions.SameFileContentException as e:
+                commit_id_to_wait_for = commitId
+                click.echo("NO updating was needed to simple example portfolio")
+
+            print('commit_id_to_wait_for is: {}'.format(commit_id_to_wait_for))
+    return commit_id_to_wait_for
+
+
+def wait_for_pipeline(commit_id_to_wait_for, pipeline_name):
+    pipeline_execution = None
+    with betterboto_client.ClientContextManager('codepipeline') as codepipeline:
+        while pipeline_execution is None:
+            click.echo('Looking for pipeline execution')
+            time.sleep(1)
+            response = codepipeline.list_pipeline_executions(
+                pipelineName=pipeline_name
+            )
+            for pipeline_execution_summary in response.get('pipelineExecutionSummaries', []):
+                for source_revision in pipeline_execution_summary.get('sourceRevisions', []):
+                    if source_revision.get('revisionId') == commit_id_to_wait_for:
+                        pipeline_execution = pipeline_execution_summary
+    click.echo("Found pipeline execution")
+    pipeline_execution['status'] = 'InProgress'
+    while pipeline_execution.get('status') == 'InProgress':
+        click.echo("Waiting for execution to complete")
+        time.sleep(1)
+        response = codepipeline.get_pipeline_execution(
+            pipelineName=pipeline_name,
+            pipelineExecutionId=pipeline_execution.get('pipelineExecutionId')
+        )
+        pipeline_execution = response.get('pipelineExecution')
+    if pipeline_execution.get('status') == 'Succeeded':
+        click.echo("Pipeline finished running")
+    else:
+        raise Exception('Pipeline failed to run: {}'.format(pipeline_execution))
 
 
 if __name__ == "__main__":
