@@ -222,20 +222,15 @@ def test_product_exists_when_it_doesnt(mocker, sut):
 
     # verify
     assert actual_result == expected_result
-    
-
+     
 def test_merge_simple_case(sut):
     # setup
     expected_results = {
         "hello": "world",        
         "foo": "bar",
     }
-    input_one = {
-        "hello": "world",
-    }
-    input_two = {
-        "foo": "bar",
-    }
+    input_one = { "hello": "world" }
+    input_two = { "foo": "bar" }
     
     # exercise
     actual_results = sut.merge(input_one, input_two)
@@ -246,14 +241,9 @@ def test_merge_simple_case(sut):
     
 def test_merge_first_empty(sut):
     # setup
-    expected_results = {       
-        "foo": "bar",
-    }
-    input_one = {
-    }
-    input_two = {
-        "foo": "bar",
-    }
+    expected_results = { "foo": "bar" }
+    input_one = {}
+    input_two = { "foo": "bar" }
     
     # exercise
     actual_results = sut.merge(input_one, input_two)
@@ -263,14 +253,9 @@ def test_merge_first_empty(sut):
     
 def test_merge_second_empty(sut):
     # setup
-    expected_results = {       
-        "hello": "world",
-    }
-    input_one = {
-        "hello": "world",
-    }
-    input_two = {
-    }
+    expected_results = { "hello": "world" }
+    input_one = { "hello": "world" }
+    input_two = {}
     
     # exercise
     actual_results = sut.merge(input_one, input_two)
@@ -280,12 +265,9 @@ def test_merge_second_empty(sut):
       
 def test_merge_both_empty(sut):
     # setup
-    expected_results = { 
-    }
-    input_one = {
-    }
-    input_two = {
-    }
+    expected_results = {}
+    input_one = {}
+    input_two = {}
     
     # exercise
     actual_results = sut.merge(input_one, input_two)
@@ -308,6 +290,8 @@ def test_get_bucket_name(mocker, sut):
     actual_result = sut.get_bucket_name()
     # verify
     assert actual_result == expected_result
+    mocked_betterboto_client().__enter__().describe_stacks.assert_called_with(StackName=sut.BOOTSTRAP_STACK_NAME)
+    
     
 def test_get_bucket_name_stack_length_more(mocker, sut):
     # setup
@@ -327,6 +311,7 @@ def test_get_bucket_name_stack_length_more(mocker, sut):
         actual_result = sut.get_bucket_name() 
     # verify
     assert str(excinfo.value) == expected_result
+    mocked_betterboto_client().__enter__().describe_stacks.assert_called_with(StackName=sut.BOOTSTRAP_STACK_NAME)
 
 def test_get_bucket_name_if_not_exists(mocker, sut):
     # setup
@@ -343,16 +328,17 @@ def test_get_bucket_name_if_not_exists(mocker, sut):
         actual_result = sut.get_bucket_name() 
     # verify
     assert str(excinfo.value) == expected_result 
+    mocked_betterboto_client().__enter__().describe_stacks.assert_called_with(StackName=sut.BOOTSTRAP_STACK_NAME)
 
         
-def ensure_portfolio(portfolios_groups_name, portfolio, service_catalog):
+def test_ensure_portfolio(mocker, sut):
     # setup
     service_catalog = mocker.Mock()
     portfolio = { 'DisplayName': 'bar' }
     portfolio_groups_name = 'foo'
+    portfolio_searching_for = portfolio_groups_name+"-"+portfolio.get('DisplayName')
+    expected_result = '1'
     
-    expected_result = product
-
     service_catalog.list_portfolios_single_page.return_value = {
         'PortfolioDetails': [
             {
@@ -362,4 +348,7 @@ def ensure_portfolio(portfolios_groups_name, portfolio, service_catalog):
         ]
     }
     # exercise
-    actual_result = sut.ensure_portfolio(portfolios_groups_name, portfolio, service_catalog)
+    actual_result = sut.ensure_portfolio(portfolio_groups_name, portfolio, service_catalog)
+    # assert
+    assert expected_result == actual_result
+    
