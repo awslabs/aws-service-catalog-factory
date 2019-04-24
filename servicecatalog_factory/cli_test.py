@@ -4,6 +4,8 @@
 from pytest import fixture
 import pkg_resources
 import os
+import yaml
+
 
 @fixture
 def sut():
@@ -32,10 +34,27 @@ def test_service_catalog_factory_repo_name(sut):
     assert sut.SERVICE_CATALOG_FACTORY_REPO_NAME == 'ServiceCatalogFactory'
 
 
+def test_non_recoverable_states(sut):
+    # setup
+    # execute
+    # verify
+    assert sut.NON_RECOVERABLE_STATES == [
+        "ROLLBACK_COMPLETE",
+        'CREATE_IN_PROGRESS',
+        'ROLLBACK_IN_PROGRESS',
+        'DELETE_IN_PROGRESS',
+        'UPDATE_IN_PROGRESS',
+        'UPDATE_COMPLETE_CLEANUP_IN_PROGRESS',
+        'UPDATE_ROLLBACK_IN_PROGRESS',
+        'UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS',
+        'REVIEW_IN_PROGRESS',
+    ]
+
+
 def test_resolve_from_site_packages(mocker, sut):
     # setup
     what = 'asset.py'
-    site_path = os.path.sep.join(['some','path'])
+    site_path = os.path.sep.join(['some', 'path'])
     abspath = os.path.sep.join([site_path, 'cli.py'])
     expected_result = os.path.sep.join([site_path, what])
     mocker.patch.object(os.path, 'abspath', return_value=abspath)
@@ -60,3 +79,24 @@ def test_read_from_site_packages(mocker, sut):
 
     # verify
     assert expected_result == actual_result
+
+
+def test_get_regions(mocker, sut):
+    # setup
+    expected_result = [
+        'us-east-1',
+        'us-east-2',
+    ]
+    mocked_betterboto_client = mocker.patch.object(sut.betterboto_client, 'ClientContextManager')
+    mocked_response = {
+        'Parameter': {
+            "Value": yaml.safe_dump({'regions': expected_result})
+        }
+    }
+    mocked_betterboto_client().__enter__().get_parameter.return_value = mocked_response
+
+    # execute
+    actual_result = sut.get_regions()
+
+    # verify
+    assert actual_result == expected_result
