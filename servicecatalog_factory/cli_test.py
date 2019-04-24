@@ -1,6 +1,6 @@
 # Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-
+import pytest
 from pytest import fixture
 import pkg_resources
 import os
@@ -100,3 +100,72 @@ def test_get_regions(mocker, sut):
 
     # verify
     assert actual_result == expected_result
+
+
+def test_find_portfolio(mocker, sut):
+    # setup
+    portfolio_searching_for = 'foo'
+
+    expected_response = {'DisplayName': portfolio_searching_for}
+    mock_service_catalog = mocker.Mock()
+    mock_service_catalog.list_portfolios_single_page.return_value = {
+        'PortfolioDetails': [
+            {
+                'DisplayName': "Not{}".format(portfolio_searching_for)
+            },
+            expected_response
+        ]
+    }
+
+    # exercise
+    actual_response = sut.find_portfolio(mock_service_catalog, portfolio_searching_for)
+
+    # verify
+    assert expected_response == actual_response
+
+
+def test_find_portfolio_non_matching(mocker, sut):
+    # setup
+    portfolio_searching_for = 'foo'
+
+    expected_response = {}
+    mock_service_catalog = mocker.Mock()
+    mock_service_catalog.list_portfolios_single_page.return_value = {
+        'PortfolioDetails': [
+            {
+                'DisplayName': "Not{}".format(portfolio_searching_for)
+            },
+            {
+                'DisplayName': "StillNot{}".format(portfolio_searching_for)
+            },
+        ]
+    }
+
+    # exercise
+    actual_response = sut.find_portfolio(mock_service_catalog, portfolio_searching_for)
+
+    # verify
+    assert expected_response == actual_response
+
+
+@pytest.mark.parametrize("portfolio", [({}), ({"Description": 'Niiiice'})])
+def test_create_portfolio(portfolio, mocker, sut):
+    # setup
+    portfolio_id = 'foo'
+    portfolio_searching_for = 'my-portfolio'
+    portfolios_groups_name =  'my-group'
+
+    service_catalog = mocker.Mock()
+    service_catalog.create_portfolio().get().get.return_value = portfolio_id
+    expected_result = portfolio_id
+
+    # exercise
+    actual_result = sut.create_portfolio(
+        service_catalog, portfolio_searching_for, portfolios_groups_name, portfolio
+    )
+
+    # verify
+    assert expected_result == actual_result
+    service_catalog.create_portfolio.assert_called_with(
+        DisplayName=portfolio_searching_for, ProviderName=portfolios_groups_name, **portfolio
+    )
