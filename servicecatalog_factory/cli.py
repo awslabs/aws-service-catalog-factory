@@ -908,9 +908,10 @@ def demo(p, type=click.Path(exists=True)):
     )
     click.echo('Waiting for the pipeline to finish')
     wait_for_pipeline(commit_id_to_wait_for, 'servicecatalog-factory-pipeline')
+    product_name = 'account-iam'
     with betterboto_client.ClientContextManager('codecommit') as codecommit:
         response = codecommit.list_repositories()
-        repo_name = 'account-iam'
+        repo_name = product_name
         if repo_name not in [r.get('repositoryName') for r in response.get('repositories', [])]:
             click.echo('Creating {} repository'.format(repo_name))
             codecommit.create_repository(
@@ -925,6 +926,16 @@ def demo(p, type=click.Path(exists=True)):
             repo_name
         )
     wait_for_pipeline(commit_id_to_wait_for, 'demo-central-it-team-portfolio-account-iam-v1-pipeline')
+    product_created = False
+    with betterboto_client.ClientContextManager('servicecatalog') as servicecatalog:
+        response = servicecatalog.search_products_as_admin()
+        for product_view_detail in response.get('ProductViewDetails', []):
+            if product_view_detail.get('ProductViewSummary').get('Name') == product_name:
+                product_created = True
+                click.echo("Created AWS ServiceCatalog product: {}".format(
+                    product_view_detail.get('ProductViewSummary').get('ProductId')
+                ))
+    assert product_created, 'Product was not created!'
     click.echo("Finished demo")
 
 
@@ -967,8 +978,6 @@ def add_or_update_file_in_branch_for_repo(branch_name, file_path, contents, repo
             except codecommit.exceptions.SameFileContentException as e:
                 commit_id_to_wait_for = commitId
                 click.echo("NO updating was needed to simple example portfolio")
-
-            print('commit_id_to_wait_for is: {}'.format(commit_id_to_wait_for))
     return commit_id_to_wait_for
 
 
