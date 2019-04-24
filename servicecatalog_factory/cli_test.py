@@ -222,3 +222,144 @@ def test_product_exists_when_it_doesnt(mocker, sut):
 
     # verify
     assert actual_result == expected_result
+    
+
+def test_merge_simple_case(sut):
+    # setup
+    expected_results = {
+        "hello": "world",        
+        "foo": "bar",
+    }
+    input_one = {
+        "hello": "world",
+    }
+    input_two = {
+        "foo": "bar",
+    }
+    
+    # exercise
+    actual_results = sut.merge(input_one, input_two)
+    
+    # verify
+    assert expected_results == actual_results
+    
+    
+def test_merge_first_empty(sut):
+    # setup
+    expected_results = {       
+        "foo": "bar",
+    }
+    input_one = {
+    }
+    input_two = {
+        "foo": "bar",
+    }
+    
+    # exercise
+    actual_results = sut.merge(input_one, input_two)
+    
+    # verify
+    assert expected_results == actual_results
+    
+def test_merge_second_empty(sut):
+    # setup
+    expected_results = {       
+        "hello": "world",
+    }
+    input_one = {
+        "hello": "world",
+    }
+    input_two = {
+    }
+    
+    # exercise
+    actual_results = sut.merge(input_one, input_two)
+    
+    # verify
+    assert expected_results == actual_results
+      
+def test_merge_both_empty(sut):
+    # setup
+    expected_results = { 
+    }
+    input_one = {
+    }
+    input_two = {
+    }
+    
+    # exercise
+    actual_results = sut.merge(input_one, input_two)
+    
+    # verify
+    assert expected_results == actual_results
+     
+
+def test_get_bucket_name(mocker, sut):
+    # setup
+    expected_result = 'test-bucket'
+    mocked_betterboto_client = mocker.patch.object(sut.betterboto_client, 'ClientContextManager')
+    mocked_response = {
+        'Stacks': [{
+            "Outputs":  [{"OutputKey": "CatalogBucketName", "OutputValue": expected_result}]
+        }]
+    }
+    mocked_betterboto_client().__enter__().describe_stacks.return_value = mocked_response
+    # execute
+    actual_result = sut.get_bucket_name()
+    # verify
+    assert actual_result == expected_result
+    
+def test_get_bucket_name_stack_length_more(mocker, sut):
+    # setup
+    expected_result = 'There should only be one stack with the name'
+    mocked_betterboto_client = mocker.patch.object(sut.betterboto_client, 'ClientContextManager')
+    mocked_response = {
+        'Stacks': [{
+            "Outputs":  [{"OutputKey": "CatalogBucketName", "OutputValue": expected_result}]
+        },
+        {
+            "Outputs":  [{"OutputKey": "CatalogBucketName", "OutputValue": 'hello'}]
+        }]
+    }
+    mocked_betterboto_client().__enter__().describe_stacks.return_value = mocked_response
+    # execute
+    with pytest.raises(Exception) as excinfo: 
+        actual_result = sut.get_bucket_name() 
+    # verify
+    assert str(excinfo.value) == expected_result
+
+def test_get_bucket_name_if_not_exists(mocker, sut):
+    # setup
+    expected_result = 'Could not find bucket'
+    mocked_betterboto_client = mocker.patch.object(sut.betterboto_client, 'ClientContextManager')
+    mocked_response = {
+        'Stacks': [{
+            "Outputs":  [{"OutputKey": "BucketName", "OutputValue": expected_result}]
+        }]
+    }
+    mocked_betterboto_client().__enter__().describe_stacks.return_value = mocked_response
+    # execute
+    with pytest.raises(Exception) as excinfo: 
+        actual_result = sut.get_bucket_name() 
+    # verify
+    assert str(excinfo.value) == expected_result 
+
+        
+def ensure_portfolio(portfolios_groups_name, portfolio, service_catalog):
+    # setup
+    service_catalog = mocker.Mock()
+    portfolio = { 'DisplayName': 'bar' }
+    portfolio_groups_name = 'foo'
+    
+    expected_result = product
+
+    service_catalog.list_portfolios_single_page.return_value = {
+        'PortfolioDetails': [
+            {
+                'DisplayName': "Not{}".format(portfolio_searching_for),
+                'Id': '1',
+            },
+        ]
+    }
+    # exercise
+    actual_result = sut.ensure_portfolio(portfolios_groups_name, portfolio, service_catalog)
