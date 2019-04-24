@@ -169,3 +169,56 @@ def test_create_portfolio(portfolio, mocker, sut):
     service_catalog.create_portfolio.assert_called_with(
         DisplayName=portfolio_searching_for, ProviderName=portfolios_groups_name, **portfolio
     )
+
+
+def test_product_exists(mocker, sut):
+    # setup
+    service_catalog = mocker.Mock()
+    product = {
+        'Name': 'foo'
+    }
+    expected_result = product
+
+    service_catalog.search_products_as_admin_single_page.return_value = {
+        'ProductViewDetails': [
+            {
+                'ProductViewSummary': {
+                    'Name': 'NotFoo'
+                }
+            },
+            {
+                'ProductViewSummary': product
+            }
+        ]
+    }
+
+    # exercise
+    actual_result = sut.product_exists(service_catalog, product)
+
+    # verify
+    assert actual_result == expected_result
+
+
+def test_product_exists_when_it_doesnt(mocker, sut):
+    # setup
+    service_catalog = mocker.Mock()
+    product = {
+        'Name': 'foo'
+    }
+    expected_result = None
+
+    service_catalog.search_products_as_admin_single_page.return_value = {
+        'ProductViewDetails': [
+            {
+                'ProductViewSummary': {
+                    'Name': 'NotFoo'
+                }
+            }
+        ]
+    }
+
+    # exercise
+    actual_result = sut.product_exists(service_catalog, product)
+
+    # verify
+    assert actual_result == expected_result
