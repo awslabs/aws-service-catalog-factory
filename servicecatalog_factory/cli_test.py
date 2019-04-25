@@ -297,6 +297,26 @@ def test_get_bucket_name_if_not_exists(mocker, sut):
     
 def test_get_stacks(mocker, sut):
     # setup
+    args = {
+            "StackStatusFilter": [
+                'CREATE_IN_PROGRESS',
+                'CREATE_FAILED',
+                'CREATE_COMPLETE',
+                'ROLLBACK_IN_PROGRESS',
+                'ROLLBACK_FAILED',
+                'ROLLBACK_COMPLETE',
+                'DELETE_IN_PROGRESS',
+                'DELETE_FAILED',
+                'UPDATE_IN_PROGRESS',
+                'UPDATE_COMPLETE_CLEANUP_IN_PROGRESS',
+                'UPDATE_COMPLETE',
+                'UPDATE_ROLLBACK_IN_PROGRESS',
+                'UPDATE_ROLLBACK_FAILED',
+                'UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS',
+                'UPDATE_ROLLBACK_COMPLETE',
+                'REVIEW_IN_PROGRESS',
+            ]
+        }
     expected_result = {'foo': 'CREATE_IN_PROGRESS'}
     mocked_betterboto_client = mocker.patch.object(sut.betterboto_client, 'ClientContextManager')
     mocked_response = {
@@ -312,10 +332,32 @@ def test_get_stacks(mocker, sut):
     actual_result = sut.get_stacks()
     # verify
     assert actual_result == expected_result
+    mocked_betterboto_client().__enter__().list_stacks.assert_called_with(**args)
+    
     
     
 def test_get_stacks_if_empty(mocker, sut):
     # setup
+    args = {
+        "StackStatusFilter": [
+            'CREATE_IN_PROGRESS',
+            'CREATE_FAILED',
+            'CREATE_COMPLETE',
+            'ROLLBACK_IN_PROGRESS',
+            'ROLLBACK_FAILED',
+            'ROLLBACK_COMPLETE',
+            'DELETE_IN_PROGRESS',
+            'DELETE_FAILED',
+            'UPDATE_IN_PROGRESS',
+            'UPDATE_COMPLETE_CLEANUP_IN_PROGRESS',
+            'UPDATE_COMPLETE',
+            'UPDATE_ROLLBACK_IN_PROGRESS',
+            'UPDATE_ROLLBACK_FAILED',
+            'UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS',
+            'UPDATE_ROLLBACK_COMPLETE',
+            'REVIEW_IN_PROGRESS',
+        ]
+    }
     expected_result = {}
     mocked_betterboto_client = mocker.patch.object(sut.betterboto_client, 'ClientContextManager')
     mocked_response = {
@@ -326,4 +368,5 @@ def test_get_stacks_if_empty(mocker, sut):
     actual_result = sut.get_stacks()
     # verify
     assert actual_result == expected_result
+    mocked_betterboto_client().__enter__().list_stacks.assert_called_with(**args)
     
