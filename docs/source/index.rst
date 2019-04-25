@@ -10,6 +10,7 @@ Welcome to aws-service-catalog-factory's documentation!
    factory/getting_up_and_running
    factory/designing_your_product
    factory/diving_into_the_pipeline
+   factory/upgrading
 
    factory/utils
 

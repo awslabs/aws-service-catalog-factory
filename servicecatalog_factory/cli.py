@@ -782,7 +782,25 @@ def reseed(p):
 
 @cli.command()
 def version():
-    click.echo(VERSION)
+    click.echo("cli version: {}".format(VERSION))
+    with betterboto_client.ClientContextManager('ssm', region_name=HOME_REGION) as ssm:
+        response = ssm.get_parameter(
+            Name="service-catalog-factory-regional-version"
+        )
+        click.echo(
+            "regional stack version: {} for region: {}".format(
+                response.get('Parameter').get('Value'),
+                response.get('Parameter').get('ARN').split(':')[3]
+            )
+        )
+        response = ssm.get_parameter(
+            Name="service-catalog-factory-version"
+        )
+        click.echo(
+            "stack version: {}".format(
+                response.get('Parameter').get('Value'),
+            )
+        )
 
 
 @cli.command()
@@ -804,8 +822,8 @@ def do_upload_config(p):
 
 
 @cli.command()
-@click.argument('p')
-def fix_issues(p, type=click.Path(exists=True)):
+@click.argument('p', type=click.Path(exists=True))
+def fix_issues(p):
     fix_issues_for_portfolio(p)
 
 
