@@ -222,59 +222,22 @@ def test_product_exists_when_it_doesnt(mocker, sut):
 
     # verify
     assert actual_result == expected_result
-     
-def test_merge_simple_case(sut):
-    # setup
-    expected_results = {
-        "hello": "world",        
-        "foo": "bar",
-    }
-    input_one = { "hello": "world" }
-    input_two = { "foo": "bar" }
     
+    
+@pytest.mark.parametrize("input_one, input_two, expected_results", 
+                         [
+                             ({ "hello": "world" }, { "foo": "bar" }, {"hello": "world","foo": "bar"}),
+                             ({}, { "foo": "bar" }, { "foo": "bar" }),
+                             ({ "hello": "world" }, {}, { "hello": "world" }),
+                             ({}, {}, {}), 
+                         ]) 
+def test_merge_case(input_one, input_two, expected_results, sut):
     # exercise
-    actual_results = sut.merge(input_one, input_two)
-    
+    actual_results = sut.merge(input_one, input_two)  
     # verify
     assert expected_results == actual_results
     
     
-def test_merge_first_empty(sut):
-    # setup
-    expected_results = { "foo": "bar" }
-    input_one = {}
-    input_two = { "foo": "bar" }
-    
-    # exercise
-    actual_results = sut.merge(input_one, input_two)
-    
-    # verify
-    assert expected_results == actual_results
-    
-def test_merge_second_empty(sut):
-    # setup
-    expected_results = { "hello": "world" }
-    input_one = { "hello": "world" }
-    input_two = {}
-    
-    # exercise
-    actual_results = sut.merge(input_one, input_two)
-    
-    # verify
-    assert expected_results == actual_results
-      
-def test_merge_both_empty(sut):
-    # setup
-    expected_results = {}
-    input_one = {}
-    input_two = {}
-    
-    # exercise
-    actual_results = sut.merge(input_one, input_two)
-    
-    # verify
-    assert expected_results == actual_results
-     
 
 def test_get_bucket_name(mocker, sut):
     # setup
@@ -312,6 +275,7 @@ def test_get_bucket_name_stack_length_more(mocker, sut):
     # verify
     assert str(excinfo.value) == expected_result
     mocked_betterboto_client().__enter__().describe_stacks.assert_called_with(StackName=sut.BOOTSTRAP_STACK_NAME)
+    
 
 def test_get_bucket_name_if_not_exists(mocker, sut):
     # setup
@@ -330,25 +294,36 @@ def test_get_bucket_name_if_not_exists(mocker, sut):
     assert str(excinfo.value) == expected_result 
     mocked_betterboto_client().__enter__().describe_stacks.assert_called_with(StackName=sut.BOOTSTRAP_STACK_NAME)
 
-        
-def test_ensure_portfolio(mocker, sut):
-    # setup
-    service_catalog = mocker.Mock()
-    portfolio = { 'DisplayName': 'bar' }
-    portfolio_groups_name = 'foo'
-    portfolio_searching_for = portfolio_groups_name+"-"+portfolio.get('DisplayName')
-    expected_result = '1'
     
-    service_catalog.list_portfolios_single_page.return_value = {
-        'PortfolioDetails': [
+def test_get_stacks(mocker, sut):
+    # setup
+    expected_result = {'foo': 'CREATE_IN_PROGRESS'}
+    mocked_betterboto_client = mocker.patch.object(sut.betterboto_client, 'ClientContextManager')
+    mocked_response = {
+        'StackSummaries': [
             {
-                'DisplayName': "Not{}".format(portfolio_searching_for),
-                'Id': '1',
-            },
+                'StackName': 'foo',
+                'StackStatus': 'CREATE_IN_PROGRESS'
+            }
         ]
     }
-    # exercise
-    actual_result = sut.ensure_portfolio(portfolio_groups_name, portfolio, service_catalog)
-    # assert
-    assert expected_result == actual_result
+    mocked_betterboto_client().__enter__().list_stacks.return_value = mocked_response
+    # execute
+    actual_result = sut.get_stacks()
+    # verify
+    assert actual_result == expected_result
+    
+    
+def test_get_stacks_if_empty(mocker, sut):
+    # setup
+    expected_result = {}
+    mocked_betterboto_client = mocker.patch.object(sut.betterboto_client, 'ClientContextManager')
+    mocked_response = {
+        'StackSummaries': []
+    }
+    mocked_betterboto_client().__enter__().list_stacks.return_value = mocked_response
+    # execute
+    actual_result = sut.get_stacks()
+    # verify
+    assert actual_result == expected_result
     
