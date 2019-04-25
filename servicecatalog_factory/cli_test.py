@@ -335,6 +335,45 @@ def test_get_stacks(mocker, sut):
     mocked_betterboto_client().__enter__().list_stacks.assert_called_with(**args)
     
     
+def test_get_stacks(mocker, sut):
+    # setup
+    args = {
+            "StackStatusFilter": [
+                'CREATE_IN_PROGRESS',
+                'CREATE_FAILED',
+                'CREATE_COMPLETE',
+                'ROLLBACK_IN_PROGRESS',
+                'ROLLBACK_FAILED',
+                'ROLLBACK_COMPLETE',
+                'DELETE_IN_PROGRESS',
+                'DELETE_FAILED',
+                'UPDATE_IN_PROGRESS',
+                'UPDATE_COMPLETE_CLEANUP_IN_PROGRESS',
+                'UPDATE_COMPLETE',
+                'UPDATE_ROLLBACK_IN_PROGRESS',
+                'UPDATE_ROLLBACK_FAILED',
+                'UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS',
+                'UPDATE_ROLLBACK_COMPLETE',
+                'REVIEW_IN_PROGRESS',
+            ]
+        }
+    expected_result = {'foo': 'CREATE_IN_PROGRESS'}
+    mocked_betterboto_client = mocker.patch.object(sut.betterboto_client, 'ClientContextManager')
+    mocked_betterboto_client().__enter__().list_stacks.return_value = {
+        'StackSummaries': [
+            {
+                'StackName': 'foo',
+                'StackStatus': 'CREATE_IN_PROGRESS'
+            }
+        ]
+    }
+    # execute
+    actual_result = sut.get_stacks()
+    # verify
+    assert actual_result == expected_result
+    mocked_betterboto_client().__enter__().list_stacks.assert_called_with(**args)
+    
+    
     
 def test_get_stacks_if_empty(mocker, sut):
     # setup
@@ -360,10 +399,9 @@ def test_get_stacks_if_empty(mocker, sut):
     }
     expected_result = {}
     mocked_betterboto_client = mocker.patch.object(sut.betterboto_client, 'ClientContextManager')
-    mocked_response = {
+    mocked_betterboto_client().__enter__().list_stacks.return_value = {
         'StackSummaries': []
     }
-    mocked_betterboto_client().__enter__().list_stacks.return_value = mocked_response
     # execute
     actual_result = sut.get_stacks()
     # verify
