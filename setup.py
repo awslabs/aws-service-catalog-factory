@@ -6,9 +6,12 @@ import setuptools
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+with open("servicecatalog_factory/requirements.txt", "r") as fh:
+    requirements = fh.read().split("\n")
+
 setuptools.setup(
     name="aws-service-catalog-factory",
-    version="0.1.25",
+    version="0.1.26",
     author="Eamonn Faherty",
     author_email="aws-service-catalog-tools@amazon.com",
     description="Making it easier to build out ServiceCatalog products",
@@ -29,12 +32,5 @@ setuptools.setup(
         'console_scripts': [
             'servicecatalog-factory = servicecatalog_factory.cli:cli'
         ]},
-    install_requires=[
-        'pyyaml',
-        'click',
-        'Jinja2',
-        'boto3',
-        'pykwalify',
-        'better-boto>=0.6.8',
-    ],
+    install_requires=requirements,
 )
