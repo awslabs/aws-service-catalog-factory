@@ -1,0 +1,52 @@
+# Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+AWSTemplateFormatVersion: '2010-09-09'
+Description: IAM Role needed to use AWS Organizations to create AWS Accounts.
+
+Parameters:
+  ServiceCatalogFactoryAccountId:
+    Type: String
+
+Resources:
+  AssumableOrgRole:
+    Type: AWS::IAM::Role
+    Description: |
+      IAM Role needed by the account vending machine so it can create and move accounts
+    Properties:
+      Path: /servicefactory-puppet/
+      Policies:
+        - PolicyName: Organizations
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action:
+                  - organizations:ListRoots
+                  - organizations:MoveAccount
+                  - organizations:CreateAccount
+                  - organizations:DescribeCreateAccountStatus
+                  - organizations:ListOrganizationalUnitsForParent
+                Resource: '*'
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              AWS: !Sub "arn:aws:iam::${ServiceCatalogFactoryAccountId}:root"
+            Action:
+              - "sts:AssumeRole"
+
+  AssumableOrgRoleParam:
+    Type: AWS::SSM::Parameter
+    Description: |
+      SSM Parameter to help sharing of the AssumableOrgRole Arn.  Stores it in the SSM Param with the name
+      ```AssumableOrgRole```
+    Properties:
+      Name: AssumableOrgRole
+      Type: String
+      Value: !GetAtt AssumableOrgRole.Arn
+
+Outputs:
+  AssumableOrgRoleArn:
+    Value: !GetAtt AssumableOrgRole.Arn
