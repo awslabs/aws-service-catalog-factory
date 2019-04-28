@@ -91,7 +91,7 @@ Resources:
             post_build:
               commands:
                 - servicecatalog-factory --info deploy portfolios/
-      TimeoutInMinutes: 20
+      TimeoutInMinutes: 60
 
   PipelineRole:
     Type: AWS::IAM::Role
