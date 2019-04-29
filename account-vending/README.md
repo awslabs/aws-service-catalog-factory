@@ -16,7 +16,7 @@ You must add the ```account-creation-shared-product``` to your servicecatalog-fa
     Components:
       - Name: account-vending-account-creation-shared
         Owner: central-it@customer.com
-        Description: The iam roles needed for you to do your jobs
+        Description: lambda to used to back custom resources that create an AWS account and move it to an ou
         Distributor: central-it-team
         SupportDescription: Contact us on Chime for help #central-it-team
         SupportEmail: central-it-team@customer.com
@@ -26,7 +26,7 @@ You must add the ```account-creation-shared-product``` to your servicecatalog-fa
           Value: iam
         Versions:
           - Name: v1
-            Description: The iam roles needed for you to do your jobs
+            Description: lambda to used to back custom resources that create an AWS account and move it to an ou
             Active: True
             Source:
               Provider: CodeCommit
@@ -57,7 +57,7 @@ You must add the ```account-bootstrap-shared-product``` to your servicecatalog-f
 ```yaml
       - Name: account-vending-account-bootstrap-shared
         Owner: central-it@customer.com
-        Description: The iam roles needed for you to do your jobs
+        Description: Lambda and codebuild project needed to run servicecatalog-puppet bootstrap-spoke-as
         Distributor: central-it-team
         SupportDescription: Contact us on Chime for help #central-it-team
         SupportEmail: central-it-team@customer.com
@@ -67,7 +67,7 @@ You must add the ```account-bootstrap-shared-product``` to your servicecatalog-f
           Value: iam
         Versions:
           - Name: v1
-            Description: The iam roles needed for you to do your jobs
+            Description: Lambda and codebuild project needed to run servicecatalog-puppet bootstrap-spoke-as
             Active: True
             Source:
               Provider: CodeCommit
@@ -98,7 +98,7 @@ You must add the ```account-creation-product``` to your servicecatalog-factory p
 ```yaml
       - Name: account-vending-account-creation
         Owner: central-it@customer.com
-        Description: The iam roles needed for you to do your jobs
+        Description: template used to interact with custom resources in the shared projects
         Distributor: central-it-team
         SupportDescription: Contact us on Chime for help #central-it-team
         SupportEmail: central-it-team@customer.com
@@ -108,7 +108,7 @@ You must add the ```account-creation-product``` to your servicecatalog-factory p
           Value: iam
         Versions:
           - Name: v1
-            Description: The iam roles needed for you to do your jobs
+            Description: template used to interact with custom resources in the shared projects.
             Active: True
             Source:
               Provider: CodeCommit
