@@ -50,7 +50,7 @@ def handler(event, context):
                             'type': 'PLAINTEXT'
                         },
                     ],
-                ).get('build')
+                )
                 final_status = bootstrapper_build.get('buildStatus')
 
                 if final_status == 'SUCCEEDED':
@@ -63,7 +63,7 @@ def handler(event, context):
                                 'type': 'PLAINTEXT'
                             }
                         ],
-                    ).get('build')
+                    )
                     final_status = puppet_run_build.get('buildStatus')
 
                     if final_status == 'SUCCEEDED':
