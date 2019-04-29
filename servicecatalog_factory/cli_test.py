@@ -15,30 +15,34 @@ def sut():
 
 def test_version(sut):
     # setup
+    expected_result = pkg_resources.require("aws-service-catalog-factory")[0].version
+
     # execute
     # verify
-    assert sut.VERSION == pkg_resources.require("aws-service-catalog-factory")[0].version
+    assert sut.VERSION == expected_result
 
 
 def test_bootstrap_stack_name(sut):
     # setup
+    expected_result = 'servicecatalog-factory'
+
     # execute
     # verify
-    assert sut.BOOTSTRAP_STACK_NAME == 'servicecatalog-factory'
+    assert sut.BOOTSTRAP_STACK_NAME == expected_result
 
 
 def test_service_catalog_factory_repo_name(sut):
     # setup
+    expected_result = 'ServiceCatalogFactory'
+
     # execute
     # verify
-    assert sut.SERVICE_CATALOG_FACTORY_REPO_NAME == 'ServiceCatalogFactory'
+    assert sut.SERVICE_CATALOG_FACTORY_REPO_NAME == expected_result
 
 
 def test_non_recoverable_states(sut):
     # setup
-    # execute
-    # verify
-    assert sut.NON_RECOVERABLE_STATES == [
+    expected_result = [
         "ROLLBACK_COMPLETE",
         'CREATE_IN_PROGRESS',
         'ROLLBACK_IN_PROGRESS',
@@ -49,6 +53,10 @@ def test_non_recoverable_states(sut):
         'UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS',
         'REVIEW_IN_PROGRESS',
     ]
+
+    # execute
+    # verify
+    assert sut.NON_RECOVERABLE_STATES == expected_result
 
 
 def test_resolve_from_site_packages(mocker, sut):
@@ -232,12 +240,13 @@ def test_product_exists_when_it_doesnt(mocker, sut):
                              ({}, {}, {}), 
                          ]) 
 def test_merge_case(input_one, input_two, expected_results, sut):
+    # setup
     # exercise
-    actual_results = sut.merge(input_one, input_two)  
+    actual_results = sut.merge(input_one, input_two)
+
     # verify
     assert expected_results == actual_results
-    
-    
+
 
 def test_get_bucket_name(mocker, sut):
     # setup
@@ -249,8 +258,10 @@ def test_get_bucket_name(mocker, sut):
         }]
     }
     mocked_betterboto_client().__enter__().describe_stacks.return_value = mocked_response
+
     # execute
     actual_result = sut.get_bucket_name()
+
     # verify
     assert actual_result == expected_result
     mocked_betterboto_client().__enter__().describe_stacks.assert_called_with(StackName=sut.BOOTSTRAP_STACK_NAME)
@@ -269,9 +280,11 @@ def test_get_bucket_name_stack_length_more(mocker, sut):
         }]
     }
     mocked_betterboto_client().__enter__().describe_stacks.return_value = mocked_response
+
     # execute
     with pytest.raises(Exception) as excinfo: 
-        actual_result = sut.get_bucket_name() 
+        sut.get_bucket_name()
+
     # verify
     assert str(excinfo.value) == expected_result
     mocked_betterboto_client().__enter__().describe_stacks.assert_called_with(StackName=sut.BOOTSTRAP_STACK_NAME)
@@ -287,9 +300,11 @@ def test_get_bucket_name_if_not_exists(mocker, sut):
         }]
     }
     mocked_betterboto_client().__enter__().describe_stacks.return_value = mocked_response
+
     # execute
     with pytest.raises(Exception) as excinfo: 
-        actual_result = sut.get_bucket_name() 
+        sut.get_bucket_name()
+
     # verify
     assert str(excinfo.value) == expected_result 
     mocked_betterboto_client().__enter__().describe_stacks.assert_called_with(StackName=sut.BOOTSTRAP_STACK_NAME)
@@ -327,14 +342,15 @@ def test_get_stacks(mocker, sut):
             }
         ]
     }
+
     # execute
     actual_result = sut.get_stacks()
+
     # verify
     assert actual_result == expected_result
     mocked_betterboto_client().__enter__().list_stacks.assert_called_with(**args)
     
-    
-    
+
 def test_get_stacks_if_empty(mocker, sut):
     # setup
     args = {
@@ -362,9 +378,10 @@ def test_get_stacks_if_empty(mocker, sut):
     mocked_betterboto_client().__enter__().list_stacks.return_value = {
         'StackSummaries': []
     }
+
     # execute
     actual_result = sut.get_stacks()
+
     # verify
     assert actual_result == expected_result
     mocked_betterboto_client().__enter__().list_stacks.assert_called_with(**args)
-    
