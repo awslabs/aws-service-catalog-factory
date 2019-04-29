@@ -113,7 +113,7 @@ Resources:
       Description: Lambda for accepting shares
       Role: !GetAtt BootstrapperProjectCustomResourceRole.Arn
       Runtime: python3.7
-      Timeout: 30
+      Timeout: 900
       Environment:
         Variables:
           BOOTSTRAPPER_PROJECT_NAME: !Ref BootstrapperProject

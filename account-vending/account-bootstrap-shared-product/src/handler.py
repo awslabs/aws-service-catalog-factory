@@ -36,7 +36,7 @@ def handler(event, context):
             with betterboto_client.ClientContextManager(
                     'codebuild',
             ) as codebuild:
-                build = codebuild.start_build(
+                bootstrapper_build = codebuild.start_build_and_wait_for_completion(
                     projectName=bootstrapper_project_name,
                     environmentVariablesOverride=[
                         {
@@ -51,34 +51,55 @@ def handler(event, context):
                         },
                     ],
                 ).get('build')
-                build_id = build.get('id')
-
-                while build.get('buildStatus') == 'IN_PROGRESS':
-                    response = codebuild.batch_get_builds(ids=[build_id])
-                    build = response.get('builds')[0]
-                    time.sleep(5)
-                    logger.info("current status: {}".format(build.get('buildStatus')))
-
-                final_status = build.get('buildStatus')
+                final_status = bootstrapper_build.get('buildStatus')
 
                 if final_status == 'SUCCEEDED':
-                    send_response(
-                        event,
-                        context,
-                        "SUCCESS",
-                        {
-                            "Message": "Resource creation successful!",
-                            "build_id": build_id,
-                        }
-                    )
+                    puppet_run_build = codebuild.start_build_and_wait_for_completion(
+                        projectName='servicecatalog-puppet-single-account-run',
+                        environmentVariablesOverride=[
+                            {
+                                'name': 'SINGLE_ACCOUNT_ID',
+                                'value': target_account_id,
+                                'type': 'PLAINTEXT'
+                            }
+                        ],
+                    ).get('build')
+                    final_status = puppet_run_build.get('buildStatus')
+
+                    if final_status == 'SUCCEEDED':
+                        send_response(
+                            event,
+                            context,
+                            "SUCCESS",
+                            {
+                                "Message": "Resource creation successful!",
+                                "puppet_run_build_id": puppet_run_build.get('id'),
+                                "bootstrapper_build_id": bootstrapper_build.get('id'),
+                            }
+                        )
+                    else:
+                        logger.error('Errored check the logs: {}'.format(puppet_run_build.get('logs').get('deepLink')))
+                        send_response(
+                            event,
+                            context,
+                            "FAILED",
+                            {
+                                "Message": 'Pipeline errored, check the logs: {}'.format(
+                                    puppet_run_build.get('logs').get('deepLink')
+                                ),
+
+                            }
+                        )
                 else:
-                    logger.error('Errored check the logs: {}'.format(build.get('logs').get('deepLink')))
+                    logger.error('Errored check the logs: {}'.format(bootstrapper_build.get('logs').get('deepLink')))
                     send_response(
                         event,
                         context,
                         "FAILED",
                         {
-                            "Message": 'Errored check the logs: {}'.format(build.get('logs').get('deepLink')),
+                            "Message": 'Bootstrap errored, check the logs: {}'.format(
+                                bootstrapper_build.get('logs').get('deepLink')
+                            ),
 
                         }
                     )
