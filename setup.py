@@ -11,7 +11,7 @@ with open("servicecatalog_factory/requirements.txt", "r") as fh:
 
 setuptools.setup(
     name="aws-service-catalog-factory",
-    version="0.1.26",
+    version="0.1.28",
     author="Eamonn Faherty",
     author_email="aws-service-catalog-tools@amazon.com",
     description="Making it easier to build out ServiceCatalog products",
