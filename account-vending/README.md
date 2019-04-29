@@ -8,7 +8,14 @@ Follow these steps (better instructions coming soon)
 ### Preparing the OrgAssumableRole
 You need provision the template ```org-bootstrap-template.yaml``` using CloudFormation in the 
 AWS Organizations root account or you need a similar role.  If you use your own role you will 
-need to set up SSM yourself.
+need to set up SSM yourself.  This template creates an IAM role in the account and stores the 
+ARN in an SSM Param named AssumableOrgRole.
+
+### Preparing the Factory account
+If your factory account is not your AWS Organizations root account then you will need to deploy 
+the ```factory-bootstrap.template.yaml``` template into your factory account.  You will need to 
+provide the output from the stack org-bootstrap-template.yaml created (AssumableOrgRoleArn) as 
+the input to this template.
 
 ### Preparing the shared account creation product
 You must add the ```account-creation-shared-product``` to your servicecatalog-factory portfolio:
