@@ -57,6 +57,22 @@ regions: [
   'sa-east-1',
 ]
 ```
+Configure aws cli using aws configure --profile *profilename* command.
+
+Export variables:
+
+For linux:
+```
+export AWS_DEFAULT_PROFILE = profilename
+export AWS_DEFAULT_REGION = region
+```
+For Windows:
+```
+set AWS_DEFAULT_PROFILE = profilename
+set AWS_DEFAULT_REGION = region
+```
+Note: the profilename should be the profile name used to configure aws cli, and region should be the aws region to bootstrap the factory.
+
 Once you have this file you need to upload the config:
 ```bash
 servicecatalog-factory upload-config config.yaml
@@ -84,6 +100,12 @@ git add .
 git commit -am "initial add"
 git push
 ```
+
+For Windows users, use git clone command as:
+```
+git clone --config "credential.helper=!aws codecommit credential-helper $@" --config "credential.UseHttpPath=true" https://git-codecommit.eu-west-1.amazonaws.com/v1/repos/ServiceCatalogFactory
+```
+
 Please note ```git clone``` command above includes an AWS Region in it.  You may need to change this or you can use the
 command the bootstrap command prints to the terminal upon completion for the correct command.
 
@@ -113,6 +135,10 @@ git checkout -b v1
 git add .
 git commit -am "initial add"
 git push --set-upstream origin v1
+```
+For Windows users, use git clone command as:
+```
+git clone --config "credential.helper=!aws codecommit credential-helper $@" --config "credential.UseHttpPath=true" https://git-codecommit.eu-west-1.amazonaws.com/v1/repos/account-iam
 ```
 
 Please note, this clone command also contains an AWS Region that may need to change for this action to work.
