@@ -53,7 +53,6 @@ Resources:
     Type: Custom::CustomResource
     Properties:
       ServiceToken: !Ref AccountVendingBootstrapperLambda
-      OrganizationAccountAccessRoleName: !Ref OrganizationAccountAccessRole
       TargetAccountId: !GetAtt Account.account_id
       PuppetAccountId: !Sub "${AWS::AccountId}"
 

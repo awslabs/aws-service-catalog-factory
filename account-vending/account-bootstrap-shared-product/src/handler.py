@@ -24,12 +24,6 @@ def handler(event, context):
         if request_type == 'Create':
             target_account_id = event.get('ResourceProperties').get('TargetAccountId')
             puppet_account_id = event.get('ResourceProperties').get('PuppetAccountId')
-            organization_account_access_role_name = event.get('ResourceProperties').get(
-                'OrganizationAccountAccessRoleName')
-
-            organization_account_access_role_arn = 'arn:aws:iam::{}:role/{}'.format(
-                target_account_id, organization_account_access_role_name
-            )
 
             bootstrapper_project_name = os.environ.get('BOOTSTRAPPER_PROJECT_NAME')
 
@@ -42,11 +36,6 @@ def handler(event, context):
                         {
                             'name': 'PUPPET_ACCOUNT_ID',
                             'value': puppet_account_id,
-                            'type': 'PLAINTEXT'
-                        },
-                        {
-                            'name': 'ORGANIZATION_ACCOUNT_ACCESS_ROLE_ARN',
-                            'value': organization_account_access_role_arn,
                             'type': 'PLAINTEXT'
                         },
                     ],
