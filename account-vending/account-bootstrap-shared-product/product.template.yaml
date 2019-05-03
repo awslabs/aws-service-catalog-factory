@@ -67,7 +67,7 @@ Resources:
                 - pip install aws-service-catalog-puppet==${VERSION}
             build:
               commands:
-                - servicecatalog-puppet bootstrap-spoke-as ${PUPPET_ACCOUNT_ID} ${ORGANIZATION_ACCOUNT_ACCESS_ROLE_ARN}
+                - servicecatalog-puppet bootstrap-spoke-as ${PUPPET_ACCOUNT_ID} ${ORG_IAM_ROLE_ARN} ${ORGANIZATION_ACCOUNT_ACCESS_ROLE_ARN}
       TimeoutInMinutes: 30
 
   BootstrapperProjectCustomResourceRole:

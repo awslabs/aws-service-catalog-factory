@@ -7,6 +7,7 @@ from betterboto import client as betterboto_client
 import os
 import traceback
 
+CONFIG_PARAM_NAME_ORG_IAM_ROLE_ARN = "/servicecatalog-puppet/org-iam-role-arn"
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -26,6 +27,9 @@ def handler(event, context):
             puppet_account_id = event.get('ResourceProperties').get('PuppetAccountId')
             organization_account_access_role_name = event.get('ResourceProperties').get(
                 'OrganizationAccountAccessRoleName')
+
+            with betterboto_client.ClientContextManager('ssm') as ssm:
+                org_iam_role_arn = ssm.get_parameter(Name=CONFIG_PARAM_NAME_ORG_IAM_ROLE_ARN).get('Parameter')
 
             organization_account_access_role_arn = 'arn:aws:iam::{}:role/{}'.format(
                 target_account_id, organization_account_access_role_name
@@ -47,6 +51,11 @@ def handler(event, context):
                         {
                             'name': 'ORGANIZATION_ACCOUNT_ACCESS_ROLE_ARN',
                             'value': organization_account_access_role_arn,
+                            'type': 'PLAINTEXT'
+                        },
+                        {
+                            'name': 'ORG_IAM_ROLE_ARN',
+                            'value': org_iam_role_arn,
                             'type': 'PLAINTEXT'
                         },
                     ],
