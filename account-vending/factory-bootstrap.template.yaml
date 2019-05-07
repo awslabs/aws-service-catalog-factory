@@ -5,22 +5,21 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: Template to save the AssumableOrgRole Arn to SSM in the factory account
 
 Parameters:
-  AssumableOrgRoleARN:
+  AssumableRoleInRootAccountArn:
     Type: String
-    Description: The ARN of the AssumableOrgRole in the Organizations account
+    Description: The ARN of the AssumableRoleInRootAccount in the Organizations account
 
 Resources:
-
-  AssumableOrgRoleParam:
+  AssumableRoleInRootAccountParam:
     Type: AWS::SSM::Parameter
     Description: |
-      SSM Parameter to help sharing of the AssumableOrgRole Arn.  Stores it in the SSM Param with the name
-      ```AssumableOrgRole```
+      SSM Parameter to help sharing of the AssumableRoleInRootAccount Arn.  Stores it in the SSM Param with the name
+      ```AssumableRoleInRootAccount```
     Properties:
-      Name: AssumableOrgRole
+      Name: /account-vending/assumable-role-in-root-account
       Type: String
-      Value: !Ref AssumableOrgRoleARN
+      Value: !Ref AssumableRoleInRootAccountArn
 
 Outputs:
-  AssumableOrgRoleArn:
-    Value: !Ref AssumableOrgRoleARN
+  AssumableRoleInRootAccountArn:
+    Value: !Ref AssumableRoleInRootAccountArn

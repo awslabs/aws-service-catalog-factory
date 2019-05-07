@@ -9,12 +9,13 @@ Parameters:
     Type: String
 
 Resources:
-  AssumableOrgRole:
+  AssumableRoleInRootAccount:
     Type: AWS::IAM::Role
     Description: |
       IAM Role needed by the account vending machine so it can create and move accounts
     Properties:
-      Path: /servicefactory-puppet/
+      RoleName: AssumableRoleInRootAccount
+      Path: /servicecatalog-puppet/
       Policies:
         - PolicyName: Organizations
           PolicyDocument:
@@ -37,16 +38,16 @@ Resources:
             Action:
               - "sts:AssumeRole"
 
-  AssumableOrgRoleParam:
+  AssumableRoleInRootAccountParam:
     Type: AWS::SSM::Parameter
     Description: |
-      SSM Parameter to help sharing of the AssumableOrgRole Arn.  Stores it in the SSM Param with the name
-      ```AssumableOrgRole```
+      SSM Parameter to help sharing of the AssumableRoleInRootAccount Arn.  Stores it in the SSM Param with the name
+      ```AssumableRoleInRootAccount```
     Properties:
-      Name: AssumableOrgRole
+      Name: /account-vending/assumable-role-in-root-account
       Type: String
-      Value: !GetAtt AssumableOrgRole.Arn
+      Value: !GetAtt AssumableRoleInRootAccount.Arn
 
 Outputs:
-  AssumableOrgRoleArn:
-    Value: !GetAtt AssumableOrgRole.Arn
+  AssumableRoleInRootAccountArn:
+    Value: !GetAtt AssumableRoleInRootAccount.Arn

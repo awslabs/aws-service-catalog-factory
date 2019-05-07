@@ -20,10 +20,10 @@ def handler(event, context):
             organization_account_access_role = event.get('ResourceProperties').get('OrganizationAccountAccessRole')
             iam_user_access_to_billing = event.get('ResourceProperties').get('IamUserAccessToBilling')
             target_ou = event.get('ResourceProperties').get('TargetOU')
-            assumable_org_role_arn = os.environ.get('ASSUMABLE_ORG_ROLE_ARN')
+            assumable_role_in_root_account_arn = os.environ.get('ASSUMABLE_ROLE_IN_ROOT_ACCOUNT_ARN')
 
             with betterboto_client.CrossAccountClientContextManager(
-                'organizations',assumable_org_role_arn, 'assumable_org_role'
+                'organizations',assumable_role_in_root_account_arn, 'assumable_org_role'
             ) as organizations:
                 logger.info('Creating')
                 response = organizations.create_account(
