@@ -29,7 +29,9 @@ def handler(event, context):
                 'OrganizationAccountAccessRoleName')
 
             with betterboto_client.ClientContextManager('ssm') as ssm:
-                org_iam_role_arn = ssm.get_parameter(Name=CONFIG_PARAM_NAME_ORG_IAM_ROLE_ARN).get('Parameter')
+                org_iam_role_arn = ssm.get_parameter(
+                    Name=CONFIG_PARAM_NAME_ORG_IAM_ROLE_ARN
+                ).get('Parameter').get('Value')
 
             organization_account_access_role_arn = 'arn:aws:iam::{}:role/{}'.format(
                 target_account_id, organization_account_access_role_name
