@@ -6,16 +6,15 @@ This is a toolkit to help deliver account vending machine using aws-service-cata
 Follow these steps (better instructions coming soon)
 
 ### Preparing the OrgAssumableRole
-You need provision the template ```org-bootstrap-template.yaml``` using CloudFormation in the 
-AWS Organizations root account or you need a similar role.  If you use your own role you will 
-need to set up SSM yourself.  This template creates an IAM role in the account and stores the 
-ARN in an SSM Param named AssumableOrgRole.
+In order to use the Account-vending machine you will need an AWS IAM Role in your Organizations root account.  For the 
+account-vending solution to discover this role you will need to have an SSM Parameter created.
 
-### Preparing the Factory account
-If your factory account is not your AWS Organizations root account then you will need to deploy 
-the ```factory-bootstrap.template.yaml``` template into your factory account.  You will need to 
-provide the output from the stack org-bootstrap-template.yaml created (AssumableOrgRoleArn) as 
-the input to this template.
+If your factory/puppet account is your Organization root account you can run the template ```org-bootstrap.template.yaml``` 
+in that account.
+
+If your factory/puppet account is not your Organization root account you will need to run ```org-bootstrap.template.yaml``` 
+in your organization root account and ```factory-bootstrap.template.yaml``` in your factory/puppet account.  When doing
+this you will need to copy the output from running org-bootstrap as the input for factory-bootstrap
 
 ### Preparing the shared account creation product
 You must add the ```account-creation-shared-product``` to your servicecatalog-factory portfolio:

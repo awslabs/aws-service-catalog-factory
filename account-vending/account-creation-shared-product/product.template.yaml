@@ -7,10 +7,12 @@ Description: |
   Lambda for backing custom resources to create an AWS Account
 
 Parameters:
-  AssumableOrgRoleArn:
+  AssumableRoleInRootAccountParam:
     Type: AWS::SSM::Parameter::Value<String>
-    Description: IAM role to assume that enables Organizations access to create and move the cereated account
-    Default: AssumableOrgRole
+    Default: /account-vending/assumable-role-in-root-account
+    Description: |
+      SSM Parameter to help sharing of the AssumableRoleInRootAccount Arn.  Stores it in the SSM Param with the name
+      ```AssumableRoleInRootAccount```
 
 Resources:
   AccountCustomResourceRole:
@@ -27,11 +29,7 @@ Resources:
               - Effect: Allow
                 Action:
                   - sts:AssumeRole
-                Resource: !Ref AssumableOrgRoleArn
-              - Effect: Allow
-                Action:
-                  - ssm:GetParameter
-                Resource: !Ref AssumableOrgRoleArn
+                Resource: !Ref AssumableRoleInRootAccountParam
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -72,7 +70,7 @@ Resources:
       Timeout: 30
       Environment:
         Variables:
-          ASSUMABLE_ORG_ROLE_ARN: !Ref AssumableOrgRoleArn
+          ASSUMABLE_ROLE_IN_ROOT_ACCOUNT_ARN: !Ref AssumableRoleInRootAccountParam
 
   Param:
     Type: AWS::SSM::Parameter
