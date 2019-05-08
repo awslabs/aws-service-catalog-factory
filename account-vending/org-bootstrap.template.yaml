@@ -29,6 +29,10 @@ Resources:
                   - organizations:DescribeCreateAccountStatus
                   - organizations:ListOrganizationalUnitsForParent
                 Resource: '*'
+              - Effect: Allow
+                Action:
+                  - sts:AssumeRole
+                Resource: "arn:aws:iam::*:role/OrganizationAccountAccessRole"
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
