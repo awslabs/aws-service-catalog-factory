@@ -8,19 +8,6 @@ Description: |
    - codebuild project that can be run to bootstrap an account
    - lambda function that can be used to back a custom resource so the codebuild project can be started from CloudFormation
 
-Parameters:
-  PuppetVersion:
-    Type: AWS::SSM::Parameter::Value<String>
-    Default: service-catalog-puppet-version
-    Description: Which version of aws-service-catalog-puppet should be installed to run the bootstrap-spoke-as command
-
-  AssumableRoleInRootAccountParam:
-    Type: AWS::SSM::Parameter::Value<String>
-    Default: /account-vending/assumable-role-in-root-account
-    Description: |
-      SSM Parameter to help sharing of the AssumableRoleInRootAccount Arn.  Stores it in the SSM Param with the name
-      ```AssumableRoleInRootAccount```
-
 Resources:
   BootstrapperRole:
     Type: AWS::IAM::Role
@@ -63,10 +50,10 @@ Resources:
             Value: CHANGE_ME
           - Name: VERSION
             Type: PLAINTEXT
-            Value: !Ref PuppetVersion
+            Value: CHANGE_ME
           - Name: ASSUMABLE_ROLE_IN_ROOT_ACCOUNT
             Type: PLAINTEXT
-            Value: !Ref AssumableRoleInRootAccountParam
+            Value: CHANGE_ME
       Source:
         Type: NO_SOURCE
         BuildSpec: |
@@ -127,7 +114,6 @@ Resources:
       Environment:
         Variables:
           BOOTSTRAPPER_PROJECT_NAME: !Ref BootstrapperProject
-          PUPPET_VERSION: !Ref PuppetVersion
 
   Param:
     Type: AWS::SSM::Parameter

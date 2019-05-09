@@ -30,6 +30,14 @@ def handler(event, context):
                 target_account_id, organization_account_access_role_name
             )
 
+            with betterboto_client.ClientContextManager('ssm') as ssm:
+                puppet_version = ssm.get_parameter(
+                    Name='service-catalog-puppet-version'
+                ).get('Parameter').get('Value')
+                assumable_role_in_root_account = ssm.get_parameter(
+                    Name='/account-vending/assumable-role-in-root-account'
+                ).get('Parameter').get('Value')
+
             bootstrapper_project_name = os.environ.get('BOOTSTRAPPER_PROJECT_NAME')
 
             with betterboto_client.ClientContextManager(
@@ -38,6 +46,16 @@ def handler(event, context):
                 bootstrapper_build = codebuild.start_build_and_wait_for_completion(
                     projectName=bootstrapper_project_name,
                     environmentVariablesOverride=[
+                        {
+                            'name': 'ASSUMABLE_ROLE_IN_ROOT_ACCOUNT',
+                            'value': assumable_role_in_root_account,
+                            'type': 'PLAINTEXT'
+                        },
+                        {
+                            'name': 'VERSION',
+                            'value': puppet_version,
+                            'type': 'PLAINTEXT'
+                        },
                         {
                             'name': 'PUPPET_ACCOUNT_ID',
                             'value': puppet_account_id,
