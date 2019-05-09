@@ -213,7 +213,6 @@ version you wish to define:
 The files named specification need to contain the details for the version:
 
 ```yaml
-Name: v1
 Description: template used to interact with custom resources in the shared projects.
 Active: True
 Source:
@@ -222,6 +221,8 @@ Source:
     RepositoryName: account-vending-account-creation
     BranchName: master
 ```
+
+Please note, the name of the directory is used as the name of the version.
 
 When your service-catalog-factory pipeline runs it will treat these versions as if they were defined within the portfolio 
 file.

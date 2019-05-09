@@ -430,6 +430,7 @@ def generate_portfolios(portfolios_file_path):
                             'r'
                         ).read()
                         version_spec = yaml.safe_load(specification)
+                        version_spec['Name'] = external_version
                         if component.get('Versions') is None:
                             component['Versions'] = []
                         LOGGER.info("Adding external version: {} to component: {}".format(
