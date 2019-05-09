@@ -1,4 +1,4 @@
-Diving into the pipelines
+Configuring your pipelines
 =========================
 
 Each Product version in your portfolio becomes a CodePipeline in your Factory account.  At a minimum, each pipeline has

@@ -8,11 +8,11 @@ Welcome to aws-service-catalog-factory's documentation!
 
    factory/what_is_this
    factory/getting_up_and_running
+   factory/configuring_your_pipelines
    factory/designing_your_product
-   factory/diving_into_the_pipeline
    factory/upgrading
 
-   factory/utils
+   factory/using_the_cli
 
 
 

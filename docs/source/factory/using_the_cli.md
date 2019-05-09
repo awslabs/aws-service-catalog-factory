@@ -1,8 +1,11 @@
-Utils
-=====
+Using the CLI
+=============
 
-When building a Service Catalog factory you should expect some failures on the way.  To reduce the burden
-of experimentation and to help cleaning up after your self there are the following utilities:
+When you install ```aws-service-catalog-factory``` you install a command line tool ```servicecatalog-factory```.
+
+When you bootstrap the framework and upgrade it you use the cli tool to perform these actions.
+
+There are other commands that you may find useful:
 
 ## nuke-product-version
 You can use the ```servicecatalog-factory``` cli to remove a product from AWS Service Catalog and to remove
@@ -13,7 +16,6 @@ Once you have the details you can run the following command:
 ```bash
 servicecatalog-factory nuke-product-version example-simple-central-it-team-portfolio account-iam v1
 ```  
-
 
 ## delete-stack-from-all-regions
 You can delete a stack from every region using the following command:
