@@ -499,31 +499,32 @@ def get_stacks():
 def deploy(p):
     stacks = get_stacks()
     for portfolio_file_name in os.listdir(p):
-        p_name = portfolio_file_name.split(".")[0]
-        output_path = os.path.sep.join(["output", p_name])
-        portfolios_file_path = os.path.sep.join([p, portfolio_file_name])
-        portfolios = generate_portfolios(portfolios_file_path)
-        for portfolio in portfolios.get('Portfolios'):
-            for product in portfolio.get('Components', []):
-                for version in product.get('Versions'):
-                    run_deploy_for_component(
-                        p_name,
-                        output_path,
-                        portfolio,
-                        product,
-                        version,
-                        stacks,
-                    )
-            for product in portfolio.get('ComponentGroups', []):
-                for version in product.get('Versions'):
-                    run_deploy_for_component_groups(
-                        p_name,
-                        output_path,
-                        portfolio,
-                        product,
-                        version,
-                        stacks,
-                    )
+        if '.yaml' in portfolio_file_name:
+            p_name = portfolio_file_name.split(".")[0]
+            output_path = os.path.sep.join(["output", p_name])
+            portfolios_file_path = os.path.sep.join([p, portfolio_file_name])
+            portfolios = generate_portfolios(portfolios_file_path)
+            for portfolio in portfolios.get('Portfolios'):
+                for product in portfolio.get('Components', []):
+                    for version in product.get('Versions'):
+                        run_deploy_for_component(
+                            p_name,
+                            output_path,
+                            portfolio,
+                            product,
+                            version,
+                            stacks,
+                        )
+                for product in portfolio.get('ComponentGroups', []):
+                    for version in product.get('Versions'):
+                        run_deploy_for_component_groups(
+                            p_name,
+                            output_path,
+                            portfolio,
+                            product,
+                            version,
+                            stacks,
+                        )
 
 
 def get_hash_for_template(template):
@@ -872,37 +873,38 @@ def fix_issues(p):
 def fix_issues_for_portfolio(p):
     click.echo('Fixing issues for portfolios')
     for portfolio_file_name in os.listdir(p):
-        p_name = portfolio_file_name.split(".")[0]
-        portfolios = generate_portfolios(os.path.sep.join([p, portfolio_file_name]))
-        for portfolio in portfolios.get('Portfolios', []):
-            for component in portfolio.get('Components', []):
-                for version in component.get('Versions', []):
-                    stack_name = "-".join([
-                        p_name,
-                        portfolio.get('DisplayName'),
-                        component.get('Name'),
-                        version.get('Name'),
-                    ])
-                    LOGGER.info('looking at stack: {}'.format(stack_name))
-                    with betterboto_client.ClientContextManager('cloudformation') as cloudformation:
-                        response = {'Stacks': []}
-                        try:
-                            response = cloudformation.describe_stacks(StackName=stack_name)
-                        except cloudformation.exceptions.ClientError as e:
-                            if "Stack with id {} does not exist".format(stack_name) in str(e):
-                                click.echo("There is no pipeline for: {}".format(stack_name))
-                            else:
-                                raise e
+        if '.yaml' in portfolio_file_name:
+            p_name = portfolio_file_name.split(".")[0]
+            portfolios = generate_portfolios(os.path.sep.join([p, portfolio_file_name]))
+            for portfolio in portfolios.get('Portfolios', []):
+                for component in portfolio.get('Components', []):
+                    for version in component.get('Versions', []):
+                        stack_name = "-".join([
+                            p_name,
+                            portfolio.get('DisplayName'),
+                            component.get('Name'),
+                            version.get('Name'),
+                        ])
+                        LOGGER.info('looking at stack: {}'.format(stack_name))
+                        with betterboto_client.ClientContextManager('cloudformation') as cloudformation:
+                            response = {'Stacks': []}
+                            try:
+                                response = cloudformation.describe_stacks(StackName=stack_name)
+                            except cloudformation.exceptions.ClientError as e:
+                                if "Stack with id {} does not exist".format(stack_name) in str(e):
+                                    click.echo("There is no pipeline for: {}".format(stack_name))
+                                else:
+                                    raise e
 
-                        for stack in response.get('Stacks'):
-                            if stack.get('StackStatus') == "ROLLBACK_COMPLETE":
-                                if click.confirm(
-                                        'Found a stack: {} in status: "ROLLBACK_COMPLETE".  '
-                                        'Should it be deleted?'.format(stack_name)
-                                ):
-                                    cloudformation.delete_stack(StackName=stack_name)
-                                    waiter = cloudformation.get_waiter('stack_delete_complete')
-                                    waiter.wait(StackName=stack_name)
+                            for stack in response.get('Stacks'):
+                                if stack.get('StackStatus') == "ROLLBACK_COMPLETE":
+                                    if click.confirm(
+                                            'Found a stack: {} in status: "ROLLBACK_COMPLETE".  '
+                                            'Should it be deleted?'.format(stack_name)
+                                    ):
+                                        cloudformation.delete_stack(StackName=stack_name)
+                                        waiter = cloudformation.get_waiter('stack_delete_complete')
+                                        waiter.wait(StackName=stack_name)
 
     click.echo('Finished fixing issues for portfolios')
 
