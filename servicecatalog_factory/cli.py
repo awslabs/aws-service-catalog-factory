@@ -437,8 +437,6 @@ def generate_portfolios(portfolios_file_path):
                             component.get('Name'),
                         ))
                         component['Versions'].append(version_spec)
-
-
         return portfolios
 
 
@@ -506,7 +504,7 @@ def deploy(p):
             portfolios = generate_portfolios(portfolios_file_path)
             for portfolio in portfolios.get('Portfolios'):
                 for product in portfolio.get('Components', []):
-                    for version in product.get('Versions'):
+                    for version in product.get('Versions', []):
                         run_deploy_for_component(
                             p_name,
                             output_path,
@@ -516,7 +514,7 @@ def deploy(p):
                             stacks,
                         )
                 for product in portfolio.get('ComponentGroups', []):
-                    for version in product.get('Versions'):
+                    for version in product.get('Versions', []):
                         run_deploy_for_component_groups(
                             p_name,
                             output_path,
