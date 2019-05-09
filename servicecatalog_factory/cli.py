@@ -901,8 +901,8 @@ def delete_stack_from_a_regions(stack_name, region):
 
 
 @cli.command()
-@click.argument('p')
-def demo(p, type=click.Path(exists=True)):
+@click.argument('p', type=click.Path(exists=True))
+def demo(p):
     click.echo("Starting demo")
     click.echo("Setting up your config")
     config_yaml = 'config.yaml'
