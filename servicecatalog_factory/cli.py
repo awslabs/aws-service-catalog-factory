@@ -324,7 +324,7 @@ def generate_pipelines(portfolios_groups_name, portfolios, output_path):
     for portfolio in portfolios.get('Portfolios'):
         portfolio_ids_by_region = {}
         for product in portfolio.get('Components', []):
-            for version in product.get('Versions'):
+            for version in product.get('Versions', []):
                 portfolio_ids_by_region_for_component, product_ids_by_region = generate_pipeline(
                     ENV.get_template(COMPONENT),
                     portfolios_groups_name,
@@ -397,17 +397,60 @@ def validate(p):
     click.echo("Finished validating: OK")
 
 
+def generate_portfolios(portfolios_file_path):
+    LOGGER.info('Loading portfolio: {}'.format(portfolios_file_path))
+    with open(portfolios_file_path) as portfolios_file:
+        portfolio_file_name = portfolios_file_path.split("/")[-1]
+        portfolio_file_name = portfolio_file_name.replace(".yaml", "")
+        portfolios_file_contents = portfolios_file.read()
+        portfolios = yaml.safe_load(portfolios_file_contents)
+        LOGGER.info("Checking for external config")
+        for portfolio in portfolios.get('Portfolios'):
+            for component in portfolio.get('Components'):
+                portfolio_external_components_specification_path = os.path.sep.join(
+                    [
+                        'portfolios',
+                        portfolio_file_name,
+                        'Portfolios',
+                        portfolio.get('DisplayName'),
+                        'Components',
+                        component.get('Name'),
+                        'Versions'
+                    ]
+                )
+                if os.path.exists(portfolio_external_components_specification_path):
+                    external_versions = os.listdir(portfolio_external_components_specification_path)
+                    for external_version in external_versions:
+                        specification = open(
+                            os.path.sep.join([
+                                portfolio_external_components_specification_path,
+                                external_version,
+                                'specification.yaml'
+                            ]),
+                            'r'
+                        ).read()
+                        version_spec = yaml.safe_load(specification)
+                        version_spec['Name'] = external_version
+                        if component.get('Versions') is None:
+                            component['Versions'] = []
+                        LOGGER.info("Adding external version: {} to component: {}".format(
+                            version_spec.get('Name'),
+                            component.get('Name'),
+                        ))
+                        component['Versions'].append(version_spec)
+        return portfolios
+
+
 @cli.command()
 @click.argument('p', type=click.Path(exists=True))
 def generate(p):
     LOGGER.info('Generating')
     for portfolio_file_name in os.listdir(p):
-        p_name = portfolio_file_name.split(".")[0]
-        output_path = os.path.sep.join(["output", p_name])
-        portfolios_file_path = os.path.sep.join([p, portfolio_file_name])
-        with open(portfolios_file_path) as portfolios_file:
-            portfolios_file_contents = portfolios_file.read()
-            portfolios = yaml.safe_load(portfolios_file_contents)
+        if '.yaml' in portfolio_file_name:
+            p_name = portfolio_file_name.split(".")[0]
+            output_path = os.path.sep.join(["output", p_name])
+            portfolios_file_path = os.path.sep.join([p, portfolio_file_name])
+            portfolios = generate_portfolios(portfolios_file_path)
             generate_pipelines(p_name, portfolios, output_path)
 
 
@@ -455,15 +498,14 @@ def get_stacks():
 def deploy(p):
     stacks = get_stacks()
     for portfolio_file_name in os.listdir(p):
-        p_name = portfolio_file_name.split(".")[0]
-        output_path = os.path.sep.join(["output", p_name])
-        portfolios_file_path = os.path.sep.join([p, portfolio_file_name])
-        with open(portfolios_file_path) as portfolios_file:
-            portfolios_file_contents = portfolios_file.read()
-            portfolios = yaml.safe_load(portfolios_file_contents)
+        if '.yaml' in portfolio_file_name:
+            p_name = portfolio_file_name.split(".")[0]
+            output_path = os.path.sep.join(["output", p_name])
+            portfolios_file_path = os.path.sep.join([p, portfolio_file_name])
+            portfolios = generate_portfolios(portfolios_file_path)
             for portfolio in portfolios.get('Portfolios'):
                 for product in portfolio.get('Components', []):
-                    for version in product.get('Versions'):
+                    for version in product.get('Versions', []):
                         run_deploy_for_component(
                             p_name,
                             output_path,
@@ -473,7 +515,7 @@ def deploy(p):
                             stacks,
                         )
                 for product in portfolio.get('ComponentGroups', []):
-                    for version in product.get('Versions'):
+                    for version in product.get('Versions', []):
                         run_deploy_for_component_groups(
                             p_name,
                             output_path,
@@ -830,10 +872,10 @@ def fix_issues(p):
 def fix_issues_for_portfolio(p):
     click.echo('Fixing issues for portfolios')
     for portfolio_file_name in os.listdir(p):
-        p_name = portfolio_file_name.split(".")[0]
-        with open(os.path.sep.join([p, portfolio_file_name]), 'r') as portfolio_file:
-            portfolio = yaml.safe_load(portfolio_file.read())
-            for portfolio in portfolio.get('Portfolios', []):
+        if '.yaml' in portfolio_file_name:
+            p_name = portfolio_file_name.split(".")[0]
+            portfolios = generate_portfolios(os.path.sep.join([p, portfolio_file_name]))
+            for portfolio in portfolios.get('Portfolios', []):
                 for component in portfolio.get('Components', []):
                     for version in component.get('Versions', []):
                         stack_name = "-".join([
@@ -901,8 +943,8 @@ def delete_stack_from_a_regions(stack_name, region):
 
 
 @cli.command()
-@click.argument('p')
-def demo(p, type=click.Path(exists=True)):
+@click.argument('p', type=click.Path(exists=True))
+def demo(p):
     click.echo("Starting demo")
     click.echo("Setting up your config")
     config_yaml = 'config.yaml'

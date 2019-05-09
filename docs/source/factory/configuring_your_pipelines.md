@@ -165,3 +165,64 @@ You set Versions[].Active to False to stop users from provisioning your product 
 
 Please note the ```servicecatalog-factory-pipeline``` updates the active setting.  If you find the value is not in sync 
 run the pipeline. 
+
+## Specifying versions of a component outside of the main portfolio file
+You may find that your portfolio file increases in size fairly quickly.  Having a large file to manage is often more 
+complicated than having multiple, smaller files.  If you find yourself in this situation you can provide the 
+specification for component versions outside of your main portfolio file.
+
+For example if you have a portfolio file named ```demo.yaml``` and it defines a portfolio named 
+```central-it-team-portfolio``` as this snippet shows:
+
+```yaml
+Schema: factory-2019-04-01
+Portfolios:
+  - DisplayName: central-it-team-portfolio
+    Description: A place for self service products ready for your account
+    ProviderName: central-it-team
+    Associations:
+      - arn:aws:iam::${AWS::AccountId}:role/Admin
+```
+
+and you have a component named ```account-vending-account-creation``` as this snippet shows:
+```yaml
+    Components:
+      - Name: account-vending-account-creation
+        Owner: central-it@customer.com
+        Description: template used to interact with custom resources in the shared projects
+        Distributor: central-it-team
+        SupportDescription: Contact us on Chime for help #central-it-team
+```
+      
+you can create a directory named 
+```/portfolios/demo/Portfolios/central-it-team-portfolio/Components/account-vending-account-bootstrap-shared/Versions/```
+within the root of your ```ServiceCatalogFactory``` repository and within that directory you can add sub directories for each 
+version you wish to define:
+
+```bash
+# tree .
+.
+├── v1
+│   └── specification.yaml
+└── v2
+    └── specification.yaml
+
+2 directories, 2 files
+```
+
+The files named specification need to contain the details for the version:
+
+```yaml
+Description: template used to interact with custom resources in the shared projects.
+Active: True
+Source:
+  Provider: CodeCommit
+  Configuration:
+    RepositoryName: account-vending-account-creation
+    BranchName: master
+```
+
+Please note, the name of the directory is used as the name of the version.
+
+When your service-catalog-factory pipeline runs it will treat these versions as if they were defined within the portfolio 
+file.
