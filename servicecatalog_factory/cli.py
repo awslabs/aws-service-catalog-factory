@@ -710,6 +710,10 @@ def do_bootstrap():
 @click.argument('complexity', default='simple')
 @click.argument('p', type=click.Path(exists=True))
 def seed(complexity, p):
+    do_seed(complexity, p)
+
+
+def do_seed(complexity, p):
     target = os.path.sep.join([p, 'portfolios'])
     if not os.path.exists(target):
         os.makedirs(target)
@@ -724,25 +728,11 @@ def seed(complexity, p):
 
 
 @cli.command()
-@click.argument('p', type=click.Path(exists=True))
-def reseed(p):
-    for f in ['requirements.txt', 'cli.py']:
-        shutil.copy2(
-            resolve_from_site_packages(f),
-            os.path.sep.join([p, f])
-        )
-    for d in ['templates']:
-        target = os.path.sep.join([p, d])
-        if os.path.exists(target):
-            shutil.rmtree(target)
-        shutil.copytree(
-            resolve_from_site_packages(d),
-            target
-        )
-
-
-@cli.command()
 def version():
+    do_version()
+
+
+def do_version():
     click.echo("cli version: {}".format(VERSION))
     with betterboto_client.ClientContextManager('ssm', region_name=HOME_REGION) as ssm:
         response = ssm.get_parameter(
@@ -785,6 +775,10 @@ def do_upload_config(p):
 @cli.command()
 @click.argument('p', type=click.Path(exists=True))
 def fix_issues(p):
+    do_fix_issues(p)
+
+
+def do_fix_issues(p):
     fix_issues_for_portfolio(p)
 
 
@@ -830,6 +824,10 @@ def fix_issues_for_portfolio(p):
 @cli.command()
 @click.argument('stack-name')
 def delete_stack_from_all_regions(stack_name):
+    do_delete_stack_from_all_regions(stack_name)
+
+
+def do_delete_stack_from_all_regions(stack_name):
     all_regions = get_regions()
     if click.confirm(
             "We are going to delete the stack: {} from all regions: {}.  Are you sure?".format(
@@ -864,6 +862,10 @@ def delete_stack_from_a_regions(stack_name, region):
 @cli.command()
 @click.argument('p', type=click.Path(exists=True))
 def demo(p):
+    do_demo(p)
+
+
+def do_demo(p):
     click.echo("Starting demo")
     click.echo("Setting up your config")
     config_yaml = 'config.yaml'

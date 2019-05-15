@@ -559,3 +559,99 @@ def test_do_bootstrap_branch(mocker, sut):
     # verify
     assert sut.VERSION == "https://github.com/awslabs/aws-service-catalog-factory/archive/{}.zip".format(branch_name)
     mocked_do_bootstrap.assert_called_once()
+
+
+@pytest.mark.skip
+def test_bootstrap():
+    pass
+
+
+@pytest.mark.skip
+def test_do_bootstrap():
+    pass
+
+
+@pytest.mark.skip
+def test_seed():
+    pass
+
+
+@pytest.mark.skip
+def test_do_seed():
+    pass
+
+
+@pytest.mark.skip
+def test_version():
+    pass
+
+
+@pytest.mark.skip
+def test_do_version():
+    pass
+
+
+@pytest.mark.skip
+def test_upload_config():
+    pass
+
+
+@pytest.mark.skip
+def test_do_upload_config():
+    pass
+
+
+@pytest.mark.skip
+def test_fix_issues():
+    pass
+
+
+@pytest.mark.skip
+def test_do_fix_issues():
+    pass
+
+
+@pytest.mark.skip
+def test_fix_issues_for_portfolio():
+    pass
+
+
+@pytest.mark.skip
+def test_delete_stack_from_all_regions():
+    pass
+
+
+@pytest.mark.skip
+def test_delete_stack_from_all_regions():
+    pass
+
+
+@pytest.mark.skip
+def test_do_delete_stack_from_all_regions():
+    pass
+
+
+@pytest.mark.skip
+def test_delete_stack_from_a_regions():
+    pass
+
+
+@pytest.mark.skip
+def test_demo():
+    pass
+
+@pytest.mark.skip
+def test_do_demo():
+    pass
+
+
+@pytest.mark.skip
+def test_add_or_update_file_in_branch_for_repo():
+    pass
+
+
+@pytest.mark.skip
+def test_wait_for_pipeline():
+    pass
+
+
