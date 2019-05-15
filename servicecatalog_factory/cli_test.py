@@ -10,6 +10,11 @@ import yaml
 
 
 @fixture
+def mocked_open(mocker):
+    return mocker.patch('builtins.open')
+
+
+@fixture
 def fake_version():
     return {
         "Name": "v1",
@@ -136,11 +141,10 @@ def test_resolve_from_site_packages(mocker, sut):
     assert expected_result == actual_result
 
 
-def test_read_from_site_packages(mocker, sut):
+def test_read_from_site_packages(mocker, sut, mocked_open):
     # setup
     what = 'asset.py'
     expected_result = 'foobar'
-    mocked_open = mocker.patch('builtins.open')
     mocked_open().read.return_value = expected_result
     mocker.patch.object(sut, 'resolve_from_site_packages', return_value='ignored')
 
@@ -465,12 +469,12 @@ def test_do_deploy(mocker, sut, fake_portfolio, fake_component, fake_version):
         os.path.sep.join([path, mocked_files[1]]),
     ]
     mocked_get_stacks = mocker.patch.object(sut, 'get_stacks')
-    mock_stacks = "hello world"
-    mocked_get_stacks.return_value = mock_stacks
+    # mock_stacks = "hello world"
+    # mocked_get_stacks.return_value = mock_stacks
     mocked_listdir = mocker.patch.object(os, 'listdir')
     mocked_generate_portfolios = mocker.patch.object(sut, 'generate_portfolios')
     mocked_run_deploy_for_component = mocker.patch.object(sut, 'run_deploy_for_component')
-    mocked_run_deploy_for_component_groups = mocker.patch.object(sut, 'run_deploy_for_component_groups')
+    # mocked_run_deploy_for_component_groups = mocker.patch.object(sut, 'run_deploy_for_component_groups')
     mocked_generate_portfolios.return_value = mocked_portfolios
     mocked_listdir.return_value = mocked_files
 
@@ -483,20 +487,12 @@ def test_do_deploy(mocker, sut, fake_portfolio, fake_component, fake_version):
     mocked_generate_portfolios.assert_any_call(expected_portfolios_generated[0])
     mocked_generate_portfolios.assert_any_call(expected_portfolios_generated[1])
     mocked_run_deploy_for_component.assert_any_call(
-        'file1',
         'output/file1',
-        fake_portfolio,
-        fake_component,
-        fake_version,
-        mock_stacks
+        'file1-central-it-team-portfolio-account-vending-account-creation-v1'
     )
-    mocked_run_deploy_for_component_groups.assert_any_call(
-        'file1',
-        'output/file1',
-        fake_portfolio,
-        fake_component,
-        fake_version,
-        mock_stacks
+    mocked_run_deploy_for_component.assert_any_call(
+        'output/file2',
+        'file2-central-it-team-portfolio-account-vending-account-creation-v1'
     )
 
 
@@ -515,4 +511,26 @@ def test_get_hash_for_template(mocker, sut):
     mock_md5.assert_called()
     mock_md5().update.assert_called_with(str.encode(template))
     assert expected_result == actual_result
+
+
+def test_run_deploy_for_component(mocker, sut, mocked_open):
+    # setup
+    path = "some/path"
+    friendly_uid = "some/uid"
+    fake_template = 'foo'
+    mocked_client_context_manager = mocker.patch.object(sut.betterboto_client, 'ClientContextManager')
+    mocked_open().__enter__().read.return_value = fake_template
+
+    # exercise
+    sut.run_deploy_for_component(path, friendly_uid)
+
+    # verify
+    mocked_open.assert_called_with(
+        os.path.sep.join([path, "{}.template.yaml".format(friendly_uid)])
+    )
+    mocked_client_context_manager().__enter__().create_or_update.assert_called_once_with(
+        StackName=friendly_uid,
+        TemplateBody=fake_template,
+    )
+
 

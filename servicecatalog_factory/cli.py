@@ -337,17 +337,6 @@ def generate_pipelines(portfolios_groups_name, portfolios, output_path):
                     portfolio,
                 )
                 portfolio_ids_by_region.update(portfolio_ids_by_region_for_component)
-        for product in portfolio.get('ComponentGroups', []):
-            for version in product.get('Versions'):
-                portfolio_ids_by_region_for_group, product_ids_by_region = generate_pipeline(
-                    ENV.get_template(COMPONENT_GROUP),
-                    portfolios_groups_name,
-                    output_path,
-                    version,
-                    product,
-                    portfolio,
-                )
-                portfolio_ids_by_region.update(portfolio_ids_by_region_for_group)
         threads = []
         for region in all_regions:
             process = Thread(
@@ -513,23 +502,16 @@ def do_deploy(p):
             for portfolio in portfolios.get('Portfolios'):
                 for product in portfolio.get('Components', []):
                     for version in product.get('Versions', []):
+                        friendly_uid = "-".join([
+                            p_name, portfolio.get('DisplayName'), product.get('Name'), version.get('Name')
+                        ])
+                        first_run_of_stack = stacks.get(friendly_uid, False) is False
+                        LOGGER.info('Running deploy for: {}. Is first run: {}'.format(
+                            friendly_uid, first_run_of_stack
+                        ))
                         run_deploy_for_component(
-                            p_name,
                             output_path,
-                            portfolio,
-                            product,
-                            version,
-                            stacks,
-                        )
-                for product in portfolio.get('ComponentGroups', []):
-                    for version in product.get('Versions', []):
-                        run_deploy_for_component_groups(
-                            p_name,
-                            output_path,
-                            portfolio,
-                            product,
-                            version,
-                            stacks,
+                            friendly_uid,
                         )
 
 
@@ -539,81 +521,7 @@ def get_hash_for_template(template):
     return "{}{}".format(HASH_PREFIX, hasher.hexdigest())
 
 
-def run_deploy_for_component_groups(group_name, path, portfolio, product, version, stacks):
-    friendly_uid = "-".join([
-        group_name, portfolio.get('DisplayName'), product.get('Name'), version.get('Name')
-    ])
-    first_run_of_stack = stacks.get(friendly_uid, False) is False
-    LOGGER.info('Running deploy for: {}. Is first run: {}'.format(
-        friendly_uid, first_run_of_stack
-    ))
-
-    staging_template_path = os.path.sep.join([path, "{}.template.yaml".format(friendly_uid)])
-    with open(staging_template_path) as staging_template:
-        staging_template_contents = staging_template.read()
-    s3_bucket_name = get_bucket_name()
-    s3 = boto3.resource('s3')
-    template_path = "{}/{}/product.template.yaml".format(product.get('Name'), version.get('Name'))
-    obj = s3.Object(s3_bucket_name, template_path)
-    obj.put(Body=staging_template_contents)
-
-    with betterboto_client.ClientContextManager('servicecatalog') as service_catalog:
-        product_to_find = product.get('Name')
-
-        response = service_catalog.search_products_as_admin_single_page(
-            Filters={'FullTextSearch': [product_to_find]}
-        )
-        product_id = None
-        for product_view_details in response.get('ProductViewDetails'):
-            product_view = product_view_details.get('ProductViewSummary')
-            if product_view.get('Name') == product_to_find:
-                LOGGER.info('Found product: {}'.format(product_view))
-                product_id = product_view.get("ProductId")
-                break
-
-        assert product_id is not None, "Could not find product"
-
-        found = False
-        response = service_catalog.list_provisioning_artifacts_single_page(ProductId=product_id)
-        for provisioning_artifact_detail in response.get('ProvisioningArtifactDetails'):
-            if provisioning_artifact_detail.get('Name') == version.get("Name"):
-                found = True
-
-        if not found:
-            LOGGER.info("Creating version: {}. It didn't exist".format(version.get("Name")))
-            create_args = {
-                "ProductId": product_id,
-                "Parameters": {
-                    'Name': version.get('Name'),
-                    'Info': {
-                        "LoadTemplateFromURL": "https://s3.amazonaws.com/{}/{}".format(
-                            s3_bucket_name, template_path
-                        )
-                    },
-                    'Type': 'CLOUD_FORMATION_TEMPLATE'
-                }
-            }
-            if version.get("Description"):
-                create_args['Parameters']['Description'] = version.get("Description")
-            service_catalog.create_provisioning_artifact(**create_args)
-        else:
-            LOGGER.info(
-                'Skipped creating version: {}. It already exists'.format(version.get("Name"))
-            )
-
-
-def run_deploy_for_component(group_name, path, portfolio, product, version, stacks):
-    friendly_uid = "-".join([
-        group_name,
-        portfolio.get('DisplayName'),
-        product.get('Name'),
-        version.get('Name')
-    ])
-    first_run_of_stack = stacks.get(friendly_uid, False) is False
-    LOGGER.info(
-        'Running deploy for: {}. Is first run: {}'.format(friendly_uid, first_run_of_stack)
-    )
-
+def run_deploy_for_component(path, friendly_uid):
     staging_template_path = os.path.sep.join([path, "{}.template.yaml".format(friendly_uid)])
     with open(staging_template_path) as staging_template:
         staging_template_contents = staging_template.read()
