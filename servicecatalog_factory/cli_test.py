@@ -534,3 +534,23 @@ def test_run_deploy_for_component(mocker, sut, mocked_open):
     )
 
 
+@pytest.mark.skip
+def test_nuke_product_version():
+    pass
+
+
+@pytest.mark.skip
+def test_nuke_stack():
+    pass
+
+
+def test_bootstrap_branch(mocker, sut):
+    # setup
+    branch_name = 'foo'
+    mocked_do_bootstrap = mocker.patch.object(sut, 'do_bootstrap')
+    # exercise
+    sut.bootstrap_branch(branch_name)
+
+    # verify
+    assert sut.VERSION == "https://github.com/awslabs/aws-service-catalog-factory/archive/{}.zip".format(branch_name)
+    mocked_do_bootstrap.assert_called_once()
