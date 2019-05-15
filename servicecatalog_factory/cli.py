@@ -605,6 +605,10 @@ def nuke_stack(portfolio_name, product, version):
 @cli.command()
 @click.argument('branch-name')
 def bootstrap_branch(branch_name):
+    do_bootstrap_branch(branch_name)
+
+
+def do_bootstrap_branch(branch_name):
     global VERSION
     VERSION = "https://github.com/awslabs/aws-service-catalog-factory/archive/{}.zip".format(branch_name)
     do_bootstrap()
