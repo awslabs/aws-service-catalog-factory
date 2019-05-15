@@ -19,6 +19,9 @@ import shutil
 import pkg_resources
 import requests
 
+OUTPUT = "output"
+HASH_PREFIX = 'a'
+
 CONFIG_PARAM_NAME = "/servicecatalog-factory/config"
 PUBLISHED_VERSION = pkg_resources.require("aws-service-catalog-factory")[0].version
 VERSION = PUBLISHED_VERSION
@@ -448,7 +451,7 @@ def generate(p):
     for portfolio_file_name in os.listdir(p):
         if '.yaml' in portfolio_file_name:
             p_name = portfolio_file_name.split(".")[0]
-            output_path = os.path.sep.join(["output", p_name])
+            output_path = os.path.sep.join([OUTPUT, p_name])
             portfolios_file_path = os.path.sep.join([p, portfolio_file_name])
             portfolios = generate_portfolios(portfolios_file_path)
             generate_pipelines(p_name, portfolios, output_path)
@@ -496,11 +499,15 @@ def get_stacks():
 @cli.command()
 @click.argument('p', type=click.Path(exists=True))
 def deploy(p):
+    do_deploy(p)
+
+
+def do_deploy(p):
     stacks = get_stacks()
     for portfolio_file_name in os.listdir(p):
         if '.yaml' in portfolio_file_name:
             p_name = portfolio_file_name.split(".")[0]
-            output_path = os.path.sep.join(["output", p_name])
+            output_path = os.path.sep.join([OUTPUT, p_name])
             portfolios_file_path = os.path.sep.join([p, portfolio_file_name])
             portfolios = generate_portfolios(portfolios_file_path)
             for portfolio in portfolios.get('Portfolios'):
@@ -529,7 +536,7 @@ def deploy(p):
 def get_hash_for_template(template):
     hasher = hashlib.md5()
     hasher.update(str.encode(template))
-    return "{}{}".format('a', hasher.hexdigest())
+    return "{}{}".format(HASH_PREFIX, hasher.hexdigest())
 
 
 def run_deploy_for_component_groups(group_name, path, portfolio, product, version, stacks):
