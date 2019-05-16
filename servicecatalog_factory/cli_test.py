@@ -68,9 +68,6 @@ def fake_portfolio(fake_component):
         "Components": [
             fake_component
         ],
-        "ComponentGroups": [
-            fake_component
-        ],
     }
 
 
