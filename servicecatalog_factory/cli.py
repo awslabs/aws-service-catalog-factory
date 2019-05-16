@@ -860,135 +860,90 @@ def delete_stack_from_a_regions(stack_name, region):
 
 
 @cli.command()
-@click.argument('p', type=click.Path(exists=True))
-def demo(p):
-    do_demo(p)
+def quick_start():
+    do_quick_start()
 
 
-def do_demo(p):
+def do_quick_start():
     click.echo("Starting demo")
     click.echo("Setting up your config")
-    config_yaml = 'config.yaml'
-    if os.path.exists(os.path.sep.join([p, config_yaml])):
-        click.echo('Using config.yaml')
-    else:
-        shutil.copy2(
-            resolve_from_site_packages(
-                'example-config-small.yaml'
-            ),
-            os.path.sep.join([p, config_yaml])
+    region = os.environ.get("AWS_DEFAULT_REGION")
+    content = yaml.safe_dump({
+        "regions": [
+            'eu-west-1',
+            'eu-west-2',
+            'eu-west-3'
+        ]
+    })
+    with betterboto_client.ClientContextManager('ssm') as ssm:
+        ssm.put_parameter(
+            Name=CONFIG_PARAM_NAME,
+            Type='String',
+            Value=content,
+            Overwrite=True,
         )
-    do_upload_config(os.path.sep.join([p, config_yaml]))
     click.echo("Finished setting up your config")
-    do_bootstrap()
-    commit_id_to_wait_for = add_or_update_file_in_branch_for_repo(
-        'master',
-        'portfolios/demo.yaml',
-        read_from_site_packages('portfolios/example-simple.yaml'),
-        'ServiceCatalogFactory'
-    )
-    click.echo('Waiting for the pipeline to finish')
-    wait_for_pipeline(commit_id_to_wait_for, 'servicecatalog-factory-pipeline')
-    product_name = 'account-iam'
-    with betterboto_client.ClientContextManager('codecommit') as codecommit:
-        response = codecommit.list_repositories()
-        repo_name = product_name
-        if repo_name not in [r.get('repositoryName') for r in response.get('repositories', [])]:
-            click.echo('Creating {} repository'.format(repo_name))
-            codecommit.create_repository(
-                repositoryName=repo_name,
-            )
-        commit_id_to_wait_for = add_or_update_file_in_branch_for_repo(
-            'v1',
-            'product.template.yaml',
-            requests.get(
-                'https://raw.githubusercontent.com/eamonnfaherty/cloudformation-templates/master/iam_admin_role/product.template.yaml'
-            ).text,
-            repo_name
-        )
-    wait_for_pipeline(commit_id_to_wait_for, 'demo-central-it-team-portfolio-account-iam-v1-pipeline')
-    product_created = False
-    with betterboto_client.ClientContextManager('servicecatalog') as servicecatalog:
-        response = servicecatalog.search_products_as_admin()
-        for product_view_detail in response.get('ProductViewDetails', []):
-            if product_view_detail.get('ProductViewSummary').get('Name') == product_name:
-                product_created = True
-                click.echo("Created AWS ServiceCatalog product: {}".format(
-                    product_view_detail.get('ProductViewSummary').get('ProductId')
-                ))
-    assert product_created, 'Product was not created!'
-    click.echo("Finished demo")
+    # do_bootstrap()
 
-
-def add_or_update_file_in_branch_for_repo(branch_name, file_path, contents, repo_name):
-    with betterboto_client.ClientContextManager('codecommit') as codecommit:
-        response = codecommit.list_branches(repositoryName=repo_name)
-        if len(response.get('branches')) == 0:
-            click.echo("Adding simple example portfolio")
-            response = codecommit.create_commit(
-                repositoryName=repo_name,
-                branchName=branch_name,
-                putFiles=[
-                    {
-                        'filePath': file_path,
-                        'fileMode': 'NORMAL',
-                        'fileContent': contents,
-                    },
-                ],
-            )
-            commit_id_to_wait_for = response.get('commitId')
-        else:
-            click.echo("Updating simple example portfolio")
-            response = codecommit.get_branch(
-                repositoryName=repo_name,
-                branchName=branch_name,
-            )
-            commitId = response.get('branch').get('commitId')
-            try:
-                response = codecommit.put_file(
-                    repositoryName=repo_name,
-                    branchName=branch_name,
-                    fileContent=contents,
-                    parentCommitId=commitId,
-                    filePath=file_path,
-                    fileMode='NORMAL',
-                    commitMessage='adding',
-                )
-                commit_id_to_wait_for = response.get('commitId')
-                click.echo("Finished updating simple example portfolio")
-            except codecommit.exceptions.SameFileContentException as e:
-                commit_id_to_wait_for = commitId
-                click.echo("NO updating was needed to simple example portfolio")
-    return commit_id_to_wait_for
-
-
-def wait_for_pipeline(commit_id_to_wait_for, pipeline_name):
-    pipeline_execution = None
-    with betterboto_client.ClientContextManager('codepipeline') as codepipeline:
-        while pipeline_execution is None:
-            click.echo('Looking for pipeline execution')
-            time.sleep(1)
-            response = codepipeline.list_pipeline_executions(
-                pipelineName=pipeline_name
-            )
-            for pipeline_execution_summary in response.get('pipelineExecutionSummaries', []):
-                for source_revision in pipeline_execution_summary.get('sourceRevisions', []):
-                    if source_revision.get('revisionId') == commit_id_to_wait_for:
-                        pipeline_execution = pipeline_execution_summary
-    click.echo("Found pipeline execution")
-    pipeline_execution['status'] = 'InProgress'
-    while pipeline_execution.get('status') == 'InProgress':
-        click.echo("Waiting for execution to complete")
-        time.sleep(1)
-        response = codepipeline.get_pipeline_execution(
-            pipelineName=pipeline_name,
-            pipelineExecutionId=pipeline_execution.get('pipelineExecutionId')
-        )
-        pipeline_execution = response.get('pipelineExecution')
-    if pipeline_execution.get('status') == 'Succeeded':
-        click.echo("Pipeline finished running")
+    if os.path.exists('ServiceCatalogFactory') and False:
+        click.echo("Found ServiceCatalogFactory so not cloning or seeding")
     else:
-        raise Exception('Pipeline failed to run: {}'.format(pipeline_execution))
+        click.echo("Cloning for you")
+        command = "git clone " \
+                  "--config 'credential.helper=!aws codecommit credential-helper $@' " \
+                  "--config 'credential.UseHttpPath=true' " \
+                  f"https://git-codecommit.{region}.amazonaws.com/v1/repos/ServiceCatalogFactory"
+        # os.system(command)
+        click.echo("Seeding")
+        # os.makedirs(
+        #     os.path.sep.join([
+        #         'ServiceCatalogFactory',
+        #         'portfolios'
+        #     ])
+        # )
+        manifest = Template(
+            read_from_site_packages(os.path.sep.join(["portfolios", "example-quickstart.yaml"]))
+        ).render()
+        open(os.path.sep.join(["ServiceCatalogFactory", "portfolios", "demo.yaml"]), 'w').write(
+            manifest
+        )
+        click.echo("Pushing manifest")
+        # os.system("cd ServiceCatalogFactory && git add . && git commit -am 'initial add' && git push")
+
+        map = {
+            'account-vending-account-creation': {
+                'owner_and_repo': 'awslabs/aws-service-catalog-factory',
+                'branch': 'trunk',
+                'directory': 'account-vending/account-creation-product',
+            },
+            'account-vending-account-bootstrap-shared': {
+                'owner_and_repo': 'awslabs/aws-service-catalog-factory',
+                'branch': 'trunk',
+                'directory': 'account-vending/account-bootstrap-shared-product',
+            },
+            'account-vending-account-creation-shared': {
+                'owner_and_repo': 'awslabs/aws-service-catalog-factory',
+                'branch': 'trunk',
+                'directory': 'account-vending/account-creation-shared-product',
+            },
+        }
+
+        for product_name in [
+            'account-vending-account-creation',
+            'account-vending-account-bootstrap-shared',
+            'account-vending-account-creation-shared',
+        ]:
+            os.system(f'aws codecommit create-repository --repository-name {product_name}')
+            command = "git clone " \
+                      "--config 'credential.helper=!aws codecommit credential-helper $@' " \
+                      "--config 'credential.UseHttpPath=true' " \
+                      f"https://git-codecommit.{region}.amazonaws.com/v1/repos/{product_name}"
+            os.system(command)
+            source = "https://github.com/{owner_and_repo}/{branch}/{directory}".format(**map.get(product_name))
+            os.system(f"svn export {source} {product_name} --force")
+            os.system(f"cd {product_name} && git add . && git commit -am 'initial add' && git push")
+
+    click.echo("All done!")
 
 
 if __name__ == "__main__":

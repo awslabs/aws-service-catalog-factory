@@ -634,11 +634,12 @@ def test_delete_stack_from_a_regions():
 
 
 @pytest.mark.skip
-def test_demo():
+def test_quick_start():
     pass
 
+
 @pytest.mark.skip
-def test_do_demo():
+def test_do_test_quick_start():
     pass
 
 
