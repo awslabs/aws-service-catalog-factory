@@ -8,54 +8,6 @@ schema;seq_tags:
     Value:
       type: str
 
-schema;map_componentgroups:
-  type: map
-  mapping:
-    Name:
-      type: str
-    Owner:
-      type: str
-    Description:
-      type: str
-    Distributor:
-      type: str
-    SupportDescription:
-      type: str
-    SupportEmail:
-      type: str
-      pattern: .+@.+
-    SupportUrl:
-      type: str
-      pattern: https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+
-    Tags:
-      type: seq
-      sequence:
-        - include: seq_tags
-    Versions:
-      type: seq
-      sequence:
-        - type: map
-          mapping:
-            Name:
-              type: str
-            Description:
-              type: str
-            Active:
-              type: bool
-            Tags:
-              type: seq
-              sequence:
-                - include: seq_tags
-            Chains:
-              type: seq
-              sequence:
-                - type: map
-                  mapping:
-                    Name:
-                      type: str
-                    Version:
-                      type: str
-
 schema;map_component:
   type: map
   mapping:
@@ -177,10 +129,6 @@ mapping:
             type: seq
             sequence:
               - include: seq_tags
-          ComponentGroups:
-            type: seq
-            sequence:
-              - include: map_componentgroups
           Components:
             type: seq
             sequence:

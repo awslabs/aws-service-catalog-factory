@@ -19,6 +19,9 @@ import shutil
 import pkg_resources
 import requests
 
+OUTPUT = "output"
+HASH_PREFIX = 'a'
+
 CONFIG_PARAM_NAME = "/servicecatalog-factory/config"
 PUBLISHED_VERSION = pkg_resources.require("aws-service-catalog-factory")[0].version
 VERSION = PUBLISHED_VERSION
@@ -334,17 +337,6 @@ def generate_pipelines(portfolios_groups_name, portfolios, output_path):
                     portfolio,
                 )
                 portfolio_ids_by_region.update(portfolio_ids_by_region_for_component)
-        for product in portfolio.get('ComponentGroups', []):
-            for version in product.get('Versions'):
-                portfolio_ids_by_region_for_group, product_ids_by_region = generate_pipeline(
-                    ENV.get_template(COMPONENT_GROUP),
-                    portfolios_groups_name,
-                    output_path,
-                    version,
-                    product,
-                    portfolio,
-                )
-                portfolio_ids_by_region.update(portfolio_ids_by_region_for_group)
         threads = []
         for region in all_regions:
             process = Thread(
@@ -448,7 +440,7 @@ def generate(p):
     for portfolio_file_name in os.listdir(p):
         if '.yaml' in portfolio_file_name:
             p_name = portfolio_file_name.split(".")[0]
-            output_path = os.path.sep.join(["output", p_name])
+            output_path = os.path.sep.join([OUTPUT, p_name])
             portfolios_file_path = os.path.sep.join([p, portfolio_file_name])
             portfolios = generate_portfolios(portfolios_file_path)
             generate_pipelines(p_name, portfolios, output_path)
@@ -496,117 +488,40 @@ def get_stacks():
 @cli.command()
 @click.argument('p', type=click.Path(exists=True))
 def deploy(p):
+    do_deploy(p)
+
+
+def do_deploy(p):
     stacks = get_stacks()
     for portfolio_file_name in os.listdir(p):
         if '.yaml' in portfolio_file_name:
             p_name = portfolio_file_name.split(".")[0]
-            output_path = os.path.sep.join(["output", p_name])
+            output_path = os.path.sep.join([OUTPUT, p_name])
             portfolios_file_path = os.path.sep.join([p, portfolio_file_name])
             portfolios = generate_portfolios(portfolios_file_path)
             for portfolio in portfolios.get('Portfolios'):
                 for product in portfolio.get('Components', []):
                     for version in product.get('Versions', []):
+                        friendly_uid = "-".join([
+                            p_name, portfolio.get('DisplayName'), product.get('Name'), version.get('Name')
+                        ])
+                        first_run_of_stack = stacks.get(friendly_uid, False) is False
+                        LOGGER.info('Running deploy for: {}. Is first run: {}'.format(
+                            friendly_uid, first_run_of_stack
+                        ))
                         run_deploy_for_component(
-                            p_name,
                             output_path,
-                            portfolio,
-                            product,
-                            version,
-                            stacks,
-                        )
-                for product in portfolio.get('ComponentGroups', []):
-                    for version in product.get('Versions', []):
-                        run_deploy_for_component_groups(
-                            p_name,
-                            output_path,
-                            portfolio,
-                            product,
-                            version,
-                            stacks,
+                            friendly_uid,
                         )
 
 
 def get_hash_for_template(template):
     hasher = hashlib.md5()
     hasher.update(str.encode(template))
-    return "{}{}".format('a', hasher.hexdigest())
+    return "{}{}".format(HASH_PREFIX, hasher.hexdigest())
 
 
-def run_deploy_for_component_groups(group_name, path, portfolio, product, version, stacks):
-    friendly_uid = "-".join([
-        group_name, portfolio.get('DisplayName'), product.get('Name'), version.get('Name')
-    ])
-    first_run_of_stack = stacks.get(friendly_uid, False) is False
-    LOGGER.info('Running deploy for: {}. Is first run: {}'.format(
-        friendly_uid, first_run_of_stack
-    ))
-
-    staging_template_path = os.path.sep.join([path, "{}.template.yaml".format(friendly_uid)])
-    with open(staging_template_path) as staging_template:
-        staging_template_contents = staging_template.read()
-    s3_bucket_name = get_bucket_name()
-    s3 = boto3.resource('s3')
-    template_path = "{}/{}/product.template.yaml".format(product.get('Name'), version.get('Name'))
-    obj = s3.Object(s3_bucket_name, template_path)
-    obj.put(Body=staging_template_contents)
-
-    with betterboto_client.ClientContextManager('servicecatalog') as service_catalog:
-        product_to_find = product.get('Name')
-
-        response = service_catalog.search_products_as_admin_single_page(
-            Filters={'FullTextSearch': [product_to_find]}
-        )
-        product_id = None
-        for product_view_details in response.get('ProductViewDetails'):
-            product_view = product_view_details.get('ProductViewSummary')
-            if product_view.get('Name') == product_to_find:
-                LOGGER.info('Found product: {}'.format(product_view))
-                product_id = product_view.get("ProductId")
-                break
-
-        assert product_id is not None, "Could not find product"
-
-        found = False
-        response = service_catalog.list_provisioning_artifacts_single_page(ProductId=product_id)
-        for provisioning_artifact_detail in response.get('ProvisioningArtifactDetails'):
-            if provisioning_artifact_detail.get('Name') == version.get("Name"):
-                found = True
-
-        if not found:
-            LOGGER.info("Creating version: {}. It didn't exist".format(version.get("Name")))
-            create_args = {
-                "ProductId": product_id,
-                "Parameters": {
-                    'Name': version.get('Name'),
-                    'Info': {
-                        "LoadTemplateFromURL": "https://s3.amazonaws.com/{}/{}".format(
-                            s3_bucket_name, template_path
-                        )
-                    },
-                    'Type': 'CLOUD_FORMATION_TEMPLATE'
-                }
-            }
-            if version.get("Description"):
-                create_args['Parameters']['Description'] = version.get("Description")
-            service_catalog.create_provisioning_artifact(**create_args)
-        else:
-            LOGGER.info(
-                'Skipped creating version: {}. It already exists'.format(version.get("Name"))
-            )
-
-
-def run_deploy_for_component(group_name, path, portfolio, product, version, stacks):
-    friendly_uid = "-".join([
-        group_name,
-        portfolio.get('DisplayName'),
-        product.get('Name'),
-        version.get('Name')
-    ])
-    first_run_of_stack = stacks.get(friendly_uid, False) is False
-    LOGGER.info(
-        'Running deploy for: {}. Is first run: {}'.format(friendly_uid, first_run_of_stack)
-    )
-
+def run_deploy_for_component(path, friendly_uid):
     staging_template_path = os.path.sep.join([path, "{}.template.yaml".format(friendly_uid)])
     with open(staging_template_path) as staging_template:
         staging_template_contents = staging_template.read()
@@ -690,6 +605,10 @@ def nuke_stack(portfolio_name, product, version):
 @cli.command()
 @click.argument('branch-name')
 def bootstrap_branch(branch_name):
+    do_bootstrap_branch(branch_name)
+
+
+def do_bootstrap_branch(branch_name):
     global VERSION
     VERSION = "https://github.com/awslabs/aws-service-catalog-factory/archive/{}.zip".format(branch_name)
     do_bootstrap()
@@ -791,6 +710,10 @@ def do_bootstrap():
 @click.argument('complexity', default='simple')
 @click.argument('p', type=click.Path(exists=True))
 def seed(complexity, p):
+    do_seed(complexity, p)
+
+
+def do_seed(complexity, p):
     target = os.path.sep.join([p, 'portfolios'])
     if not os.path.exists(target):
         os.makedirs(target)
@@ -805,25 +728,11 @@ def seed(complexity, p):
 
 
 @cli.command()
-@click.argument('p', type=click.Path(exists=True))
-def reseed(p):
-    for f in ['requirements.txt', 'cli.py']:
-        shutil.copy2(
-            resolve_from_site_packages(f),
-            os.path.sep.join([p, f])
-        )
-    for d in ['templates']:
-        target = os.path.sep.join([p, d])
-        if os.path.exists(target):
-            shutil.rmtree(target)
-        shutil.copytree(
-            resolve_from_site_packages(d),
-            target
-        )
-
-
-@cli.command()
 def version():
+    do_version()
+
+
+def do_version():
     click.echo("cli version: {}".format(VERSION))
     with betterboto_client.ClientContextManager('ssm', region_name=HOME_REGION) as ssm:
         response = ssm.get_parameter(
@@ -866,6 +775,10 @@ def do_upload_config(p):
 @cli.command()
 @click.argument('p', type=click.Path(exists=True))
 def fix_issues(p):
+    do_fix_issues(p)
+
+
+def do_fix_issues(p):
     fix_issues_for_portfolio(p)
 
 
@@ -911,6 +824,10 @@ def fix_issues_for_portfolio(p):
 @cli.command()
 @click.argument('stack-name')
 def delete_stack_from_all_regions(stack_name):
+    do_delete_stack_from_all_regions(stack_name)
+
+
+def do_delete_stack_from_all_regions(stack_name):
     all_regions = get_regions()
     if click.confirm(
             "We are going to delete the stack: {} from all regions: {}.  Are you sure?".format(
@@ -945,6 +862,10 @@ def delete_stack_from_a_regions(stack_name, region):
 @cli.command()
 @click.argument('p', type=click.Path(exists=True))
 def demo(p):
+    do_demo(p)
+
+
+def do_demo(p):
     click.echo("Starting demo")
     click.echo("Setting up your config")
     config_yaml = 'config.yaml'

@@ -91,22 +91,3 @@ Portfolios:
             Source:
               Configuration:
                 BranchName: v1
-    ComponentGroups:
-      - Name: development-account
-        Owner: ccoe@some-customer.com
-        Description: the resources resources needed to create a development account
-        Distributor: ccoe
-        SupportDescription: email us with the issue
-        SupportEmail: ccoe-support@some-customer.com
-        SupportUrl: http://jira.ccoe-support.some-customer.com
-        Tags:
-        - Key: account-type
-          Value: development
-        Versions:
-          - Name: v1
-            Description: MVP for a development account.
-            Chains:
-              - Name: development-account-iam
-                Version: v1
-              - Name: development-account-networking
-                Version: v1
