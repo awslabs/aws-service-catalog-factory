@@ -19,7 +19,7 @@ this you will need to copy the output from running org-bootstrap as the input fo
 ### Preparing the shared account creation product
 You must add the ```account-creation-shared-product``` to your servicecatalog-factory portfolio:
 ```yaml
-    Components:
+    Components:      
       - Name: account-vending-account-creation-shared
         Owner: central-it@customer.com
         Description: lambda to used to back custom resources that create an AWS account and move it to an ou
