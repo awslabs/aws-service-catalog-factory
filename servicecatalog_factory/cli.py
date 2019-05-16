@@ -883,7 +883,7 @@ def do_quick_start():
             Overwrite=True,
         )
     click.echo("Finished setting up your config")
-    # do_bootstrap()
+    do_bootstrap()
 
     if os.path.exists('ServiceCatalogFactory') and False:
         click.echo("Found ServiceCatalogFactory so not cloning or seeding")
@@ -893,14 +893,14 @@ def do_quick_start():
                   "--config 'credential.helper=!aws codecommit credential-helper $@' " \
                   "--config 'credential.UseHttpPath=true' " \
                   f"https://git-codecommit.{region}.amazonaws.com/v1/repos/ServiceCatalogFactory"
-        # os.system(command)
+        os.system(command)
         click.echo("Seeding")
-        # os.makedirs(
-        #     os.path.sep.join([
-        #         'ServiceCatalogFactory',
-        #         'portfolios'
-        #     ])
-        # )
+        os.makedirs(
+            os.path.sep.join([
+                'ServiceCatalogFactory',
+                'portfolios'
+            ])
+        )
         manifest = Template(
             read_from_site_packages(os.path.sep.join(["portfolios", "example-quickstart.yaml"]))
         ).render()
@@ -908,7 +908,7 @@ def do_quick_start():
             manifest
         )
         click.echo("Pushing manifest")
-        # os.system("cd ServiceCatalogFactory && git add . && git commit -am 'initial add' && git push")
+        os.system("cd ServiceCatalogFactory && git add . && git commit -am 'initial add' && git push")
 
         map = {
             'account-vending-account-creation': {
