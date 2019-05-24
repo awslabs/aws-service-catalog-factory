@@ -165,12 +165,11 @@ def create_product(service_catalog, portfolio, product, s3_bucket_name):
         response = service_catalog.search_products_as_admin_single_page(
             # Filters={'SourceProductId': [product_id]}
         )
-        time.sleep(1)
-        product_view_details = response.get('ProductViewDetails')
-        for product_view_detail in product_view_details:
-            LOGGER.info(f"Comparing {product_view_detail.get('ProductViewSummary').get('ProductId')} with {product_id}")
-            found = found or product_view_detail.get('ProductViewSummary').get('ProductId') == product_id
-            break
+        time.sleep(5)
+        products_ids = [
+            product_view_detail.get('ProductViewSummary').get('ProductId') for product_view_detail in response.get('ProductViewDetails')
+        ]
+        LOGGER.info(f'Looking for {product_id} in {product_ids}')
 
     service_catalog.associate_product_with_portfolio(
         ProductId=product_id,
