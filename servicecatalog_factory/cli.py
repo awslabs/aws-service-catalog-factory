@@ -163,8 +163,9 @@ def create_product(service_catalog, portfolio, product, s3_bucket_name):
     found = False
     while not found:
         response = service_catalog.search_products_as_admin_single_page(
-            Filters={'SourceProductId': [product_id]}
+            # Filters={'SourceProductId': [product_id]}
         )
+        LOGGER.info(response)
         time.sleep(1)
         product_view_details = response.get('ProductViewDetails')
         for product_view_detail in product_view_details:
