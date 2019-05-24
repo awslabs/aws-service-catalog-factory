@@ -169,7 +169,7 @@ def create_product(service_catalog, portfolio, product, s3_bucket_name):
         products_ids = [
             product_view_detail.get('ProductViewSummary').get('ProductId') for product_view_detail in response.get('ProductViewDetails')
         ]
-        LOGGER.info(f'Looking for {product_id} in {product_ids}')
+        LOGGER.info(f'Looking for {product_id} in {products_ids}')
 
     service_catalog.associate_product_with_portfolio(
         ProductId=product_id,
