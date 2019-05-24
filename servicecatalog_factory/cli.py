@@ -162,6 +162,7 @@ def create_product(service_catalog, portfolio, product, s3_bucket_name):
     found = False
     while not found:
         response = service_catalog.search_products_as_admin_single_page(
+            PortfolioId=portfolio.get('Id'),
             Filters={'FullTextSearch': [args.get("Name")]}
         )
         time.sleep(1)
@@ -554,7 +555,7 @@ def nuke_product_version(portfolio_name, product, version):
             LOGGER.info('Portfolio_id found: {}'.format(portfolio_id))
             product_name = "-".join([product, version])
             LOGGER.info('Looking for product: {}'.format(product_name))
-            result = product_exists(servicecatalog, {'Name': product}, PortfolioId=portfolio_id)
+            result = product_exists(servicecatalog, {'Name': product}, portfolio_id)
             if result is None:
                 click.echo("Could not find product: {}".format(product))
             else:
