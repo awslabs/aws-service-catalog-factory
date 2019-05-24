@@ -112,10 +112,11 @@ def create_portfolio(service_catalog, portfolio_searching_for, portfolios_groups
     ).get('PortfolioDetail').get('Id')
 
 
-def product_exists(service_catalog, product, **kwargs):
+def product_exists(service_catalog, product, portfolio_id):
     product_to_find = product.get('Name')
     LOGGER.info('Searching for product for: {}'.format(product_to_find))
     response = service_catalog.search_products_as_admin_single_page(
+        PortfolioId=portfolio_id,
         Filters={'FullTextSearch': [product_to_find]}
     )
     for product_view_details in response.get('ProductViewDetails'):
@@ -211,7 +212,7 @@ def ensure_portfolio(portfolios_groups_name, portfolio, service_catalog):
 def ensure_product(product, portfolio, service_catalog):
     s3_bucket_name = get_bucket_name()
 
-    remote_product = product_exists(service_catalog, product)
+    remote_product = product_exists(service_catalog, product, portfolio.get('Id'))
     if remote_product is None:
         remote_product = create_product(
             service_catalog,
