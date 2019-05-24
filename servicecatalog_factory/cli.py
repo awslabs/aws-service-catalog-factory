@@ -112,10 +112,11 @@ def create_portfolio(service_catalog, portfolio_searching_for, portfolios_groups
     ).get('PortfolioDetail').get('Id')
 
 
-def product_exists(service_catalog, product, **kwargs):
+def product_exists(service_catalog, product, portfolio_id):
     product_to_find = product.get('Name')
     LOGGER.info('Searching for product for: {}'.format(product_to_find))
     response = service_catalog.search_products_as_admin_single_page(
+        PortfolioId=portfolio_id,
         Filters={'FullTextSearch': [product_to_find]}
     )
     for product_view_details in response.get('ProductViewDetails'):
@@ -155,18 +156,18 @@ def create_product(service_catalog, portfolio, product, s3_bucket_name):
     )
     product_view = response.get('ProductViewDetail').get('ProductViewSummary')
     product_id = product_view.get('ProductId')
+    LOGGER.info(f"Created product: {product_id}")
 
     # create_product is not a synchronous request and describe product doesnt work here
     LOGGER.info('Waiting for the product to register: {}'.format(product.get('Name')))
-    found = False
-    while not found:
-        response = service_catalog.search_products_as_admin_single_page(
-            Filters={'FullTextSearch': [args.get("Name")]}
-        )
-        time.sleep(1)
-        product_view_details = response.get('ProductViewDetails')
-        for product_view_detail in product_view_details:
-            found = product_view_detail.get('ProductViewSummary').get('ProductId') == product_id
+    while True:
+        response = service_catalog.search_products_as_admin_single_page()
+        time.sleep(2)
+        products_ids = [
+            product_view_detail.get('ProductViewSummary').get('ProductId') for product_view_detail in response.get('ProductViewDetails')
+        ]
+        LOGGER.info(f'Looking for {product_id} in {products_ids}')
+        if product_id in products_ids:
             break
 
     service_catalog.associate_product_with_portfolio(
@@ -211,7 +212,7 @@ def ensure_portfolio(portfolios_groups_name, portfolio, service_catalog):
 def ensure_product(product, portfolio, service_catalog):
     s3_bucket_name = get_bucket_name()
 
-    remote_product = product_exists(service_catalog, product)
+    remote_product = product_exists(service_catalog, product, portfolio.get('Id'))
     if remote_product is None:
         remote_product = create_product(
             service_catalog,
@@ -553,7 +554,7 @@ def nuke_product_version(portfolio_name, product, version):
             LOGGER.info('Portfolio_id found: {}'.format(portfolio_id))
             product_name = "-".join([product, version])
             LOGGER.info('Looking for product: {}'.format(product_name))
-            result = product_exists(servicecatalog, {'Name': product}, PortfolioId=portfolio_id)
+            result = product_exists(servicecatalog, {'Name': product}, portfolio_id)
             if result is None:
                 click.echo("Could not find product: {}".format(product))
             else:
