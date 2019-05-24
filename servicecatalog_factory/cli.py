@@ -161,10 +161,8 @@ def create_product(service_catalog, portfolio, product, s3_bucket_name):
     # create_product is not a synchronous request and describe product doesnt work here
     LOGGER.info('Waiting for the product to register: {}'.format(product.get('Name')))
     while True:
-        response = service_catalog.search_products_as_admin_single_page(
-            # Filters={'SourceProductId': [product_id]}
-        )
-        time.sleep(5)
+        response = service_catalog.search_products_as_admin_single_page()
+        time.sleep(2)
         products_ids = [
             product_view_detail.get('ProductViewSummary').get('ProductId') for product_view_detail in response.get('ProductViewDetails')
         ]
