@@ -249,6 +249,7 @@ def test_product_exists(mocker, sut):
         'Name': 'foo'
     }
     expected_result = product
+    portfolio_id = -1
 
     service_catalog.search_products_as_admin_single_page.return_value = {
         'ProductViewDetails': [
@@ -264,7 +265,7 @@ def test_product_exists(mocker, sut):
     }
 
     # exercise
-    actual_result = sut.product_exists(service_catalog, product)
+    actual_result = sut.product_exists(service_catalog, product, portfolio_id)
 
     # verify
     assert actual_result == expected_result
@@ -277,6 +278,7 @@ def test_product_exists_when_it_doesnt(mocker, sut):
         'Name': 'foo'
     }
     expected_result = None
+    portfolio_id = -1
 
     service_catalog.search_products_as_admin_single_page.return_value = {
         'ProductViewDetails': [
@@ -289,7 +291,7 @@ def test_product_exists_when_it_doesnt(mocker, sut):
     }
 
     # exercise
-    actual_result = sut.product_exists(service_catalog, product)
+    actual_result = sut.product_exists(service_catalog, product, portfolio_id)
 
     # verify
     assert actual_result == expected_result
