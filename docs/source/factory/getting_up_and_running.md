@@ -75,12 +75,12 @@ Export variables:
 
 For linux:
 ```
-export AWS_DEFAULT_PROFILE = profilename
+export AWS_PROFILE = profilename
 export AWS_DEFAULT_REGION = region
 ```
 For Windows:
 ```
-set AWS_DEFAULT_PROFILE = profilename
+set AWS_PROFILE = profilename
 set AWS_DEFAULT_REGION = region
 ```
 Note: the profilename should be the profile name used to configure aws cli, and region should be the aws region to bootstrap the factory.
