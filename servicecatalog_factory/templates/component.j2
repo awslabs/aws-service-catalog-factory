@@ -31,7 +31,8 @@ Resources:
                 Provider: {{ Source.Provider }}
               {% if Source.Provider.lower() == 'codecommit' %}Configuration:
                 RepositoryName: {{ Source.Configuration.RepositoryName }}
-                BranchName: {{ Source.Configuration.BranchName }}{% endif %}
+                BranchName: {{ Source.Configuration.BranchName }}
+                PollForSourceChanges: {{ Source.Configuration.PollForSourceChanges or 'false' }}{% endif %}
               {% if Source.Provider.lower() == 'github' %}Configuration:
                 Owner: {{ Source['Configuration']['Owner'] }}
                 Repo: {{ Source['Configuration']['Repo'] }}
