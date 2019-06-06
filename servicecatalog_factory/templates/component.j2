@@ -6,6 +6,33 @@ Resources:
 {% if Options.ShouldCFNNag %}{% include 'tests/CFNNagBuildProject.j2' %}{% endif %}
 {% if Options.ShouldCloudformationRSpec %}{% include 'tests/CloudformationRSpecProject.j2' %}{% endif %}
 
+
+
+  PipeLineEventTrigger:
+    Type: AWS::Events::Rule
+      Properties:
+        Description: "Trigger the pipeline when there is a change to the codecommit repo"
+        EventPattern:
+          source:
+            - "aws.codecommit"
+          detail-type:
+            - "CodeCommit Repository State Change"
+          resources:
+            - !Sub "arn:aws:codecommit:${AWS::Region}:${AWS::AccountId}:{{ Source.Configuration.RepositoryName }}"
+          detail:
+            event:
+              - "referenceCreated"
+              - "referenceUpdated"
+            referenceType:
+              - branch
+            referenceName:
+              - "{{ Source.Configuration.BranchName }}"
+
+        Name: !Sub "${AWS::StackName}-event-rule"
+        State: ENABLED
+        Targets:
+          - !Sub "arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${AWS::StackName}-pipeline"
+
   Pipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
