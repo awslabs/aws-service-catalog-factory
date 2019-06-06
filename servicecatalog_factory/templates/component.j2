@@ -10,7 +10,7 @@ Resources:
   PipeLineEventTrigger:
     Type: AWS::Events::Rule
     Properties:
-      Description: "triggers ${AWS::StackName}-pipeline"
+      Description: !Sub "triggers ${AWS::StackName}-pipeline"
       EventPattern:
         source:
           - "aws.codecommit"
