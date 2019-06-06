@@ -175,6 +175,7 @@ def create_product(service_catalog, portfolio, product, s3_bucket_name):
         PortfolioId=portfolio.get('Id')
     )
 
+    # associate_product_with_portfolio is not a synchronous request
     LOGGER.info(f'Waiting for the product: {product.get("Name")} '
                 f'to be associated with the portfolio: {portfolio.get("Id")}')
     while True:
