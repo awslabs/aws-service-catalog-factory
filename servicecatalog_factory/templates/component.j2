@@ -6,6 +6,7 @@ Resources:
 {% if Options.ShouldCFNNag %}{% include 'tests/CFNNagBuildProject.j2' %}{% endif %}
 {% if Options.ShouldCloudformationRSpec %}{% include 'tests/CloudformationRSpecProject.j2' %}{% endif %}
 
+{% if Source.Provider.lower() == 'codecommit' and Source.Configuration.get('PollForSourceChanges', 'FALSE').upper() == 'FALSE' %}
   PipeLineEventTrigger:
     Type: AWS::Events::Rule
     Properties:
@@ -31,6 +32,7 @@ Resources:
         - Arn: !Sub "arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${AWS::StackName}-pipeline"
           Id: !Sub "${AWS::StackName}-pipeline"
           RoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/servicecatalog-product-factory/CodePipelineTriggerRole"
+{% endif %}
 
   Pipeline:
     Type: AWS::CodePipeline::Pipeline
