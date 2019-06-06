@@ -93,6 +93,31 @@ Resources:
                 - servicecatalog-factory --info deploy portfolios/
       TimeoutInMinutes: 60
 
+  CodePipelineTriggerRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: CodePipelineTriggerRole
+      Path: /servicecatalog-product-factory/
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "events.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Policies:
+        - PolicyName: cwe-pipeline-execution
+          PolicyDocument:
+            Version: 2012-10-17
+            Statement:
+              - Effect: Allow
+                Action: codepipeline:StartPipelineExecution
+                Resource: !Sub "arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:*-pipeline"
+
+
+
   PipelineRole:
     Type: AWS::IAM::Role
     Properties:

@@ -6,8 +6,6 @@ Resources:
 {% if Options.ShouldCFNNag %}{% include 'tests/CFNNagBuildProject.j2' %}{% endif %}
 {% if Options.ShouldCloudformationRSpec %}{% include 'tests/CloudformationRSpecProject.j2' %}{% endif %}
 
-
-
   PipeLineEventTrigger:
     Type: AWS::Events::Rule
     Properties:
@@ -30,7 +28,9 @@ Resources:
       Name: !Sub "${AWS::StackName}-event-rule"
       State: ENABLED
       Targets:
-        - !Sub "arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${AWS::StackName}-pipeline"
+        - Arn: !Sub "arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${AWS::StackName}-pipeline"
+          Id: !Sub "${AWS::StackName}-pipeline"
+          RoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/servicecatalog-product-factory/CodePipelineTriggerRole"
 
   Pipeline:
     Type: AWS::CodePipeline::Pipeline
