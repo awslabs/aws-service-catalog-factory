@@ -10,7 +10,7 @@ Resources:
   PipeLineEventTrigger:
     Type: AWS::Events::Rule
     Properties:
-      Description: "Trigger the pipeline when there is a change to the codecommit repo"
+      Description: "triggers ${AWS::StackName}-pipeline"
       EventPattern:
         source:
           - "aws.codecommit"
@@ -26,7 +26,6 @@ Resources:
             - branch
           referenceName:
             - "{{ Source.Configuration.BranchName }}"
-      Name: !Sub "${AWS::StackName}-event-rule"
       State: ENABLED
       Targets:
         - Arn: !Sub "arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${AWS::StackName}-pipeline"
