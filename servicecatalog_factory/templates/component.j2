@@ -30,7 +30,7 @@ Resources:
       State: ENABLED
       Targets:
         - Arn: !Sub "arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${AWS::StackName}-pipeline"
-          Id: !Sub "${AWS::StackName}-pipeline"
+          Id: "sc-pipeline"
           RoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/servicecatalog-product-factory/CodePipelineTriggerRole"
 {% endif %}
 
