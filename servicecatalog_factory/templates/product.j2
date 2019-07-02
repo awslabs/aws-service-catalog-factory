@@ -1,0 +1,175 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: {{friendly_uid}}
+Resources:
+
+{% include 'tests/ValidateProject.j2' %}
+{% if Options.ShouldCFNNag %}{% include 'tests/CFNNagBuildProject.j2' %}{% endif %}
+{% if Options.ShouldCloudformationRSpec %}{% include 'tests/CloudformationRSpecProject.j2' %}{% endif %}
+
+{% if Source.Provider.lower() == 'codecommit' and Source.Configuration.get('PollForSourceChanges', 'FALSE').upper() == 'FALSE' %}
+  PipeLineEventTrigger:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: !Sub "triggers ${AWS::StackName}-pipeline"
+      EventPattern:
+        source:
+          - "aws.codecommit"
+        detail-type:
+          - "CodeCommit Repository State Change"
+        resources:
+          - !Sub "arn:aws:codecommit:${AWS::Region}:${AWS::AccountId}:{{ Source.Configuration.RepositoryName }}"
+        detail:
+          event:
+            - "referenceCreated"
+            - "referenceUpdated"
+          referenceType:
+            - branch
+          referenceName:
+            - "{{ Source.Configuration.BranchName }}"
+      State: ENABLED
+      Targets:
+        - Arn: !Sub "arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${AWS::StackName}-pipeline"
+          Id: "sc-pipeline"
+          RoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/servicecatalog-product-factory/CodePipelineTriggerRole"
+{% endif %}
+
+  Pipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodePipelineRole"
+      Name: !Sub "${AWS::StackName}-pipeline"
+      ArtifactStores:
+      {% for region in ALL_REGIONS %}
+        - Region: {{ region }}
+          ArtifactStore:
+            Type: S3
+            Location: !Sub "sc-factory-artifacts-${AWS::AccountId}-{{ region }}"
+      {% endfor %}
+
+      RestartExecutionOnUpdate: true
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: Source
+              ActionTypeId:
+                Category: Source
+                Owner: {% if Source.Provider.lower() == 'codecommit' %}AWS{% else %}ThirdParty{% endif %}
+                Version: 1
+                Provider: {{ Source.Provider }}
+              {% if Source.Provider.lower() == 'codecommit' %}Configuration:
+                RepositoryName: {{ Source.Configuration.RepositoryName }}
+                BranchName: {{ Source.Configuration.BranchName }}
+                PollForSourceChanges: {{ Source.Configuration.PollForSourceChanges or 'false' }}{% endif %}
+              {% if Source.Provider.lower() == 'github' %}Configuration:
+                Owner: {{ Source['Configuration']['Owner'] }}
+                Repo: {{ Source['Configuration']['Repo'] }}
+                Branch: {{ Source['Configuration']['Branch'] }}
+                OAuthToken: !Sub "{{ '{% raw %}{{{% endraw %}' }} resolve:secretsmanager:${friendly_uid}:SecretString:OAuthToken {{ '{% raw %}}}{% endraw %}' }}"
+                PollForSourceChanges: {{ Source['Configuration']['PollForSourceChanges'] }}{% endif %}
+              OutputArtifacts:
+                - Name: Source
+              RunOrder: 1
+              RoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliverySourceRole"
+        - Name: Tests
+          Actions:
+{% with action="Validate" %}{% include 'test-action.j2' %}{% endwith %}
+{% if Options.ShouldCFNNag %}{% with action="CFNNag" %}{% include 'test-action.j2' %}{% endwith %}{% endif %}
+{% if Options.ShouldCloudformationRSpec %}{% with action="CloudformationRSpec" %}{% include 'test-action.j2' %}{% endwith %}{% endif %}
+
+        - Name: Package
+          Actions:
+            - Name: Package
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref PackageProject
+              RunOrder: 1
+              InputArtifacts:
+                - Name: Source
+              OutputArtifacts:
+                - Name: Package
+
+        - Name: Deploy
+          Actions:
+          {% for region in ALL_REGIONS %}
+            - Name: Deploy-{{region}}
+              Region: {{ region }}
+              InputArtifacts:
+                - Name: Package
+              ActionTypeId:
+                Category: Deploy
+                Owner: AWS
+                Provider: ServiceCatalog
+                Version: '1'
+              Configuration:
+                TemplateFilePath: product.template-{{ region }}.yaml
+                ProductVersionName: {{ version.Name }}
+                ProductType: CLOUD_FORMATION_TEMPLATE{% if version.Description %}
+                ProductVersionDescription: {{ version.Description }}{% endif %}
+                ProductId: {{ product_ids_by_region[region] }}
+          {% endfor %}
+
+
+  {% if Source.Provider.lower() == 'github' %}Webhook:
+    Type: 'AWS::CodePipeline::Webhook'
+    Properties:
+      AuthenticationConfiguration:
+        SecretToken: !Sub "{{ '{% raw %}{{{% endraw %}' }}resolve:secretsmanager:${friendly_uid}:SecretString:SecretToken{{ '{% raw %}}}{% endraw %}' }}"
+      Filters:
+      - JsonPath: "$.ref"
+        MatchEquals: "refs/heads/{{ Source.Configuration.Branch }}"
+      Authentication: GITHUB_HMAC
+      TargetPipeline: !Ref Pipeline
+      TargetAction: Source
+      Name: !Sub "${AWS::StackName}-webhook"
+      TargetPipelineVersion: !GetAtt Pipeline.Version
+      RegisterWithThirdParty: 'true'
+{% endif %}
+
+  PackageProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub "${AWS::StackName}-PackageProject"
+      ServiceRole: !Sub "arn:aws:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodeRole"
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: linuxContainer
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:1.0
+        EnvironmentVariables:
+          - Name: STACK_NAME
+            Type: PLAINTEXT
+            Value: !Sub "${AWS::StackName}"
+          - Name: ACCOUNT_ID
+            Type: PLAINTEXT
+            Value: !Sub "${AWS::AccountId}"
+      Source:
+        Type: CODEPIPELINE
+        {% if version.BuildSpec %}
+        BuildSpec: |
+{{ version.BuildSpec|indent(12,true) }}
+        {% else %}
+        {% if product.BuildSpec %}
+        BuildSpec: |
+{{ product.BuildSpec|indent(12,true) }}
+        {% else %}
+        BuildSpec: |
+            version: 0.2
+            phases:
+              build:
+                commands:
+                {% for region in ALL_REGIONS %}
+                  - aws cloudformation package --template $(pwd)/product.template.yaml --s3-bucket sc-factory-artifacts-${ACCOUNT_ID}-{{ region }} --s3-prefix ${STACK_NAME} --output-template-file product.template-{{ region }}.yaml
+                {% endfor %}
+            artifacts:
+              files:
+                - '*'
+                - '**/*'
+
+        {% endif %}
+        {% endif %}
+      TimeoutInMinutes: 20

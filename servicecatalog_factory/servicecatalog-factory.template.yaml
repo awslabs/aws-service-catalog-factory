@@ -87,10 +87,7 @@ Resources:
   {% endif %}
             build:
               commands:
-                - servicecatalog-factory --info generate portfolios/
-            post_build:
-              commands:
-                - servicecatalog-factory --info deploy portfolios/
+                - servicecatalog-factory --info generate-via-luigi portfolios/
       TimeoutInMinutes: 60
 
   CodePipelineTriggerRole:

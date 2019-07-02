@@ -3,5 +3,7 @@ Jinja2==2.10.1
 click==7.0
 boto3==1.9.102
 pykwalify==1.7.0
-better-boto==0.6.14
+better-boto==0.9.0
 requests==2.21.0
+cfn_flip==1.2.1
+luigi
