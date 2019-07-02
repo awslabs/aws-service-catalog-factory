@@ -1,0 +1,298 @@
+import jinja2
+import luigi
+from betterboto import client as betterboto_client
+import logging
+import json
+import cfn_tools
+
+from . import aws
+from . import constants
+from . import utils
+
+logger = logging.getLogger(__file__)
+
+
+class CreatePortfolioTask(luigi.Task):
+    region = luigi.Parameter()
+    portfolio_group_name = luigi.Parameter()
+    display_name = luigi.Parameter()
+    description = luigi.Parameter(significant=False)
+    provider_name = luigi.Parameter(significant=False)
+    associations = luigi.ListParameter(significant=False, default=[])
+    tags = luigi.ListParameter(default=[], significant=False)
+
+    def output(self):
+        output_file = f"output/CreatePortfolioTask/{self.region}-{self.portfolio_group_name}-{self.display_name}.json"
+        return luigi.LocalTarget(output_file)
+
+    def run(self):
+        logger_prefix = f"{self.region}-{self.portfolio_group_name}-{self.display_name}"
+        with betterboto_client.ClientContextManager(
+                'servicecatalog', region_name=self.region
+        ) as service_catalog:
+            generated_portfolio_name = f"{self.portfolio_group_name}-{self.display_name}"
+            tags = []
+            for t in self.tags:
+                tags.append({
+                    "Key": t.get('Key'),
+                    "Value": t.get('Value'),
+                })
+            tags.append({"Key": "ServiceCatalogFactory:Actor", "Value": "Portfolio"})
+
+            portfolio_detail = aws.get_or_create_portfolio(
+                self.description,
+                self.provider_name,
+                generated_portfolio_name,
+                tags,
+                service_catalog
+            )
+
+        if portfolio_detail is None:
+            raise Exception("portfolio_detail was not found or created")
+
+        with self.output().open('w') as f:
+            logger.info(f"{logger_prefix}: about to write! {portfolio_detail}")
+            f.write(
+                json.dumps(
+                    portfolio_detail,
+                    indent=4,
+                    default=str,
+                )
+            )
+
+
+class CreateProductTask(luigi.Task):
+    uid = luigi.Parameter()
+    region = luigi.Parameter()
+    name = luigi.Parameter()
+    owner = luigi.Parameter(significant=False)
+    description = luigi.Parameter(significant=False)
+    distributor = luigi.Parameter(significant=False)
+    support_description = luigi.Parameter(significant=False)
+    support_email = luigi.Parameter(significant=False)
+    support_url = luigi.Parameter(significant=False)
+    tags = luigi.ListParameter(default=[], significant=False)
+
+    def output(self):
+        return luigi.LocalTarget(
+            f"output/CreateProductTask/{self.region}-{self.name}.json"
+        )
+
+    def run(self):
+        logger_prefix = f"{self.region}-{self.name}"
+        with betterboto_client.ClientContextManager(
+                'servicecatalog', region_name=self.region
+        ) as service_catalog:
+            tags = []
+            for t in self.tags:
+                tags.append({
+                    "Key": t.get('Key'),
+                    "Value": t.get('Value'),
+                })
+            tags.append({"Key": "ServiceCatalogFactory:Actor", "Value": "Product"})
+
+            s3_bucket_name = aws.get_bucket_name()
+
+            args = {
+                'ProductType': 'CLOUD_FORMATION_TEMPLATE',
+                'ProvisioningArtifactParameters': {
+                    'Name': "-",
+                    'Type': 'CLOUD_FORMATION_TEMPLATE',
+                    'Description': 'Placeholder version, do not provision',
+                    "Info": {
+                        "LoadTemplateFromURL": "https://s3.amazonaws.com/{}/{}".format(
+                            s3_bucket_name, "empty.template.yaml"
+                        )
+                    }
+                },
+                "Name": self.name,
+                "Owner": self.owner,
+                "Description": self.description,
+                "Distributor": self.distributor,
+                "SupportDescription": self.support_description,
+                "SupportEmail": self.support_email,
+                "SupportUrl": self.support_url,
+                "Tags": tags
+            }
+
+            product_view_summary = aws.get_or_create_product(self.name, args, service_catalog)
+
+            if product_view_summary is None:
+                raise Exception(f"{logger_prefix}: did not find or create a product")
+
+            product_view_summary['uid'] = self.uid
+            with self.output().open('w') as f:
+                logger.info(f"{logger_prefix}: about to write! {product_view_summary}")
+                f.write(
+                    json.dumps(
+                        product_view_summary,
+                        indent=4,
+                        default=str,
+                    )
+                )
+
+
+class AssociateProductWithPortfolioTask(luigi.Task):
+    region = luigi.Parameter()
+    portfolio_args = luigi.DictParameter()
+    product_args = luigi.DictParameter()
+
+    def output(self):
+        return luigi.LocalTarget(
+            f"output/AssociateProductWithPortfolioTask/"
+            f"{self.region}"
+            f"{self.product_args.get('name')}"
+            f"_{self.portfolio_args.get('portfolio_group_name')}"
+            f"_{self.portfolio_args.get('display_name')}.json"
+        )
+
+    def requires(self):
+        return {
+            'create_portfolio_task': CreatePortfolioTask(
+                **self.portfolio_args
+            ),
+            'create_product_task': CreateProductTask(
+                **self.product_args
+            )
+        }
+
+    def run(self):
+        logger_prefix = f"{self.region}-{self.portfolio_args.get('portfolio_group_name')}-{self.portfolio_args.get('display_name')}"
+        portfolio = json.loads(self.input().get('create_portfolio_task').open('r').read())
+        portfolio_id = portfolio.get('Id')
+        product = json.loads(self.input().get('create_product_task').open('r').read())
+        product_id = product.get('ProductId')
+        with betterboto_client.ClientContextManager(
+                'servicecatalog', region_name=self.region
+        ) as service_catalog:
+            logger.info(f"{logger_prefix}: Searching for existing association")
+
+            aws.ensure_portfolio_association_for_product(portfolio_id, product_id, service_catalog)
+
+            with self.output().open('w') as f:
+                logger.info(f"{logger_prefix}: about to write!")
+                f.write("{}")
+
+
+class EnsureProductVersionDetailsCorrect(luigi.Task):
+    region = luigi.Parameter()
+    version = luigi.DictParameter()
+    product_args = luigi.DictParameter()
+
+    def output(self):
+        return luigi.LocalTarget(
+            f"output/EnsureProductVersionDetailsCorrect/"
+            f"{self.region}_{self.product_args.get('name')}_{self.version.get('Name')}.json"
+        )
+
+    def requires(self):
+        return {
+            'create_product_task': CreateProductTask(
+                **self.product_args
+            )
+        }
+
+    def run(self):
+        pass
+
+
+class CreateVersionPipelineTemplateTask(luigi.Task):
+    all_regions = luigi.ListParameter()
+    version = luigi.DictParameter()
+    product = luigi.DictParameter()
+
+    products_args_by_region = luigi.DictParameter()
+
+    def output(self):
+        return luigi.LocalTarget(
+            f"output/CreateVersionPipelineTemplateTask/"
+            f"{self.product.get('Name')}_{self.version.get('Name')}.template.yaml"
+        )
+
+    def requires(self):
+        create_products_tasks = {}
+        for region, product_args_by_region in self.products_args_by_region.items():
+            create_products_tasks[region] = CreateProductTask(
+                **product_args_by_region
+            )
+        return {
+            'create_products_tasks': create_products_tasks,
+        }
+
+    def run(self):
+        logger_prefix = f"{self.product.get('Name')}-{self.version.get('Name')}"
+        logger.info(f"{logger_prefix} - Getting product id")
+
+        product_ids_by_region = {}
+        friendly_uid = None
+        for region, product_details_content in self.input().get('create_products_tasks').items():
+            product_details = json.loads(product_details_content.open('r').read())
+            product_ids_by_region[region] = product_details.get('ProductId')
+            friendly_uid = product_details.get('uid')
+
+        template = utils.ENV.get_template(constants.PRODUCT)
+
+        rendered = template.render(
+            friendly_uid=friendly_uid,
+            version=self.version,
+            product=self.product,
+            Options=utils.merge(self.product.get('Options', {}), self.version.get('Options', {})),
+            Source=utils.merge(self.product.get('Source', {}), self.version.get('Source', {})),
+            ALL_REGIONS=self.all_regions,
+            product_ids_by_region=product_ids_by_region,
+        )
+        rendered = jinja2.Template(rendered).render(
+            friendly_uid=friendly_uid,
+            version=self.version,
+            product=self.product,
+            Options=utils.merge(self.product.get('Options', {}), self.version.get('Options', {})),
+            Source=utils.merge(self.product.get('Source', {}), self.version.get('Source', {})),
+            ALL_REGIONS=self.all_regions,
+            product_ids_by_region=product_ids_by_region,
+        )
+
+        with self.output().open('w') as output_file:
+            output_file.write(rendered)
+
+
+class CreateVersionPipelineTask(luigi.Task):
+    all_regions = luigi.ListParameter()
+    version = luigi.DictParameter()
+    product = luigi.DictParameter()
+
+    products_args_by_region = luigi.DictParameter()
+
+    def output(self):
+        return luigi.LocalTarget(
+            f"output/CreateVersionPipelineTask/"
+            f"{self.product.get('Name')}_{self.version.get('Name')}.template.yaml"
+        )
+
+    def requires(self):
+        return CreateVersionPipelineTemplateTask(
+            all_regions=self.all_regions,
+            version=self.version,
+            product=self.product,
+            products_args_by_region=self.products_args_by_region,
+        )
+
+    def run(self):
+        logger_prefix = f"{self.product.get('Name')}-{self.version.get('Name')}"
+        template_contents = self.input().open('r').read()
+        template = cfn_tools.load_yaml(template_contents)
+        friendly_uid = template.get('Description')
+        logger.info(f"{logger_prefix} creating the stack: {friendly_uid}")
+        with betterboto_client.ClientContextManager('cloudformation') as cloudformation:
+            response = cloudformation.create_or_update(
+                StackName=friendly_uid,
+                TemplateBody=template_contents,
+            )
+
+        with self.output().open('w') as f:
+            f.write(json.dumps(
+                response,
+                indent=4,
+                default=str,
+            ))
+
+        logger.info(f"{logger_prefix} - Finished")
