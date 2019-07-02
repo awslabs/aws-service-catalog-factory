@@ -572,6 +572,7 @@ def generate_via_luigi(p):
 
                     all_tasks[f"product_{p_name}-{region}"] = create_product_task
 
+    LOGGER.info("Going to create pipeline tasks")
     for version_pipeline_to_build in version_pipelines_to_build:
         product_name = version_pipeline_to_build.get('product').get('Name')
         create_args = {
@@ -583,11 +584,13 @@ def generate_via_luigi(p):
         t = luigi_tasks_and_targets.CreateVersionPipelineTemplateTask(
             **create_args
         )
+        LOGGER.info(f"created pipeline_template_{product_name}-{version_pipeline_to_build.get('Name')}")
         all_tasks[f"pipeline_template_{product_name}-{version_pipeline_to_build.get('Name')}"] = t
 
         t = luigi_tasks_and_targets.CreateVersionPipelineTask(
             **create_args
         )
+        LOGGER.info(f"created pipeline_{product_name}-{version_pipeline_to_build.get('Name')}")
         all_tasks[f"pipeline_{product_name}-{version_pipeline_to_build.get('Name')}"] = t
 
     result = luigi.build(
