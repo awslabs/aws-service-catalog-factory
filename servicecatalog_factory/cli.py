@@ -555,20 +555,20 @@ def generate_via_luigi(p):
                             f"association_{portfolio}_{product.get('Name')}-{region}"
                         ] = associate_product_with_portfolio_task
 
-                        for version in product.get('Versions', []):
-                            version_pipelines_to_build.append({
-                                'create_product_task_args': create_product_task_args,
-                                'product': product,
-                                'version': version,
-                            })
-                            ensure_product_version_details_correct_task = luigi_tasks_and_targets.EnsureProductVersionDetailsCorrect(
-                                    region=region,
-                                    version=version,
-                                    product_args=create_product_task_args,
-                                )
-                            all_tasks[
-                                    f"version_{product.get('Name')}_{version.get('Name')}-{region}"
-                            ] = ensure_product_version_details_correct_task
+                    for version in product.get('Versions', []):
+                        version_pipelines_to_build.append({
+                            'create_product_task_args': create_product_task_args,
+                            'product': product,
+                            'version': version,
+                        })
+                        ensure_product_version_details_correct_task = luigi_tasks_and_targets.EnsureProductVersionDetailsCorrect(
+                                region=region,
+                                version=version,
+                                product_args=create_product_task_args,
+                        )
+                        all_tasks[
+                            f"version_{product.get('Name')}_{version.get('Name')}-{region}"
+                        ] = ensure_product_version_details_correct_task
 
                     all_tasks[f"product_{p_name}-{region}"] = create_product_task
 
