@@ -386,7 +386,7 @@ def show_pipelines(p):
         elif status == "Failed":
             status = "{red}" + status + "{/red}"
         else:
-            status = "{orange}" + status + "{/orange}"
+            status = "{yellow}" + status + "{/yellow}"
         if len(result.get('sourceRevisions')) > 0:
             revision = result.get('sourceRevisions')[0]
         else:
