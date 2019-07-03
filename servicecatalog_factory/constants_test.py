@@ -1,7 +1,5 @@
 # Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-import hashlib
-
 from pytest import fixture
 
 
@@ -27,6 +25,7 @@ def test_service_catalog_factory_repo_name(sut):
     # execute
     # verify
     assert sut.SERVICE_CATALOG_FACTORY_REPO_NAME == expected_result
+
 
 def test_non_recoverable_states(sut):
     # setup

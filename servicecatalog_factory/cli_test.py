@@ -136,130 +136,6 @@ def test_get_regions(mocker, sut):
     assert actual_result == expected_result
 
 
-def test_find_portfolio(mocker, sut):
-    # setup
-    portfolio_searching_for = 'foo'
-
-    expected_response = {'DisplayName': portfolio_searching_for}
-    mock_service_catalog = mocker.Mock()
-    mock_service_catalog.list_portfolios_single_page.return_value = {
-        'PortfolioDetails': [
-            {
-                'DisplayName': "Not{}".format(portfolio_searching_for)
-            },
-            expected_response
-        ]
-    }
-
-    # exercise
-    actual_response = sut.find_portfolio(mock_service_catalog, portfolio_searching_for)
-
-    # verify
-    assert expected_response == actual_response
-
-
-def test_find_portfolio_non_matching(mocker, sut):
-    # setup
-    portfolio_searching_for = 'foo'
-
-    expected_response = {}
-    mock_service_catalog = mocker.Mock()
-    mock_service_catalog.list_portfolios_single_page.return_value = {
-        'PortfolioDetails': [
-            {
-                'DisplayName': "Not{}".format(portfolio_searching_for)
-            },
-            {
-                'DisplayName': "StillNot{}".format(portfolio_searching_for)
-            },
-        ]
-    }
-
-    # exercise
-    actual_response = sut.find_portfolio(mock_service_catalog, portfolio_searching_for)
-
-    # verify
-    assert expected_response == actual_response
-
-
-@pytest.mark.parametrize("portfolio", [({}), ({"Description": 'Niiiice'})])
-def test_create_portfolio(portfolio, mocker, sut):
-    # setup
-    portfolio_id = 'foo'
-    portfolio_searching_for = 'my-portfolio'
-    portfolios_groups_name = 'my-group'
-
-    service_catalog = mocker.Mock()
-    service_catalog.create_portfolio().get().get.return_value = portfolio_id
-    expected_result = portfolio_id
-
-    # exercise
-    actual_result = sut.create_portfolio(
-        service_catalog, portfolio_searching_for, portfolios_groups_name, portfolio
-    )
-
-    # verify
-    assert expected_result == actual_result
-    service_catalog.create_portfolio.assert_called_with(
-        DisplayName=portfolio_searching_for, ProviderName=portfolios_groups_name, **portfolio
-    )
-
-
-def test_product_exists(mocker, sut):
-    # setup
-    service_catalog = mocker.Mock()
-    product = {
-        'Name': 'foo'
-    }
-    expected_result = product
-    portfolio_id = -1
-
-    service_catalog.search_products_as_admin_single_page.return_value = {
-        'ProductViewDetails': [
-            {
-                'ProductViewSummary': {
-                    'Name': 'NotFoo'
-                }
-            },
-            {
-                'ProductViewSummary': product
-            }
-        ]
-    }
-
-    # exercise
-    actual_result = sut.product_exists(service_catalog, product, portfolio_id)
-
-    # verify
-    assert actual_result == expected_result
-
-
-def test_product_exists_when_it_doesnt(mocker, sut):
-    # setup
-    service_catalog = mocker.Mock()
-    product = {
-        'Name': 'foo'
-    }
-    expected_result = None
-    portfolio_id = -1
-
-    service_catalog.search_products_as_admin_single_page.return_value = {
-        'ProductViewDetails': [
-            {
-                'ProductViewSummary': {
-                    'Name': 'NotFoo'
-                }
-            }
-        ]
-    }
-
-    # exercise
-    actual_result = sut.product_exists(service_catalog, product, portfolio_id)
-
-    # verify
-    assert actual_result == expected_result
-
-
 @pytest.mark.parametrize("input_one, input_two, expected_results",
                          [
                              ({"hello": "world"}, {"foo": "bar"}, {"hello": "world", "foo": "bar"}),
@@ -457,7 +333,8 @@ def test_do_bootstrap_branch(mocker, sut):
     sut.do_bootstrap_branch(branch_name)
 
     # verify
-    assert sut.constants.VERSION == "https://github.com/awslabs/aws-service-catalog-factory/archive/{}.zip".format(branch_name)
+    assert sut.constants.VERSION == "https://github.com/awslabs/aws-service-catalog-factory/archive/{}.zip".format(
+        branch_name)
     mocked_do_bootstrap.assert_called_once()
 
 
@@ -554,5 +431,3 @@ def test_add_or_update_file_in_branch_for_repo():
 @pytest.mark.skip
 def test_wait_for_pipeline():
     pass
-
-

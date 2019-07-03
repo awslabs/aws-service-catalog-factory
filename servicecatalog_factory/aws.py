@@ -97,3 +97,15 @@ def ensure_portfolio_association_for_product(portfolio_id, product_id, service_c
             ProductId=product_id,
             PortfolioId=portfolio_id,
         )
+
+
+def get_product(service_catalog, product_name):
+    logger.info(f'Looking for product: {product_name}')
+    search_products_as_admin_response = service_catalog.search_products_as_admin_single_page(
+        Filters={'FullTextSearch': [product_name]}
+    )
+    for product_view_details in search_products_as_admin_response.get('ProductViewDetails'):
+        product_view_summary = product_view_details.get('ProductViewSummary')
+        if product_view_summary.get('Name') == product_name:
+            return product_view_summary
+    return None
