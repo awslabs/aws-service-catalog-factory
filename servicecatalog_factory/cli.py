@@ -2,12 +2,16 @@
 # SPDX-License-Identifier: Apache-2.0
 
 import hashlib
+import json
 import logging
 import os
-import time
+from glob import glob
+
+import colorclass
+import terminaltables
+from pathlib import Path
 
 import boto3
-import json
 import click
 import luigi
 import yaml
@@ -313,6 +317,9 @@ def generate_via_luigi(p):
         LOGGER.info(f"created pipeline_{product_name}-{version_pipeline_to_build.get('version').get('Name')}")
         all_tasks[f"pipeline_{product_name}-{version_pipeline_to_build.get('version').get('Name')}"] = t
 
+    for type in ["failure", "success", "timeout", "process_failure", "processing_time", "broken_task", ]:
+        os.makedirs(Path(constants.RESULTS_DIRECTORY) / type)
+
     result = luigi.build(
         all_tasks.values(),
         local_scheduler=True,
@@ -320,6 +327,29 @@ def generate_via_luigi(p):
         workers=10,
         log_level='INFO',
     )
+
+
+    table_data = [
+        ['Result', 'Task', 'Parameters', 'Duration'],
+
+    ]
+    table = terminaltables.AsciiTable(table_data)
+    for filename in glob('results/processing_time/*.json'):
+        result = json.loads(open(filename, 'r').read())
+        table_data.append([
+            colorclass.Color("{green}Success{/green}"),
+            result.get('task_type'),
+            json.dumps(result.get('params_for_results')),
+            result.get('duration'),
+        ])
+    click.echo(table.table)
+
+    for filename in glob('results/failure/*.json'):
+        result = json.loads(open(filename, 'r').read())
+        click.echo(colorclass.Color("{red}"+result.get('task_type')+" failed{/red}"))
+        click.echo(f"Parameters: {json.dumps(result.get('task_params'), indent=4, default=str)}")
+        click.echo("\n".join(result.get('exception_stack_trace')))
+        click.echo('')
 
 
 def get_stacks():
