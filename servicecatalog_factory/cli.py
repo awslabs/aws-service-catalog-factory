@@ -20,6 +20,7 @@ from threading import Thread
 import shutil
 
 from . import constants
+from . import aws
 from . import luigi_tasks_and_targets
 
 LOGGER = logging.getLogger()
@@ -64,110 +65,6 @@ def merge(dict1, dict2):
     return result
 
 
-def find_portfolio(service_catalog, portfolio_searching_for):
-    LOGGER.info('Searching for portfolio for: {}'.format(portfolio_searching_for))
-    response = service_catalog.list_portfolios_single_page()
-    for detail in response.get('PortfolioDetails'):
-        if detail.get('DisplayName') == portfolio_searching_for:
-            LOGGER.info('Found portfolio: {}'.format(portfolio_searching_for))
-            return detail
-    return {}
-
-
-def create_portfolio(service_catalog, portfolio_searching_for, portfolios_groups_name, portfolio):
-    LOGGER.info('Creating portfolio: {}'.format(portfolio_searching_for))
-    args = {
-        'DisplayName': portfolio_searching_for,
-        'ProviderName': portfolios_groups_name,
-    }
-    if portfolio.get('Description'):
-        args['Description'] = portfolio.get('Description')
-    return service_catalog.create_portfolio(
-        **args
-    ).get('PortfolioDetail').get('Id')
-
-
-def product_exists(service_catalog, product, portfolio_id):
-    product_to_find = product.get('Name')
-    LOGGER.info('Searching for product for: {}'.format(product_to_find))
-    response = service_catalog.search_products_as_admin_single_page(
-        PortfolioId=portfolio_id,
-        Filters={'FullTextSearch': [product_to_find]}
-    )
-    for product_view_details in response.get('ProductViewDetails'):
-        product_view = product_view_details.get('ProductViewSummary')
-        if product_view.get('Name') == product_to_find:
-            LOGGER.info('Found product: {}'.format(product_view))
-            return product_view
-
-
-def create_product(service_catalog, portfolio, product, s3_bucket_name):
-    LOGGER.info('Creating a product: {}'.format(product.get('Name')))
-    args = product.copy()
-    args.update({
-        'ProductType': 'CLOUD_FORMATION_TEMPLATE',
-        'ProvisioningArtifactParameters': {
-            'Name': "-",
-            'Type': 'CLOUD_FORMATION_TEMPLATE',
-            'Description': 'Placeholder version, do not provision',
-            "Info": {
-                "LoadTemplateFromURL": "https://s3.amazonaws.com/{}/{}".format(
-                    s3_bucket_name, "empty.template.yaml"
-                )
-            }
-        }
-    })
-    del args['Versions']
-    if args.get('Options'):
-        del args['Options']
-    if args.get('Id'):
-        del args['Id']
-    if args.get('Source'):
-        del args['Source']
-
-    LOGGER.info("Creating a product: {}".format(args))
-    response = service_catalog.create_product(
-        **args
-    )
-    product_view = response.get('ProductViewDetail').get('ProductViewSummary')
-    product_id = product_view.get('ProductId')
-    LOGGER.info(f"Created product: {product_id}")
-
-    # create_product is not a synchronous request and describe product doesnt work here
-    LOGGER.info('Waiting for the product to be created: {}'.format(product.get('Name')))
-    while True:
-        time.sleep(2)
-        response = service_catalog.search_products_as_admin_single_page()
-        products_ids = [
-            product_view_detail.get('ProductViewSummary').get('ProductId') for product_view_detail in
-            response.get('ProductViewDetails')
-        ]
-        LOGGER.info(f'Looking for {product_id} in {products_ids}')
-        if product_id in products_ids:
-            break
-
-    service_catalog.associate_product_with_portfolio(
-        ProductId=product_id,
-        PortfolioId=portfolio.get('Id')
-    )
-
-    # associate_product_with_portfolio is not a synchronous request
-    LOGGER.info(f'Waiting for the product: {product.get("Name")} '
-                f'to be associated with the portfolio: {portfolio.get("Id")}')
-    while True:
-        time.sleep(2)
-        response = service_catalog.search_products_as_admin_single_page(PortfolioId=portfolio.get('Id'))
-        products_ids = [
-            product_view_detail.get('ProductViewSummary').get('ProductId') for product_view_detail in
-            response.get('ProductViewDetails')
-        ]
-        LOGGER.info(f'Looking for {product_id} in {products_ids} for {portfolio.get("Id")}')
-        if product_id in products_ids:
-            break
-
-    return product_view
-
-
 def get_bucket_name():
     s3_bucket_url = None
     with betterboto_client.ClientContextManager(
@@ -183,170 +80,6 @@ def get_bucket_name():
                 s3_bucket_url = output.get('OutputValue')
         assert s3_bucket_url is not None, "Could not find bucket"
         return s3_bucket_url
-
-
-def ensure_portfolio(portfolios_groups_name, portfolio, service_catalog):
-    portfolio_searching_for = "{}-{}".format(portfolios_groups_name, portfolio.get('DisplayName'))
-    remote_portfolio = find_portfolio(service_catalog, portfolio_searching_for)
-    if remote_portfolio.get('Id') is None:
-        LOGGER.info("Couldn't find portfolio, creating one for: {}".format(portfolio_searching_for))
-        portfolio['Id'] = create_portfolio(
-            service_catalog,
-            portfolio_searching_for,
-            portfolios_groups_name,
-            portfolio
-        )
-    else:
-        portfolio['Id'] = remote_portfolio.get('Id')
-
-
-def ensure_product(product, portfolio, service_catalog):
-    s3_bucket_name = get_bucket_name()
-
-    remote_product = product_exists(service_catalog, product, portfolio.get('Id'))
-    if remote_product is None:
-        remote_product = create_product(
-            service_catalog,
-            portfolio,
-            product,
-            s3_bucket_name,
-        )
-    product['Id'] = remote_product.get('ProductId')
-
-
-def generate_and_run(portfolios_groups_name, portfolio, what, stack_name, region, portfolio_id):
-    LOGGER.info("Generating: {} for: {} in region: {}".format(
-        what, portfolio.get('DisplayName'), region
-    ))
-    template = ENV.get_template(what).render(
-        portfolio=portfolio, portfolio_id=portfolio_id
-    )
-    stack_name = "-".join([portfolios_groups_name, portfolio.get('DisplayName'), stack_name])
-    with betterboto_client.ClientContextManager(
-            'cloudformation', region_name=region
-    ) as cloudformation:
-        cloudformation.create_or_update(
-            StackName=stack_name,
-            TemplateBody=template,
-            Capabilities=['CAPABILITY_IAM'],
-        )
-        LOGGER.info("Finished creating/updating: {}".format(stack_name))
-
-
-def ensure_product_versions_active_is_correct(product, service_catalog):
-    LOGGER.info("Ensuring product version active setting is in sync for: {}".format(product.get('Name')))
-    product_id = product.get('Id')
-    response = service_catalog.list_provisioning_artifacts(
-        ProductId=product_id
-    )
-    for version in product.get('Versions', []):
-        LOGGER.info('Checking for version: {}'.format(version.get('Name')))
-        active = version.get('Active', True)
-        LOGGER.info("Checking through: {}".format(response))
-        for provisioning_artifact_detail in response.get('ProvisioningArtifactDetails', []):
-            if provisioning_artifact_detail.get('Name') == version.get('Name'):
-                LOGGER.info("Found matching")
-                if provisioning_artifact_detail.get('Active') != active:
-                    LOGGER.info("Active status needs to change")
-                    service_catalog.update_provisioning_artifact(
-                        ProductId=product_id,
-                        ProvisioningArtifactId=provisioning_artifact_detail.get('Id'),
-                        Active=active,
-                    )
-
-
-def generate_pipeline(template, portfolios_groups_name, output_path, version, product, portfolio):
-    LOGGER.info('Generating pipeline for {}:{}'.format(
-        portfolios_groups_name, product.get('Name')
-    ))
-    product_ids_by_region = {}
-    portfolio_ids_by_region = {}
-    all_regions = get_regions()
-    for region in all_regions:
-        with betterboto_client.ClientContextManager(
-                'servicecatalog', region_name=region
-        ) as service_catalog:
-            ensure_portfolio(portfolios_groups_name, portfolio, service_catalog)
-            portfolio_ids_by_region[region] = portfolio.get('Id')
-            ensure_product(product, portfolio, service_catalog)
-            ensure_product_versions_active_is_correct(product, service_catalog)
-            product_ids_by_region[region] = product.get('Id')
-    friendly_uid = "-".join(
-        [
-            portfolios_groups_name,
-            portfolio.get('DisplayName'),
-            product.get('Name'),
-            version.get('Name')
-        ]
-    )
-
-    rendered = template.render(
-        friendly_uid=friendly_uid,
-        portfolios_groups_name=portfolios_groups_name,
-        version=version,
-        product=product,
-        portfolio=portfolio,
-        Options=merge(product.get('Options', {}), version.get('Options', {})),
-        Source=merge(product.get('Source', {}), version.get('Source', {})),
-        ProductIdsByRegion=product_ids_by_region,
-        PortfolioIdsByRegion=portfolio_ids_by_region,
-        ALL_REGIONS=all_regions,
-    )
-    rendered = Template(rendered).render(
-        friendly_uid=friendly_uid,
-        portfolios_groups_name=portfolios_groups_name,
-        version=version,
-        product=product,
-        portfolio=portfolio,
-        Options=merge(product.get('Options', {}), version.get('Options', {})),
-        Source=merge(product.get('Source', {}), version.get('Source', {})),
-        ProductIdsByRegion=product_ids_by_region,
-        PortfolioIdsByRegion=portfolio_ids_by_region,
-        ALL_REGIONS=all_regions,
-    )
-
-    output_file_path = os.path.sep.join([output_path, friendly_uid + ".template.yaml"])
-    with open(output_file_path, 'w') as output_file:
-        output_file.write(rendered)
-
-    return portfolio_ids_by_region, product_ids_by_region
-
-
-def generate_pipelines(portfolios_groups_name, portfolios, output_path):
-    LOGGER.info('Generating pipelines for {}'.format(portfolios_groups_name))
-    os.makedirs(output_path)
-    all_regions = get_regions()
-    for portfolio in portfolios.get('Portfolios'):
-        portfolio_ids_by_region = {}
-        for product in portfolio.get('Components', []):
-            for version in product.get('Versions', []):
-                portfolio_ids_by_region_for_component, product_ids_by_region = generate_pipeline(
-                    ENV.get_template(constants.COMPONENT),
-                    portfolios_groups_name,
-                    output_path,
-                    version,
-                    product,
-                    portfolio,
-                )
-                portfolio_ids_by_region.update(portfolio_ids_by_region_for_component)
-        threads = []
-        for region in all_regions:
-            process = Thread(
-                name=region,
-                target=generate_and_run,
-                args=[
-                    portfolios_groups_name,
-                    portfolio,
-                    constants.ASSOCIATIONS,
-                    'associations',
-                    region,
-                    portfolio_ids_by_region[region]
-                ]
-            )
-            process.start()
-            threads.append(process)
-            for process in threads:
-                process.join()
 
 
 @click.group()
@@ -425,19 +158,6 @@ def check_for_external_definitions_for(portfolio, portfolio_file_name, type):
                     component['Versions'] = []
                 LOGGER.info(f"Adding external version: {version_spec.get('Name')} to {type}: {component.get('Name')}")
                 component['Versions'].append(version_spec)
-
-
-@cli.command()
-@click.argument('p', type=click.Path(exists=True))
-def generate(p):
-    LOGGER.info('Generating')
-    for portfolio_file_name in os.listdir(p):
-        if '.yaml' in portfolio_file_name:
-            p_name = portfolio_file_name.split(".")[0]
-            output_path = os.path.sep.join([constants.OUTPUT, p_name])
-            portfolios_file_path = os.path.sep.join([p, portfolio_file_name])
-            portfolios = generate_portfolios(portfolios_file_path)
-            generate_pipelines(p_name, portfolios, output_path)
 
 
 @cli.command()
@@ -709,10 +429,8 @@ def nuke_product_version(portfolio_name, product, version):
             LOGGER.info('Portfolio_id found: {}'.format(portfolio_id))
             product_name = "-".join([product, version])
             LOGGER.info('Looking for product: {}'.format(product_name))
-            result = product_exists(servicecatalog, {'Name': product}, portfolio_id)
-            if result is None:
-                click.echo("Could not find product: {}".format(product))
-            else:
+            result = aws.get_product(servicecatalog, product)
+            if result is not None:
                 product_id = result.get('ProductId')
                 LOGGER.info("p: {}".format(product_id))
 
