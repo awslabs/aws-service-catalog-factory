@@ -86,43 +86,6 @@ def test_version(sut):
     assert sut.VERSION == expected_result
 
 
-def test_bootstrap_stack_name(sut):
-    # setup
-    expected_result = 'servicecatalog-factory'
-
-    # execute
-    # verify
-    assert sut.BOOTSTRAP_STACK_NAME == expected_result
-
-
-def test_service_catalog_factory_repo_name(sut):
-    # setup
-    expected_result = 'ServiceCatalogFactory'
-
-    # execute
-    # verify
-    assert sut.SERVICE_CATALOG_FACTORY_REPO_NAME == expected_result
-
-
-def test_non_recoverable_states(sut):
-    # setup
-    expected_result = [
-        "ROLLBACK_COMPLETE",
-        'CREATE_IN_PROGRESS',
-        'ROLLBACK_IN_PROGRESS',
-        'DELETE_IN_PROGRESS',
-        'UPDATE_IN_PROGRESS',
-        'UPDATE_COMPLETE_CLEANUP_IN_PROGRESS',
-        'UPDATE_ROLLBACK_IN_PROGRESS',
-        'UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS',
-        'REVIEW_IN_PROGRESS',
-    ]
-
-    # execute
-    # verify
-    assert sut.NON_RECOVERABLE_STATES == expected_result
-
-
 def test_resolve_from_site_packages(mocker, sut):
     # setup
     what = 'asset.py'
@@ -313,68 +276,6 @@ def test_merge_case(input_one, input_two, expected_results, sut):
     assert expected_results == actual_results
 
 
-def test_get_bucket_name(mocker, sut):
-    # setup
-    expected_result = 'test-bucket'
-    mocked_betterboto_client = mocker.patch.object(sut.betterboto_client, 'ClientContextManager')
-    mocked_response = {
-        'Stacks': [{
-            "Outputs": [{"OutputKey": "CatalogBucketName", "OutputValue": expected_result}]
-        }]
-    }
-    mocked_betterboto_client().__enter__().describe_stacks.return_value = mocked_response
-
-    # execute
-    actual_result = sut.get_bucket_name()
-
-    # verify
-    assert actual_result == expected_result
-    mocked_betterboto_client().__enter__().describe_stacks.assert_called_with(StackName=sut.BOOTSTRAP_STACK_NAME)
-
-
-def test_get_bucket_name_stack_length_more(mocker, sut):
-    # setup
-    expected_result = 'There should only be one stack with the name'
-    mocked_betterboto_client = mocker.patch.object(sut.betterboto_client, 'ClientContextManager')
-    mocked_response = {
-        'Stacks': [{
-            "Outputs": [{"OutputKey": "CatalogBucketName", "OutputValue": expected_result}]
-        },
-            {
-                "Outputs": [{"OutputKey": "CatalogBucketName", "OutputValue": 'hello'}]
-            }]
-    }
-    mocked_betterboto_client().__enter__().describe_stacks.return_value = mocked_response
-
-    # execute
-    with pytest.raises(Exception) as excinfo:
-        sut.get_bucket_name()
-
-    # verify
-    assert str(excinfo.value) == expected_result
-    mocked_betterboto_client().__enter__().describe_stacks.assert_called_with(StackName=sut.BOOTSTRAP_STACK_NAME)
-
-
-def test_get_bucket_name_if_not_exists(mocker, sut):
-    # setup
-    expected_result = 'Could not find bucket'
-    mocked_betterboto_client = mocker.patch.object(sut.betterboto_client, 'ClientContextManager')
-    mocked_response = {
-        'Stacks': [{
-            "Outputs": [{"OutputKey": "BucketName", "OutputValue": expected_result}]
-        }]
-    }
-    mocked_betterboto_client().__enter__().describe_stacks.return_value = mocked_response
-
-    # execute
-    with pytest.raises(Exception) as excinfo:
-        sut.get_bucket_name()
-
-    # verify
-    assert str(excinfo.value) == expected_result
-    mocked_betterboto_client().__enter__().describe_stacks.assert_called_with(StackName=sut.BOOTSTRAP_STACK_NAME)
-
-
 def test_get_stacks(mocker, sut):
     # setup
     args = {
@@ -500,7 +401,7 @@ def test_get_hash_for_template(mocker, sut):
     mock_md5 = mocker.patch.object(hashlib, 'md5')
     fake_hash = 'fubar'
     mock_md5().hexdigest.return_value = fake_hash
-    expected_result = f'{sut.HASH_PREFIX}{fake_hash}'
+    expected_result = f'{sut.constants.HASH_PREFIX}{fake_hash}'
     template = "foo"
 
     # exercise
@@ -556,7 +457,7 @@ def test_do_bootstrap_branch(mocker, sut):
     sut.do_bootstrap_branch(branch_name)
 
     # verify
-    assert sut.VERSION == "https://github.com/awslabs/aws-service-catalog-factory/archive/{}.zip".format(branch_name)
+    assert sut.constants.VERSION == "https://github.com/awslabs/aws-service-catalog-factory/archive/{}.zip".format(branch_name)
     mocked_do_bootstrap.assert_called_once()
 
 
