@@ -112,3 +112,10 @@ def get_product(service_catalog, product_name):
         if product_view_summary.get('Name') == product_name:
             return product_view_summary
     return None
+
+
+def get_details_for_pipeline(pipeline_name):
+    with betterboto_client.ClientContextManager('codepipeline') as codepipeline:
+        return codepipeline.list_pipeline_executions(
+            pipelineName=pipeline_name, maxResults=1
+        ).get('pipelineExecutionSummaries')[0]
