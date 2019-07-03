@@ -333,7 +333,7 @@ def generate_via_luigi(p):
         ['Result', 'Task', 'Significant Parameters', 'Duration'],
 
     ]
-    table = terminaltables.AsciiTable(table_data)
+    table = terminaltables.SingleTable(table_data)
     for filename in glob('results/processing_time/*.json'):
         result = json.loads(open(filename, 'r').read())
         table_data.append([
@@ -350,6 +350,59 @@ def generate_via_luigi(p):
         click.echo(f"Parameters: {json.dumps(result.get('task_params'), indent=4, default=str)}")
         click.echo("\n".join(result.get('exception_stack_trace')))
         click.echo('')
+
+
+
+@cli.command()
+@click.argument('p', type=click.Path(exists=True))
+def show_pipelines(p):
+    pipeline_names = [f"{constants.BOOTSTRAP_STACK_NAME}-pipeline"]
+    for portfolio_file_name in os.listdir(p):
+        if '.yaml' in portfolio_file_name:
+            p_name = portfolio_file_name.split(".")[0]
+            portfolios_file_path = os.path.sep.join([p, portfolio_file_name])
+            portfolios = generate_portfolios(portfolios_file_path)
+
+            for portfolio in portfolios.get('Portfolios', []):
+                nested_products = portfolio.get('Products', []) + portfolio.get('Components', [])
+                for product in nested_products:
+                    for version in product.get('Versions', []):
+                        pipeline_names.append(
+                            f"{p_name}-{portfolio.get('DisplayName')}-{product.get('Name')}-{version.get('Name')}-pipeline"
+                        )
+            for product in portfolios.get('Products', []):
+                for version in product.get('Versions', []):
+                    pipeline_names.append(
+                        f"{product.get('Name')}-{version.get('Name')}-pipeline"
+                    )
+    table_data = [
+        ['Pipeline', 'Status', 'Last Commit Hash', 'Last Commit Message'],
+    ]
+    for pipeline_name in pipeline_names:
+        result = aws.get_details_for_pipeline(pipeline_name)
+        status = result.get('status')
+        if status == "Succeeded":
+            status = "{green}" + status + "{/green}"
+        elif status == "Failed":
+            status = "{red}" + status + "{/red}"
+        else:
+            status = "{orange}" + status + "{/orange}"
+        if len(result.get('sourceRevisions')) > 0:
+            revision = result.get('sourceRevisions')[0]
+        else:
+            revision = {
+                'revisionId': 'N/A',
+                'revisionSummary': 'N/A',
+            }
+        table_data.append([
+            pipeline_name,
+            colorclass.Color(status),
+            revision.get('revisionId'),
+            revision.get('revisionSummary').strip(),
+        ])
+
+    table = terminaltables.SingleTable(table_data)
+    click.echo(table.table)
 
 
 def get_stacks():
