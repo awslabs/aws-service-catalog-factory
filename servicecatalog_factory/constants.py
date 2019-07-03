@@ -1,3 +1,6 @@
+# Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 import os
 
 import pkg_resources
@@ -25,3 +28,6 @@ COMPONENT = 'component.j2'
 COMPONENT_GROUP = 'component_group.j2'
 ASSOCIATIONS = 'associations.j2'
 HOME_REGION = os.environ.get('AWS_DEFAULT_REGION', 'eu-west-1')
+
+
+RESULTS_DIRECTORY = "results"

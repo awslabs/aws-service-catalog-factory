@@ -10,3 +10,4 @@ __pycache__
 .pytest_cache
 .envrc
 output
+results
