@@ -457,7 +457,8 @@ def test_do_bootstrap_branch(mocker, sut):
     sut.do_bootstrap_branch(branch_name)
 
     # verify
-    assert sut.constants.VERSION == "https://github.com/awslabs/aws-service-catalog-factory/archive/{}.zip".format(branch_name)
+    assert sut.constants.VERSION == "https://github.com/awslabs/aws-service-catalog-factory/archive/{}.zip".format(
+        branch_name)
     mocked_do_bootstrap.assert_called_once()
 
 
@@ -554,5 +555,3 @@ def test_add_or_update_file_in_branch_for_repo():
 @pytest.mark.skip
 def test_wait_for_pipeline():
     pass
-
-

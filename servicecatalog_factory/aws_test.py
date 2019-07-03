@@ -1,7 +1,5 @@
 # Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-import hashlib
-
 import pytest
 from pytest import fixture
 
@@ -29,7 +27,8 @@ def test_get_bucket_name_if_not_exists(mocker, sut):
 
     # verify
     assert str(excinfo.value) == expected_result
-    mocked_betterboto_client().__enter__().describe_stacks.assert_called_with(StackName=sut.constants.BOOTSTRAP_STACK_NAME)
+    mocked_betterboto_client().__enter__().describe_stacks.assert_called_with(
+        StackName=sut.constants.BOOTSTRAP_STACK_NAME)
 
 
 def test_get_bucket_name_stack_length_more(mocker, sut):
@@ -52,7 +51,8 @@ def test_get_bucket_name_stack_length_more(mocker, sut):
 
     # verify
     assert str(excinfo.value) == expected_result
-    mocked_betterboto_client().__enter__().describe_stacks.assert_called_with(StackName=sut.constants.BOOTSTRAP_STACK_NAME)
+    mocked_betterboto_client().__enter__().describe_stacks.assert_called_with(
+        StackName=sut.constants.BOOTSTRAP_STACK_NAME)
 
 
 def test_get_bucket_name(mocker, sut):
@@ -71,6 +71,5 @@ def test_get_bucket_name(mocker, sut):
 
     # verify
     assert actual_result == expected_result
-    mocked_betterboto_client().__enter__().describe_stacks.assert_called_with(StackName=sut.constants.BOOTSTRAP_STACK_NAME)
-
-
+    mocked_betterboto_client().__enter__().describe_stacks.assert_called_with(
+        StackName=sut.constants.BOOTSTRAP_STACK_NAME)
