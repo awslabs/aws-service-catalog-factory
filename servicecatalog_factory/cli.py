@@ -330,7 +330,7 @@ def generate_via_luigi(p):
 
 
     table_data = [
-        ['Result', 'Task', 'Parameters', 'Duration'],
+        ['Result', 'Task', 'Significant Parameters', 'Duration'],
 
     ]
     table = terminaltables.AsciiTable(table_data)

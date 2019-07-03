@@ -299,7 +299,7 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
         template = utils.ENV.get_template(constants.PRODUCT)
 
         rendered = template.render(
-            friendly_uid=friendly_uid,
+            friendly_uid=f"{friendly_uid}-{self.version.get('Name')}",
             version=self.version,
             product=self.product,
             Options=utils.merge(self.product.get('Options', {}), self.version.get('Options', {})),
@@ -308,7 +308,7 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
             product_ids_by_region=product_ids_by_region,
         )
         rendered = jinja2.Template(rendered).render(
-            friendly_uid=friendly_uid,
+            friendly_uid=f"{friendly_uid}-{self.version.get('Name')}",
             version=self.version,
             product=self.product,
             Options=utils.merge(self.product.get('Options', {}), self.version.get('Options', {})),
