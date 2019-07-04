@@ -94,7 +94,7 @@ Resources:
               - output/*/*
             name: BuildOutput
 
-  TimeoutInMinutes: 60
+      TimeoutInMinutes: 60
 
   CodePipelineTriggerRole:
     Type: AWS::IAM::Role

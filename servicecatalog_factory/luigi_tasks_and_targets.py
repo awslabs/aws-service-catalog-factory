@@ -26,7 +26,7 @@ class FactoryTask(luigi.Task):
         resources_for_this_task = {}
 
         if hasattr(self, 'region'):
-            resources_for_this_task['region'] = self.region
+            resources_for_this_task[self.region] = 1
 
         return resources_for_this_task
 
