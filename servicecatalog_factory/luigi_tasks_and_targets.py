@@ -1,7 +1,5 @@
 # Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-import os
-import time
 import traceback
 from pathlib import Path
 import jinja2
@@ -22,6 +20,15 @@ class FactoryTask(luigi.Task):
 
     def params_for_results_display(self):
         return "Omitted"
+
+    @property
+    def resources(self):
+        resources_for_this_task = {}
+
+        if hasattr(self, 'region'):
+            resources_for_this_task['region'] = self.region
+
+        return resources_for_this_task
 
 
 class CreatePortfolioTask(FactoryTask):
