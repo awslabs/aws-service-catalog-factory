@@ -88,6 +88,12 @@ Resources:
             build:
               commands:
                 - servicecatalog-factory --info generate-via-luigi portfolios/
+          artifacts:
+            files:
+              - results/*/*
+              - output/*/*
+            name: BuildOutput
+
       TimeoutInMinutes: 60
 
   CodePipelineTriggerRole:
@@ -177,7 +183,7 @@ Resources:
               InputArtifacts:
                 - Name: Source
               OutputArtifacts:
-                - Name: Build
+                - Name: BuildOutput
 
   DeliverySourceRole:
     Type: AWS::IAM::Role
