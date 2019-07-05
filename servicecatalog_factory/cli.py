@@ -7,6 +7,7 @@ import logging
 import os
 from glob import glob
 
+import cfn_tools
 import colorclass
 import terminaltables
 from pathlib import Path
@@ -320,14 +321,13 @@ def generate_via_luigi(p):
     for type in ["failure", "success", "timeout", "process_failure", "processing_time", "broken_task", ]:
         os.makedirs(Path(constants.RESULTS_DIRECTORY) / type)
 
-    result = luigi.build(
+    run_result = luigi.build(
         all_tasks.values(),
         local_scheduler=True,
         detailed_summary=True,
         workers=10,
         log_level='INFO',
     )
-
 
     table_data = [
         ['Result', 'Task', 'Significant Parameters', 'Duration'],
@@ -339,7 +339,7 @@ def generate_via_luigi(p):
         table_data.append([
             colorclass.Color("{green}Success{/green}"),
             result.get('task_type'),
-            json.dumps(result.get('params_for_results')),
+            yaml.safe_dump(result.get('params_for_results')),
             result.get('duration'),
         ])
     click.echo(table.table)
@@ -347,10 +347,9 @@ def generate_via_luigi(p):
     for filename in glob('results/failure/*.json'):
         result = json.loads(open(filename, 'r').read())
         click.echo(colorclass.Color("{red}"+result.get('task_type')+" failed{/red}"))
-        click.echo(f"Parameters: {json.dumps(result.get('task_params'), indent=4, default=str)}")
+        click.echo(f"{yaml.safe_dump({'parameters':result.get('task_params')})}")
         click.echo("\n".join(result.get('exception_stack_trace')))
         click.echo('')
-
 
 
 @cli.command()
@@ -900,6 +899,48 @@ def do_quick_start():
             os.system(f"cd {product_name} && git add . && git commit -am 'initial add' && git push")
 
     click.echo("All done!")
+
+
+@cli.command()
+def list_resources():
+    click.echo("# Framework resources")
+
+    click.echo("## SSM Parameters used")
+    click.echo(f"- {constants.CONFIG_PARAM_NAME}")
+
+    for file in Path(__file__).parent.resolve().glob("*.template.yaml"):
+        if 'empty.template.yaml' == file.name:
+            continue
+        template_contents = Template(open(file, 'r').read()).render()
+        template = cfn_tools.load_yaml(template_contents)
+        click.echo(f"## Resources for stack: {file.name.split('.')[0]}")
+        table_data = [
+            ['Logical Name', 'Resource Type', 'Name', ],
+        ]
+        table = terminaltables.SingleTable(table_data)
+        for logical_name, resource in template.get('Resources').items():
+            resource_type = resource.get('Type')
+
+            name = '-'
+
+            type_to_name = {
+                'AWS::IAM::Role': 'RoleName',
+                'AWS::SSM::Parameter': 'Name',
+                'AWS::S3::Bucket': 'BucketName',
+                'AWS::CodePipeline::Pipeline': 'Name',
+                'AWS::CodeBuild::Project': 'Name',
+                'AWS::CodeCommit::Repository': 'RepositoryName',
+            }
+
+            if type_to_name.get(resource_type) is not None:
+                name = resource.get('Properties', {}).get(type_to_name.get(resource_type), 'Not Specified')
+                if not isinstance(name, str):
+                    name = cfn_tools.dump_yaml(name)
+
+            table_data.append([logical_name, resource_type, name])
+
+        click.echo(table.table)
+    click.echo(f"n.b. AWS::StackName evaluates to {constants.BOOTSTRAP_STACK_NAME}")
 
 
 if __name__ == "__main__":
