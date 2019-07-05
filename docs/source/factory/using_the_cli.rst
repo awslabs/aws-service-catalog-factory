@@ -7,8 +7,58 @@ When you bootstrap the framework and upgrade it you use the cli tool to perform 
 
 There are other commands that you may find useful:
 
+show-resources
+--------------
+
+.. note::
+
+    This was added in version 0.7.0
+
+You can use the ``servicecatalog-factory`` cli to list all the resources that will be created to bootstrap the framework
+
+.. code-block:: bash
+
+    servicecatalog-factory show-resources
+
+
+Will return the following markdown:
+
+.. code-block:: bash
+
+    # Framework resources
+    ## SSM Parameters used
+    - /servicecatalog-factory/config
+    ## Resources for stack: servicecatalog-factory-regional
+    ┌────────────────────────┬─────────────────────┬────────────────────────────────────────────────────────────────┐
+    │ Logical Name           │ Resource Type       │ Name                                                           │
+    ├────────────────────────┼─────────────────────┼────────────────────────────────────────────────────────────────┤
+    │ Param                  │ AWS::SSM::Parameter │ service-catalog-factory-regional-version                       │
+    │ PipelineArtifactBucket │ AWS::S3::Bucket     │ Fn::Sub: sc-factory-artifacts-${AWS::AccountId}-${AWS::Region} │
+    │                        │                     │                                                                │
+    └────────────────────────┴─────────────────────┴────────────────────────────────────────────────────────────────┘
+    ## Resources for stack: servicecatalog-factory
+    ┌───────────────────────────────┬─────────────────────────────┬──────────────────────────────────────┐
+    │ Logical Name                  │ Resource Type               │ Name                                 │
+    ├───────────────────────────────┼─────────────────────────────┼──────────────────────────────────────┤
+    │ Param                         │ AWS::SSM::Parameter         │ service-catalog-factory-version      │
+    │ SourceRole                    │ AWS::IAM::Role              │ SourceRole                           │
+    │ CodeRepo                      │ AWS::CodeCommit::Repository │ ServiceCatalogFactory                │
+    │ BuildRole                     │ AWS::IAM::Role              │ CodeRole                             │
+    │ BuildProject                  │ AWS::CodeBuild::Project     │ servicecatalog-product-factory-build │
+    │ CodePipelineTriggerRole       │ AWS::IAM::Role              │ CodePipelineTriggerRole              │
+    │ PipelineRole                  │ AWS::IAM::Role              │ CodePipelineRole                     │
+    │ FactoryPipelineArtifactBucket │ AWS::S3::Bucket             │ Not Specified                        │
+    │ CatalogBucket                 │ AWS::S3::Bucket             │ Not Specified                        │
+    │ Pipeline                      │ AWS::CodePipeline::Pipeline │ Fn::Sub: ${AWS::StackName}-pipeline  │
+    │                               │                             │                                      │
+    │ DeliverySourceRole            │ AWS::IAM::Role              │ DeliverySourceRole                   │
+    │ DeliveryBuildRole             │ AWS::IAM::Role              │ DeliveryCodeRole                     │
+    │ DeliveryPipelineRole          │ AWS::IAM::Role              │ DeliveryCodePipelineRole             │
+    └───────────────────────────────┴─────────────────────────────┴──────────────────────────────────────┘
+    AWS::StackName evaluates to servicecatalog-factory
+
 show-pipelines
---------------------
+--------------
 
 .. note::
 
