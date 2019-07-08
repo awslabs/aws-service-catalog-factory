@@ -7,6 +7,26 @@ When you bootstrap the framework and upgrade it you use the cli tool to perform 
 
 There are other commands that you may find useful:
 
+import-product-set
+------------------
+
+.. note::
+
+    This was added in version 0.8.0
+
+You can use the ``servicecatalog-factory`` cli to import products from the aws-service-catalog-products shared repo.
+
+This will update your portfolio file, create your AWS CodeCommit repos, export the code from the AWS shared code repo and
+push the code into your AWS CodeCommit repo on the correct branch.
+
+.. code-block:: bash
+
+    servicecatalog-factory import-product-set ServiceCatalogFactory/portfolios/example-simple-github.yaml aws-iam central-it-team-portfolio
+
+You must specify the path to the portfolio file you want to add the product set to, the name of the product set and the name
+of the portfolio you want to add it to.
+
+
 show-resources
 --------------
 
