@@ -989,13 +989,12 @@ def import_product_set(f, name, portfolio_name):
                 branch_name = configuration.get('BranchName')
                 repository_name = configuration.get('RepositoryName')
 
-                # os.system(f'aws codecommit create-repository --repository-name {repository_name}')
-                # command = "git clone " \
-                #               "--config 'credential.helper=!aws codecommit credential-helper $@' " \
-                #               "--config 'credential.UseHttpPath=true' " \
-                #               f"https://git-codecommit.{constants.HOME_REGION}.amazonaws.com/v1/repos/{repository_name}"
-                # os.system(command)
-                os.system(f'mkdir {repository_name}')
+                os.system(f'aws codecommit create-repository --repository-name {repository_name}')
+                command = "git clone " \
+                              "--config 'credential.helper=!aws codecommit credential-helper $@' " \
+                              "--config 'credential.UseHttpPath=true' " \
+                              f"https://git-codecommit.{constants.HOME_REGION}.amazonaws.com/v1/repos/{repository_name}"
+                os.system(command)
 
                 remote_name = repository_name.replace(f"{name}-",'')
                 source = f"https://github.com/awslabs/aws-service-catalog-products/trunk/{name}/{remote_name}/{version.get('Name')}"
