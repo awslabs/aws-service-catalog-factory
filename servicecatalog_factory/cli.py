@@ -1003,10 +1003,10 @@ def import_product_set(f, name, portfolio_name):
                 else:
                     os.system(f"cd {repository_name} && git checkout -b {branch_name} && git add . && git commit -am 'initial add' && git push")
 
-    # with open(f.name, 'w') as f:
-    #     f.write(
-    #         yaml.safe_dump(source_portfolio)
-    #     )
+    with open(f.name, 'w') as f:
+        f.write(
+            yaml.safe_dump(source_portfolio)
+        )
 
 if __name__ == "__main__":
     cli()
