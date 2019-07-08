@@ -995,7 +995,6 @@ def import_product_set(f, name, portfolio_name):
                               "--config 'credential.UseHttpPath=true' " \
                               f"https://git-codecommit.{constants.HOME_REGION}.amazonaws.com/v1/repos/{repository_name}"
                 os.system(command)
-
                 remote_name = repository_name.replace(f"{name}-",'')
                 source = f"https://github.com/awslabs/aws-service-catalog-products/trunk/{name}/{remote_name}/{version.get('Name')}"
                 os.system(f"svn export {source} {repository_name} --force")
