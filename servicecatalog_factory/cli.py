@@ -9,6 +9,7 @@ from glob import glob
 
 import cfn_tools
 import colorclass
+import requests
 import terminaltables
 from pathlib import Path
 
@@ -28,8 +29,8 @@ from . import constants
 from . import aws
 from . import luigi_tasks_and_targets
 
-LOGGER = logging.getLogger()
-LOGGER.setLevel(logging.INFO)
+logger = logging.getLogger()
+logger.setLevel(logging.INFO)
 
 
 def resolve_from_site_packages(what):
@@ -109,7 +110,7 @@ def cli(info, info_line_numbers):
 def validate(p):
     for portfolio_file_name in os.listdir(p):
         portfolios_file_path = os.path.sep.join([p, portfolio_file_name])
-        LOGGER.info('Validating {}'.format(portfolios_file_path))
+        logger.info('Validating {}'.format(portfolios_file_path))
         core = Core(
             source_file=portfolios_file_path,
             schema_files=[resolve_from_site_packages('schema.yaml')]
@@ -120,13 +121,13 @@ def validate(p):
 
 
 def generate_portfolios(portfolios_file_path):
-    LOGGER.info('Loading portfolio: {}'.format(portfolios_file_path))
+    logger.info('Loading portfolio: {}'.format(portfolios_file_path))
     with open(portfolios_file_path) as portfolios_file:
         portfolio_file_name = portfolios_file_path.split("/")[-1]
         portfolio_file_name = portfolio_file_name.replace(".yaml", "")
         portfolios_file_contents = portfolios_file.read()
         portfolios = yaml.safe_load(portfolios_file_contents)
-        LOGGER.info("Checking for external config")
+        logger.info("Checking for external config")
         for portfolio in portfolios.get('Portfolios'):
             check_for_external_definitions_for(portfolio, portfolio_file_name, 'Components')
             check_for_external_definitions_for(portfolio, portfolio_file_name, 'Products')
@@ -161,14 +162,14 @@ def check_for_external_definitions_for(portfolio, portfolio_file_name, type):
                 version_spec['Name'] = external_version
                 if component.get('Versions') is None:
                     component['Versions'] = []
-                LOGGER.info(f"Adding external version: {version_spec.get('Name')} to {type}: {component.get('Name')}")
+                logger.info(f"Adding external version: {version_spec.get('Name')} to {type}: {component.get('Name')}")
                 component['Versions'].append(version_spec)
 
 
 @cli.command()
 @click.argument('p', type=click.Path(exists=True))
 def generate_via_luigi(p):
-    LOGGER.info('Generating')
+    logger.info('Generating')
     all_tasks = {}
     all_regions = get_regions()
     products_by_region = {}
@@ -297,7 +298,7 @@ def generate_via_luigi(p):
 
                     all_tasks[f"product_{p_name}-{region}"] = create_product_task
 
-    LOGGER.info("Going to create pipeline tasks")
+    logger.info("Going to create pipeline tasks")
     for version_pipeline_to_build in version_pipelines_to_build:
         product_name = version_pipeline_to_build.get('product').get('Name')
         create_args = {
@@ -309,13 +310,13 @@ def generate_via_luigi(p):
         t = luigi_tasks_and_targets.CreateVersionPipelineTemplateTask(
             **create_args
         )
-        LOGGER.info(f"created pipeline_template_{product_name}-{version_pipeline_to_build.get('version').get('Name')}")
+        logger.info(f"created pipeline_template_{product_name}-{version_pipeline_to_build.get('version').get('Name')}")
         all_tasks[f"pipeline_template_{product_name}-{version_pipeline_to_build.get('version').get('Name')}"] = t
 
         t = luigi_tasks_and_targets.CreateVersionPipelineTask(
             **create_args
         )
-        LOGGER.info(f"created pipeline_{product_name}-{version_pipeline_to_build.get('version').get('Name')}")
+        logger.info(f"created pipeline_{product_name}-{version_pipeline_to_build.get('version').get('Name')}")
         all_tasks[f"pipeline_{product_name}-{version_pipeline_to_build.get('version').get('Name')}"] = t
 
     for type in ["failure", "success", "timeout", "process_failure", "processing_time", "broken_task", ]:
@@ -464,7 +465,7 @@ def do_deploy(p):
                             p_name, portfolio.get('DisplayName'), product.get('Name'), version.get('Name')
                         ])
                         first_run_of_stack = stacks.get(friendly_uid, False) is False
-                        LOGGER.info('Running deploy for: {}. Is first run: {}'.format(
+                        logger.info('Running deploy for: {}. Is first run: {}'.format(
                             friendly_uid, first_run_of_stack
                         ))
                         run_deploy_for_component(
@@ -489,7 +490,7 @@ def run_deploy_for_component(path, friendly_uid):
             StackName=friendly_uid,
             TemplateBody=staging_template_contents,
         )
-        LOGGER.info('Finished stack: {}'.format(friendly_uid))
+        logger.info('Finished stack: {}'.format(friendly_uid))
 
 
 @cli.command()
@@ -508,15 +509,15 @@ def nuke_product_version(portfolio_name, product, version):
         if portfolio_id is None:
             raise Exception("Could not find your portfolio: {}".format(portfolio_name))
         else:
-            LOGGER.info('Portfolio_id found: {}'.format(portfolio_id))
+            logger.info('Portfolio_id found: {}'.format(portfolio_id))
             product_name = "-".join([product, version])
-            LOGGER.info('Looking for product: {}'.format(product_name))
+            logger.info('Looking for product: {}'.format(product_name))
             result = aws.get_product(servicecatalog, product)
             if result is not None:
                 product_id = result.get('ProductId')
-                LOGGER.info("p: {}".format(product_id))
+                logger.info("p: {}".format(product_id))
 
-                LOGGER.info('Looking for version: {}'.format(version))
+                logger.info('Looking for version: {}'.format(version))
                 response = servicecatalog.list_provisioning_artifacts(
                     ProductId=product_id,
                 )
@@ -528,8 +529,8 @@ def nuke_product_version(portfolio_name, product, version):
                 if version_id is None:
                     click.echo('Could not find version: {}'.format(version))
                 else:
-                    LOGGER.info('Found version: {}'.format(version_id))
-                    LOGGER.info('Deleting version: {}'.format(version_id))
+                    logger.info('Found version: {}'.format(version_id))
+                    logger.info('Deleting version: {}'.format(version_id))
                     servicecatalog.delete_provisioning_artifact(
                         ProductId=product_id,
                         ProvisioningArtifactId=version_id
@@ -581,7 +582,7 @@ def do_bootstrap():
     with betterboto_client.MultiRegionClientContextManager(
             'cloudformation', all_regions
     ) as clients:
-        LOGGER.info('Creating {}-regional'.format(constants.BOOTSTRAP_STACK_NAME))
+        logger.info('Creating {}-regional'.format(constants.BOOTSTRAP_STACK_NAME))
         threads = []
         template = read_from_site_packages(
             '{}.template.yaml'.format('{}-regional'.format(constants.BOOTSTRAP_STACK_NAME))
@@ -605,13 +606,13 @@ def do_bootstrap():
             threads.append(process)
         for process in threads:
             process.join()
-        LOGGER.info('Finished creating {}-regional'.format(constants.BOOTSTRAP_STACK_NAME))
+        logger.info('Finished creating {}-regional'.format(constants.BOOTSTRAP_STACK_NAME))
     click.echo('Completed regional deployments')
 
     click.echo('Starting main deployment')
     s3_bucket_name = None
     with betterboto_client.ClientContextManager('cloudformation') as cloudformation:
-        LOGGER.info('Creating {}'.format(constants.BOOTSTRAP_STACK_NAME))
+        logger.info('Creating {}'.format(constants.BOOTSTRAP_STACK_NAME))
         template = read_from_site_packages('{}.template.yaml'.format(constants.BOOTSTRAP_STACK_NAME))
         template = Template(template).render(VERSION=constants.VERSION)
         args = {
@@ -634,19 +635,19 @@ def do_bootstrap():
             if stack_output.get('OutputKey') == 'CatalogBucketName':
                 s3_bucket_name = stack_output.get('OutputValue')
                 break
-        LOGGER.info(
+        logger.info(
             'Finished creating {}. CatalogBucketName is: {}'.format(
                 constants.BOOTSTRAP_STACK_NAME, s3_bucket_name
             )
         )
 
-    LOGGER.info('Adding empty product template to s3')
+    logger.info('Adding empty product template to s3')
     template = open(resolve_from_site_packages('empty.template.yaml')).read()
     s3 = boto3.resource('s3')
     obj = s3.Object(s3_bucket_name, 'empty.template.yaml')
     obj.put(Body=template)
-    LOGGER.info('Finished adding empty product template to s3')
-    LOGGER.info('Finished bootstrap')
+    logger.info('Finished adding empty product template to s3')
+    logger.info('Finished bootstrap')
 
     with betterboto_client.ClientContextManager('codecommit') as codecommit:
         response = codecommit.get_repository(repositoryName=constants.SERVICE_CATALOG_FACTORY_REPO_NAME)
@@ -752,7 +753,7 @@ def fix_issues_for_portfolio(p):
                             component.get('Name'),
                             version.get('Name'),
                         ])
-                        LOGGER.info('looking at stack: {}'.format(stack_name))
+                        logger.info('looking at stack: {}'.format(stack_name))
                         with betterboto_client.ClientContextManager('cloudformation') as cloudformation:
                             response = {'Stacks': []}
                             try:
@@ -942,6 +943,72 @@ def list_resources():
         click.echo(table.table)
     click.echo(f"n.b. AWS::StackName evaluates to {constants.BOOTSTRAP_STACK_NAME}")
 
+
+@cli.command()
+@click.argument('f', type=click.File())
+@click.argument('name')
+@click.argument('portfolio_name', default=None)
+def import_product_set(f, name, portfolio_name):
+    url = f"https://raw.githubusercontent.com/awslabs/aws-service-catalog-products/master/{name}/portfolio.yaml"
+    response = requests.get(url)
+    logger.info(
+        f"Getting {url}"
+    )
+    source_portfolio = yaml.safe_load(f.read())
+    target = None
+    if portfolio_name is None:
+        if source_portfolio.get('Products') is None:
+            source_portfolio.get['Products'] = {}
+        target = source_portfolio.get['Products']
+    else:
+        if source_portfolio.get("Portfolios") is None:
+            source_portfolio["Portfolios"] = []
+        for p in source_portfolio.get('Portfolios'):
+            if p.get('DisplayName') == portfolio_name:
+                if p.get('Products'):
+                    target = p.get('Products')
+                elif p.get('Components'):
+                    target = p.get('Components')
+                else:
+                    target = p['Products'] = []
+        if target is None:
+            p = {
+                "DisplayName": portfolio_name,
+                "Products": [],
+            }
+            target = p.get('Products')
+            source_portfolio["Portfolios"].append(p)
+
+    portfolio_segment = yaml.safe_load(response.text)
+    products = portfolio_segment.get('Portfolios').get('Components', []) + portfolio_segment.get('Portfolios').get('Products', [])
+    for product in products:
+        target.append(product)
+        for version in product.get('Versions'):
+            if version.get('Source').get('Provider') == "CodeCommit":
+                configuration = version.get('Source').get('Configuration')
+                branch_name = configuration.get('BranchName')
+                repository_name = configuration.get('RepositoryName')
+
+                # os.system(f'aws codecommit create-repository --repository-name {repository_name}')
+                # command = "git clone " \
+                #               "--config 'credential.helper=!aws codecommit credential-helper $@' " \
+                #               "--config 'credential.UseHttpPath=true' " \
+                #               f"https://git-codecommit.{constants.HOME_REGION}.amazonaws.com/v1/repos/{repository_name}"
+                # os.system(command)
+                os.system(f'mkdir {repository_name}')
+
+                remote_name = repository_name.replace(f"{name}-",'')
+                source = f"https://github.com/awslabs/aws-service-catalog-products/trunk/{name}/{remote_name}/{version.get('Name')}"
+                os.system(f"svn export {source} {repository_name} --force")
+                if branch_name == "master":
+                    os.system(f"cd {repository_name} && git add . && git commit -am 'initial add' && git push")
+                else:
+                    os.system(f"cd {repository_name} && git checkout -b {branch_name} && git add . && git commit -am 'initial add' && git push")
+
+    # with open(f.name, 'w') as f:
+    #     f.write(
+    #         yaml.safe_dump(source_portfolio)
+    #     )
 
 if __name__ == "__main__":
     cli()
