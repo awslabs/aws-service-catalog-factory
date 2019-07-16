@@ -27,7 +27,7 @@ You must specify the path to the portfolio file you want to add the product set 
 of the portfolio you want to add it to.
 
 
-show-resources
+list-resources
 --------------
 
 .. note::
@@ -38,7 +38,7 @@ You can use the ``servicecatalog-factory`` cli to list all the resources that wi
 
 .. code-block:: bash
 
-    servicecatalog-factory show-resources
+    servicecatalog-factory list-resources
 
 
 Will return the following markdown:
