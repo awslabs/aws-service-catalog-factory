@@ -949,17 +949,17 @@ def add_product_to_portfolio(portfolio_file_name, portfolio_display_name, produc
     raise Exception(f"Could not find portfolio {portfolio_display_name}")
 
 
-def remove_product_from_portfolio(portfolio_file_name, portfolio_display_name, product):
-    logger.info(f"removing product: {product.get('Name')} to portfolio: {portfolio_display_name} in: {portfolio_file_name}")
+def remove_product_from_portfolio(portfolio_file_name, portfolio_display_name, product_name):
+    logger.info(f"removing product: {product_name} to portfolio: {portfolio_display_name} in: {portfolio_file_name}")
     portfolios = get_portfolios_by_file_name(portfolio_file_name)
     for portfolio in portfolios.get('Portfolios'):
         if portfolio.get('DisplayName') == portfolio_display_name:
-            if not portfolio_has_product(portfolio, product.get('Name')):
+            if not portfolio_has_product(portfolio, product_name):
                 raise Exception(
-                    f"Portfolio: {portfolio_file_name} {portfolio_display_name} does not contain product: {product.get('Name')}"
+                    f"Portfolio: {portfolio_file_name} {portfolio_display_name} does not contain product: {product_name}"
                 )
             else:
-                p, where = get_product_from_portfolio(portfolio, product.get('Name'))
+                p, where = get_product_from_portfolio(portfolio, product_name)
                 portfolio.get(where).remove(p)
                 return put_portfolios_by_file_name(portfolio_file_name, portfolios)
     raise Exception(f"Could not find portfolio {portfolio_display_name}")
@@ -975,6 +975,7 @@ def get_product_from_portfolio(portfolio, product_name):
 
 
 def add_version_to_product(portfolio_file_name, portfolio_display_name, product_name, version):
+    logger.info(f"adding version: {version.get('Name')} to product: {product_name} portfolio: {portfolio_display_name} in: {portfolio_file_name}")
     portfolios = get_portfolios_by_file_name(portfolio_file_name)
     for portfolio in portfolios.get('Portfolios'):
         if portfolio.get('DisplayName') == portfolio_display_name:
@@ -997,18 +998,19 @@ def add_version_to_product(portfolio_file_name, portfolio_display_name, product_
     raise Exception(f"Could not find portfolio {portfolio_display_name}")
 
 
-def remove_version_from_product(portfolio_file_name, portfolio_display_name, product_name, version):
+def remove_version_from_product(portfolio_file_name, portfolio_display_name, product_name, version_name):
+    logger.info(f"removing version: {version_name} from product: {product_name} portfolio: {portfolio_display_name} in: {portfolio_file_name}")
     portfolios = get_portfolios_by_file_name(portfolio_file_name)
     for portfolio in portfolios.get('Portfolios'):
         if portfolio.get('DisplayName') == portfolio_display_name:
             if portfolio_has_product(portfolio, product_name):
                 p, where = get_product_from_portfolio(portfolio, product_name)
                 for v in p.get('Versions', []):
-                    if v.get('Name') == version.get('Name'):
+                    if v.get('Name') == version_name:
                         p['Versions'].remove(v)
                         return put_portfolios_by_file_name(portfolio_file_name, portfolios)
                 raise Exception(
-                    f"Portfolio: {portfolio_file_name} {portfolio_display_name} does not contain version: {version.get('Name')}"
+                    f"Portfolio: {portfolio_file_name} {portfolio_display_name} does not contain version: {version_name}"
                 )
             else:
                 raise Exception(

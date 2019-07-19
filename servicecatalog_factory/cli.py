@@ -117,15 +117,19 @@ def import_product_set(f, name, portfolio_name):
 @click.argument('portfolio_display_name')
 @click.argument('product_definition', type=click.File())
 def add_product_to_portfolio(portfolio_file_name, portfolio_display_name, product_definition):
-    core.add_product_to_portfolio(portfolio_file_name, portfolio_display_name, yaml.safe_load(product_definition.read()))
+    core.add_product_to_portfolio(
+        portfolio_file_name, portfolio_display_name, yaml.safe_load(product_definition.read())
+    )
 
 
 @cli.command()
 @click.argument('portfolio_file_name')
 @click.argument('portfolio_display_name')
-@click.argument('product_definition', type=click.File())
-def remove_product_from_portfolio(portfolio_file_name, portfolio_display_name, product_definition):
-    core.remove_product_from_portfolio(portfolio_file_name, portfolio_display_name, yaml.safe_load(product_definition.read()))
+@click.argument('product_name')
+def remove_product_from_portfolio(portfolio_file_name, portfolio_display_name, product_name):
+    core.remove_product_from_portfolio(
+        portfolio_file_name, portfolio_display_name, product_name
+    )
 
 
 @cli.command()
@@ -138,14 +142,15 @@ def add_version_to_product(portfolio_file_name, portfolio_display_name, product_
         portfolio_file_name, portfolio_display_name, product_name, yaml.safe_load(version_definition)
     )
 
+
 @cli.command()
 @click.argument('portfolio_file_name')
 @click.argument('portfolio_display_name')
 @click.argument('product_name')
-@click.argument('version_definition', type=click.File())
-def remove_version_from_product(portfolio_file_name, portfolio_display_name, product_name, version_definition):
+@click.argument('version_name')
+def remove_version_from_product(portfolio_file_name, portfolio_display_name, product_name, version_name):
     core.remove_version_from_product(
-        portfolio_file_name, portfolio_display_name, product_name, yaml.safe_load(version_definition)
+        portfolio_file_name, portfolio_display_name, product_name, version_name
     )
 
 
