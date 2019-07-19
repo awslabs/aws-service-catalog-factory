@@ -313,7 +313,7 @@ def generate_via_luigi(p):
         ['Result', 'Task', 'Significant Parameters', 'Duration'],
 
     ]
-    table = terminaltables.SingleTable(table_data)
+    table = terminaltables.AsciiTable(table_data)
     for filename in glob('results/processing_time/*.json'):
         result = json.loads(open(filename, 'r').read())
         table_data.append([
@@ -378,7 +378,7 @@ def show_pipelines(p):
             revision.get('revisionSummary').strip(),
         ])
 
-    table = terminaltables.SingleTable(table_data)
+    table = terminaltables.AsciiTable(table_data)
     click.echo(table.table)
 
 
@@ -756,7 +756,7 @@ def list_resources():
         table_data = [
             ['Logical Name', 'Resource Type', 'Name', ],
         ]
-        table = terminaltables.SingleTable(table_data)
+        table = terminaltables.AsciiTable(table_data)
         for logical_name, resource in template.get('Resources').items():
             resource_type = resource.get('Type')
 
