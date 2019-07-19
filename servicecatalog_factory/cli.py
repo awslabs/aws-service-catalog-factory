@@ -1,6 +1,6 @@
 # Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-
+import yaml
 from servicecatalog_factory import core
 import logging
 import click
@@ -110,6 +110,43 @@ def list_resources():
 @click.argument('portfolio_name', default=None)
 def import_product_set(f, name, portfolio_name):
     core.import_product_set(f, name, portfolio_name)
+
+
+@cli.command()
+@click.argument('portfolio_file_name')
+@click.argument('portfolio_display_name')
+@click.argument('product_definition', type=click.File())
+def add_product_to_portfolio(portfolio_file_name, portfolio_display_name, product_definition):
+    core.add_product_to_portfolio(portfolio_file_name, portfolio_display_name, yaml.safe_load(product_definition.read()))
+
+
+@cli.command()
+@click.argument('portfolio_file_name')
+@click.argument('portfolio_display_name')
+@click.argument('product_definition', type=click.File())
+def remove_product_from_portfolio(portfolio_file_name, portfolio_display_name, product_definition):
+    core.remove_product_from_portfolio(portfolio_file_name, portfolio_display_name, yaml.safe_load(product_definition.read()))
+
+
+@cli.command()
+@click.argument('portfolio_file_name')
+@click.argument('portfolio_display_name')
+@click.argument('product_name')
+@click.argument('version_definition', type=click.File())
+def add_version_to_product(portfolio_file_name, portfolio_display_name, product_name, version_definition):
+    core.add_version_to_product(
+        portfolio_file_name, portfolio_display_name, product_name, yaml.safe_load(version_definition)
+    )
+
+@cli.command()
+@click.argument('portfolio_file_name')
+@click.argument('portfolio_display_name')
+@click.argument('product_name')
+@click.argument('version_definition', type=click.File())
+def remove_version_from_product(portfolio_file_name, portfolio_display_name, product_name, version_definition):
+    core.remove_version_from_product(
+        portfolio_file_name, portfolio_display_name, product_name, yaml.safe_load(version_definition)
+    )
 
 
 if __name__ == "__main__":

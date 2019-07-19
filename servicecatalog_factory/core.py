@@ -842,3 +842,176 @@ def import_product_set(f, name, portfolio_name):
             yaml.safe_dump(source_portfolio)
         )
 
+
+def get_portfolios_by_file_name(portfolio_file_name):
+    with betterboto_client.ClientContextManager('codecommit') as codecommit:
+        content = codecommit.get_file(
+            repositoryName=constants.SERVICE_CATALOG_FACTORY_REPO_NAME,
+            filePath=f"portfolios/{portfolio_file_name}",
+        ).get('fileContent')
+        return yaml.safe_load(content)
+
+
+def put_portfolios_by_file_name(portfolio_file_name, portfolios):
+    logger.info(f"Saving portfolio file: {portfolio_file_name}")
+    with betterboto_client.ClientContextManager('codecommit') as codecommit:
+        parent_commit_id = codecommit.get_branch(
+            repositoryName=constants.SERVICE_CATALOG_FACTORY_REPO_NAME,
+            branchName='master',
+        ).get('branch').get('commitId')
+        codecommit.put_file(
+            repositoryName=constants.SERVICE_CATALOG_FACTORY_REPO_NAME,
+            branchName='master',
+            fileContent=yaml.safe_dump(portfolios),
+            parentCommitId=parent_commit_id,
+            commitMessage="Auto generated commit",
+            filePath=f"portfolios/{portfolio_file_name}",
+        )
+
+
+def portfolio_has_product(portfolio, product_name):
+    logger.info(f"Looking for product: {product_name}")
+    products = portfolio.get('Components', []) + portfolio.get('Products', [])
+    for p in products:
+        if p.get('Name') == product_name:
+            return True
+    return False
+
+
+def ensure_code_commit_repo(details):
+    logger.info(f"ensuring code commit rep")
+    if details.get('Source', {}).get('Provider', '').lower() == 'codecommit':
+        logger.info(f"Codecommit repo defined, carrying on")
+        configuration = details.get('Source').get('Configuration')
+        branch_name = configuration.get('BranchName')
+        repository_name = configuration.get('RepositoryName')
+        with betterboto_client.ClientContextManager('codecommit') as codecommit:
+            repo_empty = False
+            all_branches = []
+            try:
+                all_branches = codecommit.list_branches_single_page(repositoryName=repository_name).get('branches')
+                logger.info(f"Codecommit repo exists, carrying on")
+            except codecommit.exceptions.RepositoryDoesNotExistException:
+                logger.info(f"Codecommit does not exist, creating it")
+                repo_empty = True
+                codecommit.create_repository(
+                    repositoryName=repository_name
+                )
+
+            if branch_name not in all_branches:
+                logger.info(f"Codecommit branch not found, creating it")
+                if repo_empty:
+                    logger.info(f"Repo was empty, creating first commit on the branch: {branch_name}")
+                    parent_commit_id = codecommit.create_commit(
+                        repositoryName=repository_name,
+                        branchName=branch_name,
+                        commitMessage="Auto generated commit",
+                        putFiles=[
+                            {
+                                'filePath': 'product.template.yaml',
+                                'fileMode': 'NORMAL',
+                                'fileContent': '',
+                            }
+                        ]
+                    ).get('commitId')
+                else:
+                    if 'master' not in all_branches:
+                        raise Exception(f"{repository_name} has no 'master' branch to branch")
+                    logger.info(f"Repo was not empty, go to create the branch: {branch_name} from master")
+                    parent_commit_id = codecommit.get_branch(
+                        repositoryName=repository_name,
+                        branchName='master',
+                    ).get('branch').get('commitId')
+
+                logger.info(f"Creating the branch: {branch_name}")
+                codecommit.create_branch(
+                    repositoryName=repository_name,
+                    branchName=branch_name,
+                    commitId=parent_commit_id,
+                )
+
+
+def add_product_to_portfolio(portfolio_file_name, portfolio_display_name, product):
+    logger.info(f"adding product: {product.get('Name')} to portfolio: {portfolio_display_name} in: {portfolio_file_name}")
+    portfolios = get_portfolios_by_file_name(portfolio_file_name)
+    for portfolio in portfolios.get('Portfolios'):
+        if portfolio.get('DisplayName') == portfolio_display_name:
+            if not portfolio_has_product(portfolio, product.get('Name')):
+                if portfolio.get('Products', None) is None:
+                    portfolio['Products'] = []
+                portfolio['Products'].append(product)
+                ensure_code_commit_repo(product)
+                return put_portfolios_by_file_name(portfolio_file_name, portfolios)
+            else:
+                raise Exception(
+                    f"Portfolio: {portfolio_file_name} {portfolio_display_name} contains product: {product.get('Name')}"
+                )
+    raise Exception(f"Could not find portfolio {portfolio_display_name}")
+
+
+def remove_product_from_portfolio(portfolio_file_name, portfolio_display_name, product):
+    logger.info(f"removing product: {product.get('Name')} to portfolio: {portfolio_display_name} in: {portfolio_file_name}")
+    portfolios = get_portfolios_by_file_name(portfolio_file_name)
+    for portfolio in portfolios.get('Portfolios'):
+        if portfolio.get('DisplayName') == portfolio_display_name:
+            if not portfolio_has_product(portfolio, product.get('Name')):
+                raise Exception(
+                    f"Portfolio: {portfolio_file_name} {portfolio_display_name} does not contain product: {product.get('Name')}"
+                )
+            else:
+                p, where = get_product_from_portfolio(portfolio, product.get('Name'))
+                portfolio.get(where).remove(p)
+                return put_portfolios_by_file_name(portfolio_file_name, portfolios)
+    raise Exception(f"Could not find portfolio {portfolio_display_name}")
+
+
+def get_product_from_portfolio(portfolio, product_name):
+    for p in portfolio.get('Components', []):
+        if product_name == p.get("Name"):
+            return p, 'Components'
+    for p in portfolio.get('Products', []):
+        if product_name == p.get("Name"):
+            return p, 'Products'
+
+
+def add_version_to_product(portfolio_file_name, portfolio_display_name, product_name, version):
+    portfolios = get_portfolios_by_file_name(portfolio_file_name)
+    for portfolio in portfolios.get('Portfolios'):
+        if portfolio.get('DisplayName') == portfolio_display_name:
+            if portfolio_has_product(portfolio, product_name):
+                p, where = get_product_from_portfolio(portfolio, product_name)
+                for v in p.get('Versions', []):
+                    if v.get('Name') == version.get('Name'):
+                        raise Exception(
+                            f"Portfolio: {portfolio_file_name} {portfolio_display_name} contains version: {version.get('Name')}"
+                        )
+                if p.get('Versions', None) is None:
+                    p['Versions'] = []
+                p['Versions'].append(version)
+                ensure_code_commit_repo(version)
+                return put_portfolios_by_file_name(portfolio_file_name, portfolios)
+            else:
+                raise Exception(
+                    f"Portfolio: {portfolio_file_name} {portfolio_display_name} does not contain product: {product_name}"
+                )
+    raise Exception(f"Could not find portfolio {portfolio_display_name}")
+
+
+def remove_version_from_product(portfolio_file_name, portfolio_display_name, product_name, version):
+    portfolios = get_portfolios_by_file_name(portfolio_file_name)
+    for portfolio in portfolios.get('Portfolios'):
+        if portfolio.get('DisplayName') == portfolio_display_name:
+            if portfolio_has_product(portfolio, product_name):
+                p, where = get_product_from_portfolio(portfolio, product_name)
+                for v in p.get('Versions', []):
+                    if v.get('Name') == version.get('Name'):
+                        p['Versions'].remove(v)
+                        return put_portfolios_by_file_name(portfolio_file_name, portfolios)
+                raise Exception(
+                    f"Portfolio: {portfolio_file_name} {portfolio_display_name} does not contain version: {version.get('Name')}"
+                )
+            else:
+                raise Exception(
+                    f"Portfolio: {portfolio_file_name} {portfolio_display_name} does not contain product: {product_name}"
+                )
+    raise Exception(f"Could not find portfolio {portfolio_display_name}")
