@@ -74,8 +74,8 @@ def fake_portfolio(fake_component):
 
 @fixture
 def sut():
-    from servicecatalog_factory import cli
-    return cli
+    from servicecatalog_factory import core
+    return core
 
 
 def test_version(sut):
@@ -230,7 +230,7 @@ def test_get_stacks_if_empty(mocker, sut):
     mocked_betterboto_client().__enter__().list_stacks.assert_called_with(**args)
 
 
-def test_do_deploy(mocker, sut, fake_portfolio, fake_component, fake_version):
+def test_deploy(mocker, sut, fake_portfolio, fake_component, fake_version):
     # setup
     path = "some_path"
     mocked_files = [
@@ -256,7 +256,7 @@ def test_do_deploy(mocker, sut, fake_portfolio, fake_component, fake_version):
     mocked_listdir.return_value = mocked_files
 
     # execute
-    sut.do_deploy(path)
+    sut.deploy(path)
 
     # verify
     mocked_get_stacks.assert_called_once()
@@ -326,17 +326,17 @@ def test_bootstrap_branch():
     pass
 
 
-def test_do_bootstrap_branch(mocker, sut):
+def test_bootstrap_branch(mocker, sut):
     # setup
     branch_name = 'foo'
-    mocked_do_bootstrap = mocker.patch.object(sut, 'do_bootstrap')
+    mocked_bootstrap = mocker.patch.object(sut, 'bootstrap')
     # exercise
-    sut.do_bootstrap_branch(branch_name)
+    sut.bootstrap_branch(branch_name)
 
     # verify
     assert sut.constants.VERSION == "https://github.com/awslabs/aws-service-catalog-factory/archive/{}.zip".format(
         branch_name)
-    mocked_do_bootstrap.assert_called_once()
+    mocked_bootstrap.assert_called_once()
 
 
 @pytest.mark.skip
@@ -345,7 +345,7 @@ def test_bootstrap():
 
 
 @pytest.mark.skip
-def test_do_bootstrap():
+def test_bootstrap():
     pass
 
 
@@ -355,7 +355,7 @@ def test_seed():
 
 
 @pytest.mark.skip
-def test_do_seed():
+def test_seed():
     pass
 
 
@@ -365,7 +365,7 @@ def test_version():
 
 
 @pytest.mark.skip
-def test_do_version():
+def test_version():
     pass
 
 
@@ -375,7 +375,7 @@ def test_upload_config():
 
 
 @pytest.mark.skip
-def test_do_upload_config():
+def test_upload_config():
     pass
 
 
@@ -385,7 +385,7 @@ def test_fix_issues():
 
 
 @pytest.mark.skip
-def test_do_fix_issues():
+def test_fix_issues():
     pass
 
 
@@ -405,7 +405,7 @@ def test_delete_stack_from_all_regions():
 
 
 @pytest.mark.skip
-def test_do_delete_stack_from_all_regions():
+def test_delete_stack_from_all_regions():
     pass
 
 

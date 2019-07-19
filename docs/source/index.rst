@@ -13,6 +13,7 @@ Welcome to aws-service-catalog-factory's documentation!
    factory/upgrading
 
    factory/using_the_cli
+   factory/using_the_sdk
 
 
 
