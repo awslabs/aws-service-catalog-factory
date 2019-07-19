@@ -21,10 +21,6 @@ project = 'aws-service-catalog-factory'
 copyright = '2019, Eamonn Faherty'
 author = 'Eamonn Faherty'
 
-release = '0.5.20'
-
-
-
 # -- General configuration ---------------------------------------------------
 
 # Add any Sphinx extension module names here, as strings. They can be
