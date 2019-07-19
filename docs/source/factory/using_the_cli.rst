@@ -7,6 +7,112 @@ When you bootstrap the framework and upgrade it you use the cli tool to perform 
 
 There are other commands that you may find useful:
 
+add-product-to-portfolio
+------------------------
+
+.. note::
+
+    This was added in version 0.9.0
+
+You can use the ``servicecatalog-factory`` cli to add products into your portfolio.  This will add your product to the
+remote version of the portfolio file you specify:
+
+.. code-block:: bash
+
+    servicecatalog-factory add-product-to-portfolio portfolio_file_name portfolio_display_name product_definition_file.yaml
+
+product_definition_file.yaml should be a yaml file in the following format:
+
+.. code-block:: yaml
+
+    Description: The iam roles needed for you to do your jobs
+    Distributor: central-it-team
+    Name: account-iam-2
+    Owner: central-it@customer.com
+    SupportDescription: Contact us on Chime for help
+    SupportEmail: central-it-team@customer.com
+    SupportUrl: https://wiki.customer.com/central-it-team/self-service/account-iam
+    Tags:
+    - Key: product-type
+      Value: iam
+
+.. note::
+
+    If your ``product_definition_file.yaml`` file contains a source which is CodeCommit then the repo will be created for you.
+
+
+remove-product-from-portfolio
+-----------------------------
+
+.. note::
+
+    This was added in version 0.9.0
+
+You can use the ``servicecatalog-factory`` cli to remove products from your portfolio.  This will remove your product
+from the remote version of the portfolio file you specify:
+
+.. code-block:: bash
+
+    servicecatalog-factory remove-product-from-portfolio portfolio_file_name portfolio_display_name product_name
+
+
+.. note::
+
+    This command will not delete git repos
+
+
+add-version-to-product
+----------------------
+
+.. note::
+
+    This was added in version 0.9.0
+
+You can use the ``servicecatalog-factory`` cli to add versions to your products.  This will add your version to the
+specified product in the remote version of the portfolio file you specify:
+
+.. code-block:: bash
+
+    servicecatalog-factory add-version-to-product example-simple.yaml central-it-team-portfolio account-iam-2 version_definition_file.yaml
+
+version_definition_file.yaml should be a yaml file in the following format:
+
+.. code-block:: yaml
+
+    Name: v1
+    Description: The iam roles needed for you to do your jobs
+    Active: true
+    Source:
+      Provider: CodeCommit
+      Configuration:
+        BranchName: v1
+        RepositoryName: account-iam
+
+.. note::
+
+    If your ``version_definition_file.yaml`` file contains a source which is CodeCommit then the repo will be created for you.
+
+
+remove-version-from-product
+---------------------------
+
+.. note::
+
+    This was added in version 0.9.0
+
+You can use the ``servicecatalog-factory`` cli to remove versions from products in your portfolio.  This will remove
+your version from your product in the remote version of the portfolio file you specify:
+
+.. code-block:: bash
+
+    servicecatalog-factory remove-version-from-product portfolio_file_name portfolio_display_name product_name version_name
+
+
+.. note::
+
+    This command will not delete git repos
+
+
 import-product-set
 ------------------
 
