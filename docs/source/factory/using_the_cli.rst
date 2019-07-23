@@ -209,6 +209,15 @@ Will return the following:
     │ account-iam-soc-2-1-v1-pipeline                                         │ Failed    │ N/A                                      │ N/A                 │
     └─────────────────────────────────────────────────────────────────────────┴───────────┴──────────────────────────────────────────┴─────────────────────┘
 
+.. note::
+
+    This was added in version 0.11.0
+
+You can specify the output format for show-pipelines.  Valid options are ``table`` and ``json``
+
+.. code-block:: bash
+
+    servicecatalog-factory show-pipelines ServiceCatalogFactory/portfolios --format json
 
 nuke-product-version
 --------------------

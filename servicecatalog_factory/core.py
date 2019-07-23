@@ -332,7 +332,7 @@ def generate_via_luigi(p):
         click.echo('')
 
 
-def show_pipelines(p):
+def show_pipelines(p, format):
     pipeline_names = [f"{constants.BOOTSTRAP_STACK_NAME}-pipeline"]
     for portfolio_file_name in os.listdir(p):
         if '.yaml' in portfolio_file_name:
@@ -352,9 +352,7 @@ def show_pipelines(p):
                     pipeline_names.append(
                         f"{product.get('Name')}-{version.get('Name')}-pipeline"
                     )
-    table_data = [
-        ['Pipeline', 'Status', 'Last Commit Hash', 'Last Commit Message'],
-    ]
+    results = {}
     for pipeline_name in pipeline_names:
         result = aws.get_details_for_pipeline(pipeline_name)
         status = result.get('status')
@@ -371,15 +369,37 @@ def show_pipelines(p):
                 'revisionId': 'N/A',
                 'revisionSummary': 'N/A',
             }
-        table_data.append([
-            pipeline_name,
-            colorclass.Color(status),
-            revision.get('revisionId'),
-            revision.get('revisionSummary').strip(),
-        ])
+        results[pipeline_name] = {
+            "name": pipeline_name,
+            "status": result.get('status'),
+            "revision_id": revision.get('revisionId'),
+            "revision_summary": revision.get('revisionSummary').strip(),
+        }
 
-    table = terminaltables.AsciiTable(table_data)
-    click.echo(table.table)
+    if format == "table":
+        table_data = [
+            ['Pipeline', 'Status', 'Last Commit Hash', 'Last Commit Message'],
+        ]
+        for result in results.values():
+            if result.get('status') == "Succeeded":
+                status = f"{{green}}{result.get('status')}{{/green}}"
+            elif result.get('status') == "Failed":
+                status = f"{{red}}{result.get('status')}{{/red}}"
+            else:
+                status = f"{{yellow}}{result.get('status')}{{/yellow}}"
+
+            table_data.append([
+                result.get('name'),
+                colorclass.Color(status),
+                result.get('revision_id'),
+                result.get('revision_summary'),
+            ])
+        table = terminaltables.AsciiTable(table_data)
+        click.echo(table.table)
+
+    elif format == "json":
+        click.echo(json.dumps(results, indent=4, default=str))
+
 
 
 def get_stacks():
