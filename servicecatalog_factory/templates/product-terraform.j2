@@ -2,7 +2,20 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: |
   {{friendly_uid}}
   {"version": "{{ FACTORY_VERSION }}", "framework": "servicecatalog-factory", "role": "product-pipeline"}
+
+Parameters:
+  Version:
+    Type: String
+    Default: "{{ FACTORY_VERSION }}"
+
 Resources:
+  Param:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub ""/service-catalog-factory/${AWS::StackName}/version"
+      Type: String
+      Value: !Ref Version
+
 
 {% if Source.Provider.lower() == 'codecommit' and Source.Configuration.get('PollForSourceChanges', 'FALSE').upper() == 'FALSE' %}
   PipeLineEventTrigger:
@@ -164,3 +177,7 @@ Resources:
                 - '**/*'
 
       TimeoutInMinutes: 20
+
+Outputs:
+  Version:
+    Value: !GetAtt Param.Value
