@@ -25,6 +25,7 @@ from betterboto import client as betterboto_client
 from threading import Thread
 import shutil
 
+from . import utils
 from . import constants
 from . import aws
 from . import luigi_tasks_and_targets
@@ -284,6 +285,7 @@ def generate_via_luigi(p):
             "all_regions": all_regions,
             "version": version_pipeline_to_build.get('version'),
             "product": version_pipeline_to_build.get('product'),
+            "type": version_pipeline_to_build.get('version').get('Type', 'CloudFormation'),
             "products_args_by_region": products_by_region.get(product_name),
             "factory_version": constants.VERSION,
         }
@@ -294,7 +296,7 @@ def generate_via_luigi(p):
         all_tasks[f"pipeline_template_{product_name}-{version_pipeline_to_build.get('version').get('Name')}"] = t
 
         t = luigi_tasks_and_targets.CreateVersionPipelineTask(
-            **create_args
+            **create_args,
         )
         logger.info(f"created pipeline_{product_name}-{version_pipeline_to_build.get('version').get('Name')}")
         all_tasks[f"pipeline_{product_name}-{version_pipeline_to_build.get('version').get('Name')}"] = t
@@ -1038,3 +1040,11 @@ def remove_version_from_product(portfolio_file_name, portfolio_display_name, pro
                     f"Portfolio: {portfolio_file_name} {portfolio_display_name} does not contain product: {product_name}"
                 )
     raise Exception(f"Could not find portfolio {portfolio_display_name}")
+
+
+def generate_terraform_template(uid):
+    template = utils.ENV.get_template(constants.TERRAFORM_TEMPLATE)
+    return template.render(
+        FACTORY_VERSION=constants.VERSION,
+        UID=uid
+    )

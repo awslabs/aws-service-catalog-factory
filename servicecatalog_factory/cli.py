@@ -155,5 +155,12 @@ def remove_version_from_product(portfolio_file_name, portfolio_display_name, pro
     )
 
 
+@cli.command()
+@click.argument('uid')
+def generate_terraform_template(uid):
+    click.echo(
+        core.generate_terraform_template(uid)
+    )
+
 if __name__ == "__main__":
     cli()

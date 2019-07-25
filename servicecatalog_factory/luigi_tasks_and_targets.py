@@ -268,6 +268,7 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
     version = luigi.DictParameter()
     product = luigi.DictParameter()
 
+    type = luigi.Parameter()
     factory_version = luigi.Parameter()
 
     products_args_by_region = luigi.DictParameter()
@@ -276,6 +277,7 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
         return {
             "version": self.version.get('Name'),
             "product": self.product.get('Name'),
+            "type": self.type,
         }
 
     def output(self):
@@ -305,27 +307,43 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
             product_ids_by_region[region] = product_details.get('ProductId')
             friendly_uid = product_details.get('uid')
 
-        template = utils.ENV.get_template(constants.PRODUCT)
+        if self.type == 'CloudFormation':
+            template = utils.ENV.get_template(constants.PRODUCT_CLOUDFORMATION)
+            rendered = template.render(
+                friendly_uid=f"{friendly_uid}-{self.version.get('Name')}",
+                version=self.version,
+                product=self.product,
+                Options=utils.merge(self.product.get('Options', {}), self.version.get('Options', {})),
+                Source=utils.merge(self.product.get('Source', {}), self.version.get('Source', {})),
+                ALL_REGIONS=self.all_regions,
+                product_ids_by_region=product_ids_by_region,
+                FACTORY_VERSION=self.factory_version,
+            )
+            rendered = jinja2.Template(rendered).render(
+                friendly_uid=f"{friendly_uid}-{self.version.get('Name')}",
+                version=self.version,
+                product=self.product,
+                Options=utils.merge(self.product.get('Options', {}), self.version.get('Options', {})),
+                Source=utils.merge(self.product.get('Source', {}), self.version.get('Source', {})),
+                ALL_REGIONS=self.all_regions,
+                product_ids_by_region=product_ids_by_region,
+            )
 
-        rendered = template.render(
-            friendly_uid=f"{friendly_uid}-{self.version.get('Name')}",
-            version=self.version,
-            product=self.product,
-            Options=utils.merge(self.product.get('Options', {}), self.version.get('Options', {})),
-            Source=utils.merge(self.product.get('Source', {}), self.version.get('Source', {})),
-            ALL_REGIONS=self.all_regions,
-            product_ids_by_region=product_ids_by_region,
-            FACTORY_VERSION=self.factory_version,
-        )
-        rendered = jinja2.Template(rendered).render(
-            friendly_uid=f"{friendly_uid}-{self.version.get('Name')}",
-            version=self.version,
-            product=self.product,
-            Options=utils.merge(self.product.get('Options', {}), self.version.get('Options', {})),
-            Source=utils.merge(self.product.get('Source', {}), self.version.get('Source', {})),
-            ALL_REGIONS=self.all_regions,
-            product_ids_by_region=product_ids_by_region,
-        )
+        elif self.type == 'Terraform':
+            template = utils.ENV.get_template(constants.PRODUCT_TERRAFORM)
+            rendered = template.render(
+                friendly_uid=f"{friendly_uid}-{self.version.get('Name')}",
+                version=self.version,
+                product=self.product,
+                Options=utils.merge(self.product.get('Options', {}), self.version.get('Options', {})),
+                Source=utils.merge(self.product.get('Source', {}), self.version.get('Source', {})),
+                ALL_REGIONS=self.all_regions,
+                product_ids_by_region=product_ids_by_region,
+                FACTORY_VERSION=self.factory_version,
+            )
+
+        else:
+            raise Exception(f"Unknown type: {self.type}")
 
         with self.output().open('w') as output_file:
             output_file.write(rendered)
@@ -335,6 +353,8 @@ class CreateVersionPipelineTask(FactoryTask):
     all_regions = luigi.ListParameter()
     version = luigi.DictParameter()
     product = luigi.DictParameter()
+
+    type = luigi.Parameter()
 
     products_args_by_region = luigi.DictParameter()
 
@@ -351,6 +371,7 @@ class CreateVersionPipelineTask(FactoryTask):
             all_regions=self.all_regions,
             version=self.version,
             product=self.product,
+            type=self.type,
             products_args_by_region=self.products_args_by_region,
             factory_version=self.factory_version
         )
@@ -359,7 +380,7 @@ class CreateVersionPipelineTask(FactoryTask):
         logger_prefix = f"{self.product.get('Name')}-{self.version.get('Name')}"
         template_contents = self.input().open('r').read()
         template = cfn_tools.load_yaml(template_contents)
-        friendly_uid = template.get('Description')
+        friendly_uid = template.get('Description').split('\n')[0]
         logger.info(f"{logger_prefix} creating the stack: {friendly_uid}")
         with betterboto_client.ClientContextManager('cloudformation') as cloudformation:
             response = cloudformation.create_or_update(

@@ -24,6 +24,9 @@ NON_RECOVERABLE_STATES = [
     'REVIEW_IN_PROGRESS',
 ]
 PRODUCT = 'product.j2'
+PRODUCT_TERRAFORM = 'product-terraform.j2'
+PRODUCT_CLOUDFORMATION = 'product-cloudformation.j2'
+TERRAFORM_TEMPLATE = 'terraform.template.yaml.j2'
 COMPONENT = 'component.j2'
 COMPONENT_GROUP = 'component_group.j2'
 ASSOCIATIONS = 'associations.j2'
