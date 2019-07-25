@@ -268,6 +268,8 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
     version = luigi.DictParameter()
     product = luigi.DictParameter()
 
+    factory_version = luigi.Parameter()
+
     products_args_by_region = luigi.DictParameter()
 
     def params_for_results_display(self):
@@ -313,6 +315,7 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
             Source=utils.merge(self.product.get('Source', {}), self.version.get('Source', {})),
             ALL_REGIONS=self.all_regions,
             product_ids_by_region=product_ids_by_region,
+            FACTORY_VERSION=self.factory_version,
         )
         rendered = jinja2.Template(rendered).render(
             friendly_uid=f"{friendly_uid}-{self.version.get('Name')}",
@@ -335,6 +338,8 @@ class CreateVersionPipelineTask(FactoryTask):
 
     products_args_by_region = luigi.DictParameter()
 
+    factory_version = luigi.Parameter()
+
     def output(self):
         return luigi.LocalTarget(
             f"output/CreateVersionPipelineTask/"
@@ -347,6 +352,7 @@ class CreateVersionPipelineTask(FactoryTask):
             version=self.version,
             product=self.product,
             products_args_by_region=self.products_args_by_region,
+            factory_version=self.factory_version
         )
 
     def run(self):

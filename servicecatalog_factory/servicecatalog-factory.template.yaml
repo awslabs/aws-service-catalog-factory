@@ -2,6 +2,9 @@
 # SPDX-License-Identifier: Apache-2.0
 
 AWSTemplateFormatVersion: "2010-09-09"
+Description: |
+  Bootstrap template used to bring up the main ServiceCatalog-Factory AWS CodePipeline with dependencies
+  {"version": "{{ VERSION }}", "framework": "servicecatalog-factory", "role": "bootstrap"}
 
 Parameters:
   Version:

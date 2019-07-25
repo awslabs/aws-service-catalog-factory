@@ -285,6 +285,7 @@ def generate_via_luigi(p):
             "version": version_pipeline_to_build.get('version'),
             "product": version_pipeline_to_build.get('product'),
             "products_args_by_region": products_by_region.get(product_name),
+            "factory_version": constants.VERSION,
         }
         t = luigi_tasks_and_targets.CreateVersionPipelineTemplateTask(
             **create_args
