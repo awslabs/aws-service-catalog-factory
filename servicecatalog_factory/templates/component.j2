@@ -1,5 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: {{friendly_uid}}
+Description: |
+  {{friendly_uid}}
+  {"version": "{{ FACTORY_VERSION }}", "framework": "servicecatalog-factory", "role": "product-pipeline"}
 Resources:
 
 {% include 'tests/ValidateProject.j2' %}
