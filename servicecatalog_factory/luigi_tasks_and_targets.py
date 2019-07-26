@@ -395,7 +395,7 @@ class CreateVersionPipelineTask(FactoryTask):
                     Parameters=[
                         {
                             'ParameterKey': 'Version',
-                            'ParameterValue': constants.VERSION,
+                            'ParameterValue': self.factory_version,
                             'UsePreviousValue': False,
                         },
                     ],

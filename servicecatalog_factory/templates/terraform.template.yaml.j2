@@ -133,10 +133,10 @@ Resources:
               install:
                 commands:
                   - sudo pip install boto3
-                  - wget https://releases.hashicorp.com/terraform/${TERRAFORM_VERSION}/terraform_${TERRAFORM_VERSION}_linux_amd64.zip
-                  - unzip terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+                  - wget https://releases.hashicorp.com/terraform/${TerraformVersion}/terraform_${TerraformVersion}_linux_amd64.zip
+                  - unzip terraform_${TerraformVersion}_linux_amd64.zip
                   - sudo mv terraform /bin
-                  - rm terraform_${TERRAFORM_VERSION}_linux_amd64.zip
+                  - rm terraform_${TerraformVersion}_linux_amd64.zip
                   - apt-get update
                   - apt-get install -y jq
                   - echo "Display terraform provider file"
