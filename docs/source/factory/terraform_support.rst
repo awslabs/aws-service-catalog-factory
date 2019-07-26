@@ -34,6 +34,11 @@ What is working
 - Using Parameters in ServiceCatalog Puppet
 - Using SSM Parameters in ServiceCatalog Puppet
 
+Getting it working
+------------------
+- you need to add the following product set to you portfolio: https://github.com/awslabs/aws-service-catalog-products/tree/master/aws-servicecatalog-factory-provisioners
+- you need to provision the products in aws-servicecatalog-factory-provisioners into your spoke accounts
+- you can then create products.  Your products need to have their terraform code in a directory named tf
 
 What is still to come
 ---------------------
