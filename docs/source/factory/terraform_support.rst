@@ -25,3 +25,17 @@ You can now specify a product version type:
 .. warning::
 
     THIS IS EXPERIMENTAL.  This is not guaranteed to be backwards compatible.
+
+
+What is working
+---------------
+- Provision your Terraform based products using ServiceCatalog Puppet
+- Sharing Terraform based products using ServiceCatalog Puppet portfolio sharing
+- Using Parameters in ServiceCatalog Puppet
+- Using SSM Parameters in ServiceCatalog Puppet
+
+
+What is still to come
+---------------------
+- Using Depends On in ServiceCatalog Puppet
+- Using Outputs in ServiceCatalog Puppet
