@@ -34,8 +34,9 @@ def validate(p):
 
 @cli.command()
 @click.argument('p', type=click.Path(exists=True))
-def generate_via_luigi(p):
-    core.generate_via_luigi(p)
+@click.option("--branch-override")
+def generate_via_luigi(p, branch_override=None):
+    core.generate_via_luigi(p, branch_override)
 
 
 @cli.command()
@@ -154,6 +155,13 @@ def remove_version_from_product(portfolio_file_name, portfolio_display_name, pro
         portfolio_file_name, portfolio_display_name, product_name, version_name
     )
 
+
+@cli.command()
+@click.argument('uid')
+def generate_terraform_template(uid):
+    click.echo(
+        core.generate_terraform_template(uid)
+    )
 
 if __name__ == "__main__":
     cli()

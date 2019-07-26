@@ -1,0 +1,237 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: |
+  Template used provision Terraform based products into accounts using ServiceCatalog-Puppet
+  {"version": "{{ FACTORY_VERSION }}", "framework": "servicecatalog-factory", "role": "terraform-product-provision"}
+
+Parameters:
+  LaunchName:
+    Description: Unique Identifier for the launch
+    Type: String
+
+  TerraformVersion:
+    Description: Which version of terraform to use
+    Default: 0.11.11
+    Type: String
+
+  Image:
+    Description: The Image for CodeBuild to use
+    Type: String
+    Default: "aws/codebuild/python:3.6.5"
+
+  ComputeType:
+    Description: The ComputeType for CodeBuild
+    Type: String
+    Default: "BUILD_GENERAL1_SMALL"
+
+Resources:
+  S3TerraformStateBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${AWS::AccountId}-${AWS::Region}-${LaunchName}-terraform-state"
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+  S3CodePipelineBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "${AWS::AccountId}-${AWS::Region}-${LaunchName}-pipeline-bucket"
+      VersioningConfiguration:
+        Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+
+  BuildProjectPlan:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Description: !Sub "Run a terraform plan for ${LaunchName}"
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: linuxContainer
+        ComputeType: !Ref ComputeType
+        Image: !Ref Image
+        EnvironmentVariables:
+          - Name: LAUNCH_NAME
+            Value: !Ref LaunchName
+          - Name: S3_BUCKET_NAME
+            Value: !Ref S3CodePipelineBucket
+          - Name: S3_STATE_BUCKET
+            Value: !Ref S3TerraformStateBucket
+          - Name: REGION
+            Value: !Ref AWS::Region
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: !Sub |
+            version: 0.2
+            phases:
+              install:
+                commands:
+                  - wget https://releases.hashicorp.com/terraform/${TerraformVersion}/terraform_${TerraformVersion}_linux_amd64.zip
+                  - unzip terraform_${TerraformVersion}_linux_amd64.zip
+                  - sudo mv terraform /bin
+                  - echo "Prepare terraform provider file"
+                  - cd tf
+                  - echo "terraform { " >> provider-output-backend.tf
+                  - echo "   backend \"s3\" { " >> provider-output-backend.tf
+                  - echo "   bucket = \"$S3_STATE_BUCKET\"" >> provider-output-backend.tf
+                  - echo "   key    = \"$LAUNCH_NAME/terraform.tfstate\"" >> provider-output-backend.tf
+                  - echo "   region = \"$REGION\"" >> provider-output-backend.tf
+                  - echo "  }" >> provider-output-backend.tf
+                  - echo "}" >> provider-output-backend.tf
+                  - cat provider-output-backend.tf
+              build:
+                commands:
+                 - terraform init
+                 - terraform plan -no-color
+            artifacts:
+              files:
+                - '*'
+                - '**/*'
+      TimeoutInMinutes: 20
+      Tags:
+        - Key: Name
+          Value: !Ref LaunchName
+
+  BuildProjectDeploy:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Description: !Sub "Run a terraform apply for ${LaunchName}"
+      ServiceRole: !GetAtt CodeBuildRole.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: linuxContainer
+        ComputeType: !Ref ComputeType
+        Image: !Ref Image
+        EnvironmentVariables:
+          - Name: LAUNCH_NAME
+            Value: !Ref LaunchName
+          - Name: S3_BUCKET_NAME
+            Value: !Ref S3CodePipelineBucket
+          - Name: S3_STATE_BUCKET
+            Value: !Ref S3TerraformStateBucket
+          - Name: REGION
+            Value: !Ref AWS::Region
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: !Sub |
+            version: 0.2
+            phases:
+              install:
+                commands:
+                  - wget https://releases.hashicorp.com/terraform/${TerraformVersion}/terraform_${TerraformVersion}_linux_amd64.zip
+                  - unzip terraform_${TerraformVersion}_linux_amd64.zip
+                  - sudo mv terraform /bin
+                  - echo "Display terraform provider file"
+                  - cd tf
+                  - cat provider-output-backend.tf
+              build:
+                commands:
+                 - terraform init
+                 - terraform apply -auto-approve -no-color
+
+            artifacts:
+              files: '**/*'
+      TimeoutInMinutes: 20
+      Tags:
+        - Key: Name
+          Value: !Ref LaunchName
+
+  CodeBuildPolicy:
+    Type: 'AWS::IAM::Policy'
+    Properties:
+      PolicyDocument:
+        Statement:
+          - Action: '*'
+            Effect: Allow
+            Resource: '*'
+        Version: 2012-10-17
+      PolicyName: terraform-app-deploy
+      Roles:
+        - !Ref CodeBuildRole
+  CodeBuildRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - codebuild.amazonaws.com
+            Action:
+              - sts:AssumeRole
+          - Effect: Allow
+            Principal:
+              AWS: !Ref AWS::AccountId
+            Action:
+              - sts:AssumeRole
+        Version: 2012-10-17
+
+  Pipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/servicecatalog-puppet/PuppetRole"
+      Name: !Ref LaunchName
+      RestartExecutionOnUpdate: true
+      Stages:
+        - Name: Source
+          Actions:
+            - Name: Source
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Version: 1
+                Provider: S3
+              Configuration:
+                S3Bucket: !Sub "sc-factory-artifacts-${AWS::AccountId}-${AWS::Region}"
+                PollForSourceChanges: true
+                S3ObjectKey: {{ UID }}/tf.zip
+              OutputArtifacts:
+                - Name: TemplateSource
+              RunOrder: 1
+        - Name: Plan-Stage
+          Actions:
+            - Name: Plan-Terraform
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref BuildProjectPlan
+              RunOrder: 1
+              InputArtifacts:
+                - Name: TemplateSource
+              OutputArtifacts:
+                - Name: Plan
+        - Name: Deploy-Stage
+          Actions:
+            - Name: Deploy-Terraform
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref BuildProjectDeploy
+              RunOrder: 1
+              InputArtifacts:
+                - Name: Plan
+              OutputArtifacts:
+                - Name: Apply
+      ArtifactStores:
+        - Region: !Ref AWS::Region
+          ArtifactStore:
+            Location: !Ref S3CodePipelineBucket
+            Type: S3
+
+Outputs:
+  PipelineUrl:
+    Value: !Sub https://console.aws.amazon.com/codepipeline/home?region=${AWS::Region}#/view/${Pipeline}
