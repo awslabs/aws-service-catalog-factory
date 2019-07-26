@@ -163,7 +163,7 @@ Resources:
       Roles:
         - !Ref CodeBuildRole
   CodeBuildRole:
-    Type: 'AWS::IAM::Role'
+    Type: AWS::IAM::Role
     Properties:
       AssumeRolePolicyDocument:
         Statement:
@@ -179,7 +179,6 @@ Resources:
             Action:
               - sts:AssumeRole
         Version: 2012-10-17
-      RoleName: terraform-app-deploy
 
   Pipeline:
     Type: AWS::CodePipeline::Pipeline
