@@ -17,9 +17,7 @@ Parameters:
     Description: The Image for CodeBuild to use
     Type: String
     Default: "aws/codebuild/python:3.6.5"
-  NotificationEndpoint:
-    Description: The email address that emails will go to for changes related to this pipeline
-    Type: String
+
   ComputeType:
     Description: The ComputeType for CodeBuild
     Type: String
@@ -96,7 +94,9 @@ Resources:
                  - terraform init
                  - python ../../utils/runterraform.js.py $REGION $LAUNCH_NAME False
             artifacts:
-              files: '**/*'
+              files:
+                - '*'
+                - '**/*'
       TimeoutInMinutes: 20
       Tags:
         - Key: Name
@@ -215,9 +215,9 @@ Resources:
                 ProjectName: !Ref BuildProjectPlan
               RunOrder: 1
               InputArtifacts:
-                - Name: !Sub TemplateSource
+                - Name: TemplateSource
               OutputArtifacts:
-                - Name: !Sub "${LaunchName}-TerraformPlan"
+                - Name: Plan
         - Name: Deploy-Stage
           Actions:
             - Name: Deploy-Terraform
@@ -230,9 +230,9 @@ Resources:
                 ProjectName: !Ref BuildProjectDeploy
               RunOrder: 1
               InputArtifacts:
-                - Name: !Sub "${LaunchName}-TerraformPlan"
+                - Name: Plan
               OutputArtifacts:
-                - Name: !Sub "${LaunchName}-TerraformDeploy"
+                - Name: Apply
       ArtifactStores:
         - Region: !Ref AWS::Region
           ArtifactStore:
