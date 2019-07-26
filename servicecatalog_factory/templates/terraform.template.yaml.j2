@@ -209,7 +209,7 @@ Resources:
   Pipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      RoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/servicecatalog-puppet/PuppetRoleForTerraform"
+      RoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/servicecatalog-puppet/PuppetRole"
       Name: !Ref AWS::StackName
       RestartExecutionOnUpdate: true
       Stages:
