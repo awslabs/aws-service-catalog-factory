@@ -81,9 +81,8 @@ Resources:
                   - sudo mv terraform /bin
                   - rm terraform_${TerraformVersion}_linux_amd64.zip
                   - apt-get update
-                  - apt-get install -y jq
                   - echo "Prepare terraform provider file"
-                  - cd $TARGET_ACCOUNT_ID/terraform-code
+                  - cd $TARGET_ACCOUNT_ID/tf
                   - echo "terraform { " >> provider-output-backend.tf
                   - echo "   backend \"s3\" { " >> provider-output-backend.tf
                   - echo "   bucket = \"$S3_STATE_BUCKET\"" >> provider-output-backend.tf
@@ -136,9 +135,8 @@ Resources:
                   - sudo mv terraform /bin
                   - rm terraform_${TerraformVersion}_linux_amd64.zip
                   - apt-get update
-                  - apt-get install -y jq
                   - echo "Display terraform provider file"
-                  - cd $TARGET_ACCOUNT_ID/terraform-code
+                  - cd $TARGET_ACCOUNT_ID/tf
                   - cat provider-output-backend.tf
               build:
                 commands:
@@ -183,34 +181,11 @@ Resources:
         Version: 2012-10-17
       RoleName: terraform-app-deploy
 
-  PipelineSNSTopic:
-    Type: AWS::SNS::Topic
-    Properties:
-      Subscription:
-        - Endpoint: !Ref NotificationEndpoint
-          Protocol: email
-  PipelineSNSTopicPolicy:
-    Type: AWS::SNS::TopicPolicy
-    Properties:
-      PolicyDocument:
-        Id: !Sub "${AWS::StackName}"
-        Version: '2012-10-17'
-        Statement:
-        - Effect: Allow
-          Principal:
-            Service:
-              - events.amazonaws.com
-              - codecommit.amazonaws.com
-          Action: sns:Publish
-          Resource: "*"
-      Topics:
-      - !Ref PipelineSNSTopic
-
   Pipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/servicecatalog-puppet/PuppetRole"
-      Name: !Ref AWS::StackName
+      Name: !Ref LaunchName
       RestartExecutionOnUpdate: true
       Stages:
         - Name: Source
@@ -228,18 +203,6 @@ Resources:
               OutputArtifacts:
                 - Name: TemplateSource
               RunOrder: 1
-        - Name: Check-Stage
-          Actions:
-            - Name: Approve
-              ActionTypeId:
-                Category: Approval
-                Owner: AWS
-                Version: 1
-                Provider: Manual
-              Configuration:
-                NotificationArn: !Ref PipelineSNSTopic
-                CustomData: "Check the pipline is free from existing executions before approval"
-              RunOrder: 1
         - Name: Plan-Stage
           Actions:
             - Name: Plan-Terraform
@@ -255,18 +218,6 @@ Resources:
                 - Name: !Sub TemplateSource
               OutputArtifacts:
                 - Name: !Sub "${LaunchName}-TerraformPlan"
-        - Name: Approval-Stage
-          Actions:
-            - Name: Approve
-              ActionTypeId:
-                Category: Approval
-                Owner: AWS
-                Version: 1
-                Provider: Manual
-              Configuration:
-                NotificationArn: !Ref PipelineSNSTopic
-                CustomData: "Approve or Reject this deployment"
-              RunOrder: 1
         - Name: Deploy-Stage
           Actions:
             - Name: Deploy-Terraform
