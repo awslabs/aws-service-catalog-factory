@@ -383,10 +383,24 @@ class CreateVersionPipelineTask(FactoryTask):
         friendly_uid = template.get('Description').split('\n')[0]
         logger.info(f"{logger_prefix} creating the stack: {friendly_uid}")
         with betterboto_client.ClientContextManager('cloudformation') as cloudformation:
-            response = cloudformation.create_or_update(
-                StackName=friendly_uid,
-                TemplateBody=template_contents,
-            )
+            if self.type == 'CloudFormation':
+                response = cloudformation.create_or_update(
+                    StackName=friendly_uid,
+                    TemplateBody=template_contents,
+                )
+            elif self.type == 'Terraform':
+                response = cloudformation.create_or_update(
+                    StackName=friendly_uid,
+                    TemplateBody=template_contents,
+                    Parameters=[
+                        {
+                            'ParameterKey': 'Version',
+                            'ParameterValue': constants.VERSION,
+                            'UsePreviousValue': False,
+                        },
+                    ],
+
+                )
 
         with self.output().open('w') as f:
             f.write(json.dumps(
