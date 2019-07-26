@@ -13,11 +13,6 @@ Parameters:
     Default: 0.11.11
     Type: String
 
-  Image:
-    Description: The Image for CodeBuild to use
-    Type: String
-    Default: "aws/codebuild/python:3.6.5"
-
   ComputeType:
     Description: The ComputeType for CodeBuild
     Type: String
@@ -56,7 +51,7 @@ Resources:
       Environment:
         Type: linuxContainer
         ComputeType: !Ref ComputeType
-        Image: !Ref Image
+        Image: aws/codebuild/python:3.6.5
         EnvironmentVariables:
           - Name: LAUNCH_NAME
             Value: !Ref LaunchName
@@ -109,7 +104,7 @@ Resources:
       Environment:
         Type: linuxContainer
         ComputeType: !Ref ComputeType
-        Image: !Ref Image
+        Image: aws/codebuild/python:3.6.5
         EnvironmentVariables:
           - Name: LAUNCH_NAME
             Value: !Ref LaunchName
@@ -156,6 +151,7 @@ Resources:
       PolicyName: terraform-app-deploy
       Roles:
         - !Ref CodeBuildRole
+
   CodeBuildRole:
     Type: AWS::IAM::Role
     Properties:
@@ -177,7 +173,7 @@ Resources:
   Pipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      RoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/servicecatalog-puppet/PuppetRole"
+      RoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/servicecatalog-puppet/PuppetRoleForTerraform"
       Name: !Ref LaunchName
       RestartExecutionOnUpdate: true
       Stages:
