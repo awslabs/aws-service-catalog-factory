@@ -34,8 +34,9 @@ def validate(p):
 
 @cli.command()
 @click.argument('p', type=click.Path(exists=True))
-def generate_via_luigi(p):
-    core.generate_via_luigi(p)
+@click.option("--branch-override")
+def generate_via_luigi(p, branch_override=None):
+    core.generate_via_luigi(p, branch_override)
 
 
 @cli.command()

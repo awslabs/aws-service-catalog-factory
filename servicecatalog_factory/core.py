@@ -148,7 +148,8 @@ def check_for_external_definitions_for(portfolio, portfolio_file_name, type):
                 component['Versions'].append(version_spec)
 
 
-def generate_via_luigi(p):
+def generate_via_luigi(p, branch_override=None):
+    factory_version = constants.VERSION if branch_override is None else "https://github.com/awslabs/aws-service-catalog-factory/archive/{}.zip".format(branch_override)
     logger.info('Generating')
     all_tasks = {}
     all_regions = get_regions()
@@ -287,7 +288,7 @@ def generate_via_luigi(p):
             "product": version_pipeline_to_build.get('product'),
             "type": version_pipeline_to_build.get('version').get('Type', 'CloudFormation'),
             "products_args_by_region": products_by_region.get(product_name),
-            "factory_version": constants.VERSION,
+            "factory_version": factory_version,
         }
         t = luigi_tasks_and_targets.CreateVersionPipelineTemplateTask(
             **create_args
