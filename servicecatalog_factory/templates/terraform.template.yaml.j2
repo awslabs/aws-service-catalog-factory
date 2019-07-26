@@ -88,7 +88,7 @@ Resources:
               build:
                 commands:
                  - terraform init
-                 - terraform plan
+                 - terraform -no-color plan
             artifacts:
               files:
                 - '*'
@@ -133,7 +133,7 @@ Resources:
               build:
                 commands:
                  - terraform init
-                 - terraform apply
+                 - terraform -auto-approve -no-color apply
 
             artifacts:
               files: '**/*'
