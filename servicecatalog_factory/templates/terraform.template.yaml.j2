@@ -92,7 +92,7 @@ Resources:
               build:
                 commands:
                  - terraform init
-                 - python ../../utils/runterraform.js.py $REGION $LAUNCH_NAME False
+                 - terraform plan
             artifacts:
               files:
                 - '*'
@@ -141,7 +141,7 @@ Resources:
               build:
                 commands:
                  - terraform init
-                 - python ../../utils/runterraform.js.py $REGION $LAUNCH_NAME True
+                 - terraform apply
 
             artifacts:
               files: '**/*'
