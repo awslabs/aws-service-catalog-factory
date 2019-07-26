@@ -73,12 +73,8 @@ Resources:
             phases:
               install:
                 commands:
-                  - sudo pip install boto3
-                  - wget https://releases.hashicorp.com/terraform/${TerraformVersion}/terraform_${TerraformVersion}_linux_amd64.zip
-                  - unzip terraform_${TerraformVersion}_linux_amd64.zip
-                  - sudo mv terraform /bin
-                  - rm terraform_${TerraformVersion}_linux_amd64.zip
                   - apt-get update
+                  - apt-get install -y terraform=${TerraformVersion}
                   - echo "Prepare terraform provider file"
                   - cd tf
                   - echo "terraform { " >> provider-output-backend.tf
@@ -129,12 +125,8 @@ Resources:
             phases:
               install:
                 commands:
-                  - sudo pip install boto3
-                  - wget https://releases.hashicorp.com/terraform/${TerraformVersion}/terraform_${TerraformVersion}_linux_amd64.zip
-                  - unzip terraform_${TerraformVersion}_linux_amd64.zip
-                  - sudo mv terraform /bin
-                  - rm terraform_${TerraformVersion}_linux_amd64.zip
                   - apt-get update
+                  - apt-get install -y terraform=${TerraformVersion}
                   - echo "Display terraform provider file"
                   - cd tf
                   - cat provider-output-backend.tf
