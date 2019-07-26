@@ -51,7 +51,6 @@ Resources:
   BuildProjectPlan:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: !Sub "${LaunchName}-terraform-plan"
       Description: !Sub "Run a terraform plan for ${LaunchName}"
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Artifacts:
@@ -107,7 +106,6 @@ Resources:
   BuildProjectDeploy:
     Type: AWS::CodeBuild::Project
     Properties:
-      Name: !Sub "${LaunchName}-terraform-apply"
       Description: !Sub "Run a terraform apply for ${LaunchName}"
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Artifacts:
@@ -211,7 +209,7 @@ Resources:
   Pipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      RoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/servicecatalog-puppet/PuppetRole"
+      RoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/servicecatalog-puppet/PuppetRoleForTerraform"
       Name: !Ref AWS::StackName
       RestartExecutionOnUpdate: true
       Stages:
