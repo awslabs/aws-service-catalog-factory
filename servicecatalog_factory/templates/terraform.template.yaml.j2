@@ -80,7 +80,7 @@ Resources:
                   - rm terraform_${TerraformVersion}_linux_amd64.zip
                   - apt-get update
                   - echo "Prepare terraform provider file"
-                  - cd $TARGET_ACCOUNT_ID/tf
+                  - cd tf
                   - echo "terraform { " >> provider-output-backend.tf
                   - echo "   backend \"s3\" { " >> provider-output-backend.tf
                   - echo "   bucket = \"$S3_STATE_BUCKET\"" >> provider-output-backend.tf
@@ -136,7 +136,7 @@ Resources:
                   - rm terraform_${TerraformVersion}_linux_amd64.zip
                   - apt-get update
                   - echo "Display terraform provider file"
-                  - cd $TARGET_ACCOUNT_ID/tf
+                  - cd tf
                   - cat provider-output-backend.tf
               build:
                 commands:
