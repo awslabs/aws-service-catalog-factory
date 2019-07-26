@@ -12,7 +12,7 @@ Resources:
   Param:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: !Sub ""/service-catalog-factory/${AWS::StackName}/version"
+      Name: !Sub "/service-catalog-factory/${AWS::StackName}/version"
       Type: String
       Value: !Ref Version
 
