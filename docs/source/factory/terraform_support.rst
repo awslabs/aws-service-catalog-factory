@@ -21,3 +21,7 @@ You can now specify a product version type:
               BranchName: v1
               RepositoryName: account-iam-terraform
             Provider: CodeCommit
+
+.. warning::
+
+    THIS IS EXPERIMENTAL.  This is not guaranteed to be backwards compatible.
