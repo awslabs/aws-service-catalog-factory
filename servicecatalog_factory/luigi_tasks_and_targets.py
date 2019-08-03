@@ -269,6 +269,7 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
     product = luigi.DictParameter()
 
     type = luigi.Parameter()
+    provisioner_version = luigi.Parameter(default='')
     factory_version = luigi.Parameter()
 
     products_args_by_region = luigi.DictParameter()
@@ -355,6 +356,7 @@ class CreateVersionPipelineTask(FactoryTask):
     product = luigi.DictParameter()
 
     type = luigi.Parameter()
+    provisioner_version = luigi.Parameter(default='')
 
     products_args_by_region = luigi.DictParameter()
 
@@ -372,6 +374,7 @@ class CreateVersionPipelineTask(FactoryTask):
             version=self.version,
             product=self.product,
             type=self.type,
+            provisioner_version=self.provisioner_version,
             products_args_by_region=self.products_args_by_region,
             factory_version=self.factory_version
         )

@@ -287,6 +287,7 @@ def generate_via_luigi(p, branch_override=None):
             "version": version_pipeline_to_build.get('version'),
             "product": version_pipeline_to_build.get('product'),
             "type": version_pipeline_to_build.get('version').get('Type', 'CloudFormation'),
+            "provisioner_version": version_pipeline_to_build.get('version').get('Version'),
             "products_args_by_region": products_by_region.get(product_name),
             "factory_version": factory_version,
         }
@@ -1043,9 +1044,10 @@ def remove_version_from_product(portfolio_file_name, portfolio_display_name, pro
     raise Exception(f"Could not find portfolio {portfolio_display_name}")
 
 
-def generate_terraform_template(uid):
+def generate_terraform_template(uid, terraform_version):
     template = utils.ENV.get_template(constants.TERRAFORM_TEMPLATE)
     return template.render(
         FACTORY_VERSION=constants.VERSION,
+        PROVISIONER_VERSION=terraform_version,
         UID=uid
     )
