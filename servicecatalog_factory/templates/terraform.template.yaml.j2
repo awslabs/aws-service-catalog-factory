@@ -4,10 +4,6 @@ Description: |
   {"version": "{{ FACTORY_VERSION }}", "framework": "servicecatalog-factory", "role": "terraform-product-provision"}
 
 Parameters:
-  LaunchName:
-    Description: Unique Identifier for the launch
-    Type: String
-
   TerraformVersion:
     Description: Which version of terraform to use
     Default: '{{ PROVISIONER_VERSION }}'
@@ -18,17 +14,17 @@ Parameters:
     Type: String
     Default: "BUILD_GENERAL1_SMALL"
 
-  TFVarsToEval:
-    Description: |
-      A string that can be evaled to pass params from a Service Catalog Puppet manifest into the Terraform environment
+  {{ for TF_VAR in TF_VARS }}
+  {{TF_VAR}}:
     Type: String
-    Default: ""
+  {{ endfor }}
+
 
 Resources:
   S3TerraformStateBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub "${AWS::AccountId}-${AWS::Region}-${LaunchName}-terraform-state"
+      BucketName: !Sub "${AWS::AccountId}-${AWS::Region}-${AWS::StackName}-terraform-state"
       VersioningConfiguration:
         Status: Enabled
       BucketEncryption:
@@ -39,7 +35,7 @@ Resources:
   S3CodePipelineBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub "${AWS::AccountId}-${AWS::Region}-${LaunchName}-pipeline-bucket"
+      BucketName: !Sub "${AWS::AccountId}-${AWS::Region}-${AWS::StackName}-pipeline-bucket"
       VersioningConfiguration:
         Status: Enabled
       BucketEncryption:
@@ -50,7 +46,7 @@ Resources:
   BuildProjectPlan:
     Type: AWS::CodeBuild::Project
     Properties:
-      Description: !Sub "Run a terraform plan for ${LaunchName}"
+      Description: !Sub "Run a terraform plan for ${AWS::StackName}"
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Artifacts:
         Type: CODEPIPELINE
@@ -60,13 +56,18 @@ Resources:
         Image: aws/codebuild/python:3.6.5
         EnvironmentVariables:
           - Name: LAUNCH_NAME
-            Value: !Ref LaunchName
+            Value: !Ref AWS::StackName
           - Name: S3_BUCKET_NAME
             Value: !Ref S3CodePipelineBucket
           - Name: S3_STATE_BUCKET
             Value: !Ref S3TerraformStateBucket
           - Name: REGION
             Value: !Ref AWS::Region
+  {{ for TF_VAR in TF_VARS }}
+          - Name: {{TF_VAR}}
+            Value: !Ref {{TF_VAR}}
+  {{ endfor }}
+
       Source:
         Type: CODEPIPELINE
         BuildSpec: !Sub |
@@ -74,7 +75,6 @@ Resources:
             phases:
               install:
                 commands:
-                  - eval $TFVarsToEval
                   - wget https://releases.hashicorp.com/terraform/${TerraformVersion}/terraform_${TerraformVersion}_linux_amd64.zip
                   - unzip terraform_${TerraformVersion}_linux_amd64.zip
                   - sudo mv terraform /bin
@@ -99,12 +99,12 @@ Resources:
       TimeoutInMinutes: 20
       Tags:
         - Key: Name
-          Value: !Ref LaunchName
+          Value: !Ref AWS::StackName
 
   BuildProjectDeploy:
     Type: AWS::CodeBuild::Project
     Properties:
-      Description: !Sub "Run a terraform apply for ${LaunchName}"
+      Description: !Sub "Run a terraform apply for ${AWS::StackName}"
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Artifacts:
         Type: CODEPIPELINE
@@ -114,7 +114,7 @@ Resources:
         Image: aws/codebuild/python:3.6.5
         EnvironmentVariables:
           - Name: LAUNCH_NAME
-            Value: !Ref LaunchName
+            Value: !Ref AWS::StackName
           - Name: S3_BUCKET_NAME
             Value: !Ref S3CodePipelineBucket
           - Name: S3_STATE_BUCKET
@@ -144,7 +144,7 @@ Resources:
       TimeoutInMinutes: 20
       Tags:
         - Key: Name
-          Value: !Ref LaunchName
+          Value: !Ref AWS::StackName
 
   CodeBuildPolicy:
     Type: 'AWS::IAM::Policy'
@@ -181,7 +181,7 @@ Resources:
     Type: AWS::CodePipeline::Pipeline
     Properties:
       RoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/servicecatalog-puppet/PuppetRoleForTerraform"
-      Name: !Ref LaunchName
+      Name: !Ref AWS::StackName
       RestartExecutionOnUpdate: true
       Stages:
         - Name: Source

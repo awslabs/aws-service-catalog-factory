@@ -339,6 +339,7 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
                 Source=utils.merge(self.product.get('Source', {}), self.version.get('Source', {})),
                 ALL_REGIONS=self.all_regions,
                 product_ids_by_region=product_ids_by_region,
+                TF_VARS=" ".join(self.provisioner.get('TFVars', [])),
                 FACTORY_VERSION=self.factory_version,
             )
 

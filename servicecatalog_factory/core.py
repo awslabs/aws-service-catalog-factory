@@ -1043,10 +1043,11 @@ def remove_version_from_product(portfolio_file_name, portfolio_display_name, pro
     raise Exception(f"Could not find portfolio {portfolio_display_name}")
 
 
-def generate_terraform_template(uid, terraform_version):
+def generate_terraform_template(uid, terraform_version, tf_vars):
     template = utils.ENV.get_template(constants.TERRAFORM_TEMPLATE)
     return template.render(
         FACTORY_VERSION=constants.VERSION,
         PROVISIONER_VERSION=terraform_version,
-        UID=uid
+        TF_VARS=tf_vars,
+        UID=uid,
     )

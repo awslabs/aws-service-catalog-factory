@@ -159,9 +159,10 @@ def remove_version_from_product(portfolio_file_name, portfolio_display_name, pro
 @cli.command()
 @click.argument('uid')
 @click.argument('terraform_version')
-def generate_terraform_template(uid, terraform_version):
+@click.argument('tf_vars', nargs=-1)
+def generate_terraform_template(uid, terraform_version, tf_vars):
     click.echo(
-        core.generate_terraform_template(uid, terraform_version)
+        core.generate_terraform_template(uid, terraform_version, tf_vars)
     )
 
 if __name__ == "__main__":
