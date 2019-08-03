@@ -10,7 +10,7 @@ Portfolios:
     Tags:
     - Key: provider
       Value: central-it-team
-    Components:
+    Products:
       - Name: account-iam
         Owner: central-it@customer.com
         Description: The iam roles needed for you to do your jobs

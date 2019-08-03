@@ -18,6 +18,12 @@ Parameters:
     Type: String
     Default: "BUILD_GENERAL1_SMALL"
 
+  TFVarsToEval:
+    Description: |
+      A string that can be evaled to pass params from a Service Catalog Puppet manifest into the Terraform environment
+    Type: String
+    Default: ""
+
 Resources:
   S3TerraformStateBucket:
     Type: AWS::S3::Bucket
@@ -68,6 +74,7 @@ Resources:
             phases:
               install:
                 commands:
+                  - eval $TFVarsToEval
                   - wget https://releases.hashicorp.com/terraform/${TerraformVersion}/terraform_${TerraformVersion}_linux_amd64.zip
                   - unzip terraform_${TerraformVersion}_linux_amd64.zip
                   - sudo mv terraform /bin

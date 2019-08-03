@@ -149,9 +149,6 @@ Resources:
           - Name: STACK_NAME
             Type: PLAINTEXT
             Value: !Sub "${AWS::StackName}"
-          - Name: TERRAFORM_VERSION
-            Type: PLAINTEXT
-            Value: !Ref TerraformVersion
           - Name: ACCOUNT_ID
             Type: PLAINTEXT
             Value: !Sub "${AWS::AccountId}"
@@ -171,7 +168,7 @@ Resources:
                 commands:
                   - zip -r tf.zip tf/
                 {% for region in ALL_REGIONS %}
-                  - servicecatalog-factory generate-terraform-template ${STACK_NAME} {{ version.Version }} > product.template-{{ region }}.yaml
+                  - servicecatalog-factory generate-terraform-template ${STACK_NAME} {{ version.Provisioner.Version }} > product.template-{{ region }}.yaml
                   - aws s3 cp tf.zip s3://sc-factory-artifacts-${ACCOUNT_ID}-{{ region }}/${STACK_NAME}/
                 {% endfor %}
             artifacts:

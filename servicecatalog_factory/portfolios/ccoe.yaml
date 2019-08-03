@@ -10,7 +10,7 @@ Portfolios:
     Tags:
     - Key: team
       Value: ccoe
-    Components:
+    Products:
       - Name: guardduty-master-enabler
         Owner: ccoe@some-customer.com
         Description: build out a master account for guard duty and add all child accounts from an ou or path
