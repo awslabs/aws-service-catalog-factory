@@ -14,10 +14,10 @@ Parameters:
     Type: String
     Default: "BUILD_GENERAL1_SMALL"
 
-  {{ for TF_VAR in TF_VARS }}
+  {% for TF_VAR in TF_VARS %}
   {{TF_VAR}}:
     Type: String
-  {{ endfor }}
+  {% endfor %}
 
 
 Resources:
@@ -63,10 +63,10 @@ Resources:
             Value: !Ref S3TerraformStateBucket
           - Name: REGION
             Value: !Ref AWS::Region
-  {{ for TF_VAR in TF_VARS }}
+  {% for TF_VAR in TF_VARS %}
           - Name: {{TF_VAR}}
             Value: !Ref {{TF_VAR}}
-  {{ endfor }}
+  {% endfor %}
 
       Source:
         Type: CODEPIPELINE
