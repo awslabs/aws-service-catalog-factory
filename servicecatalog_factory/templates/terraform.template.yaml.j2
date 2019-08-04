@@ -119,6 +119,11 @@ Resources:
             Value: !Ref S3TerraformStateBucket
           - Name: REGION
             Value: !Ref AWS::Region
+  {% for TF_VAR in TF_VARS %}
+          - Name: {{TF_VAR}}
+            Value: !Ref {{TF_VAR}}
+  {% endfor %}
+
       Source:
         Type: CODEPIPELINE
         BuildSpec: !Sub |
