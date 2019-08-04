@@ -24,7 +24,6 @@ Resources:
   S3TerraformStateBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub "${AWS::AccountId}-${AWS::Region}-${AWS::StackName}-terraform-state"
       VersioningConfiguration:
         Status: Enabled
       BucketEncryption:
@@ -35,7 +34,6 @@ Resources:
   S3CodePipelineBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub "${AWS::AccountId}-${AWS::Region}-${AWS::StackName}-pipeline-bucket"
       VersioningConfiguration:
         Status: Enabled
       BucketEncryption:
