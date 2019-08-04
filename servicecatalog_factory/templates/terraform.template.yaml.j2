@@ -4,30 +4,26 @@ Description: |
   {"version": "{{ FACTORY_VERSION }}", "framework": "servicecatalog-factory", "role": "terraform-product-provision"}
 
 Parameters:
-  LaunchName:
-    Description: Unique Identifier for the launch
-    Type: String
-
   TerraformVersion:
     Description: Which version of terraform to use
-    Default: 0.11.11
+    Default: '{{ PROVISIONER_VERSION }}'
     Type: String
-
-  Image:
-    Description: The Image for CodeBuild to use
-    Type: String
-    Default: "aws/codebuild/python:3.6.5"
 
   ComputeType:
     Description: The ComputeType for CodeBuild
     Type: String
     Default: "BUILD_GENERAL1_SMALL"
 
+  {% for TF_VAR in TF_VARS %}
+  {{TF_VAR}}:
+    Type: String
+  {% endfor %}
+
+
 Resources:
   S3TerraformStateBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub "${AWS::AccountId}-${AWS::Region}-${LaunchName}-terraform-state"
       VersioningConfiguration:
         Status: Enabled
       BucketEncryption:
@@ -38,7 +34,6 @@ Resources:
   S3CodePipelineBucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub "${AWS::AccountId}-${AWS::Region}-${LaunchName}-pipeline-bucket"
       VersioningConfiguration:
         Status: Enabled
       BucketEncryption:
@@ -49,23 +44,28 @@ Resources:
   BuildProjectPlan:
     Type: AWS::CodeBuild::Project
     Properties:
-      Description: !Sub "Run a terraform plan for ${LaunchName}"
+      Description: !Sub "Run a terraform plan for ${AWS::StackName}"
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Artifacts:
         Type: CODEPIPELINE
       Environment:
         Type: linuxContainer
         ComputeType: !Ref ComputeType
-        Image: !Ref Image
+        Image: aws/codebuild/python:3.6.5
         EnvironmentVariables:
           - Name: LAUNCH_NAME
-            Value: !Ref LaunchName
+            Value: !Ref AWS::StackName
           - Name: S3_BUCKET_NAME
             Value: !Ref S3CodePipelineBucket
           - Name: S3_STATE_BUCKET
             Value: !Ref S3TerraformStateBucket
           - Name: REGION
             Value: !Ref AWS::Region
+  {% for TF_VAR in TF_VARS %}
+          - Name: {{TF_VAR}}
+            Value: !Ref {{TF_VAR}}
+  {% endfor %}
+
       Source:
         Type: CODEPIPELINE
         BuildSpec: !Sub |
@@ -97,28 +97,33 @@ Resources:
       TimeoutInMinutes: 20
       Tags:
         - Key: Name
-          Value: !Ref LaunchName
+          Value: !Ref AWS::StackName
 
   BuildProjectDeploy:
     Type: AWS::CodeBuild::Project
     Properties:
-      Description: !Sub "Run a terraform apply for ${LaunchName}"
+      Description: !Sub "Run a terraform apply for ${AWS::StackName}"
       ServiceRole: !GetAtt CodeBuildRole.Arn
       Artifacts:
         Type: CODEPIPELINE
       Environment:
         Type: linuxContainer
         ComputeType: !Ref ComputeType
-        Image: !Ref Image
+        Image: aws/codebuild/python:3.6.5
         EnvironmentVariables:
           - Name: LAUNCH_NAME
-            Value: !Ref LaunchName
+            Value: !Ref AWS::StackName
           - Name: S3_BUCKET_NAME
             Value: !Ref S3CodePipelineBucket
           - Name: S3_STATE_BUCKET
             Value: !Ref S3TerraformStateBucket
           - Name: REGION
             Value: !Ref AWS::Region
+  {% for TF_VAR in TF_VARS %}
+          - Name: {{TF_VAR}}
+            Value: !Ref {{TF_VAR}}
+  {% endfor %}
+
       Source:
         Type: CODEPIPELINE
         BuildSpec: !Sub |
@@ -142,7 +147,7 @@ Resources:
       TimeoutInMinutes: 20
       Tags:
         - Key: Name
-          Value: !Ref LaunchName
+          Value: !Ref AWS::StackName
 
   CodeBuildPolicy:
     Type: 'AWS::IAM::Policy'
@@ -156,6 +161,7 @@ Resources:
       PolicyName: terraform-app-deploy
       Roles:
         - !Ref CodeBuildRole
+
   CodeBuildRole:
     Type: AWS::IAM::Role
     Properties:
@@ -177,8 +183,8 @@ Resources:
   Pipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      RoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/servicecatalog-puppet/PuppetRole"
-      Name: !Ref LaunchName
+      RoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/servicecatalog-puppet/PuppetRoleForTerraform"
+      Name: !Ref AWS::StackName
       RestartExecutionOnUpdate: true
       Stages:
         - Name: Source
