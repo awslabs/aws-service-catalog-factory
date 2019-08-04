@@ -277,7 +277,7 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
         return {
             "version": self.version.get('Name'),
             "product": self.product.get('Name'),
-            "type": self.type,
+            "type": self.provisioner.get('Type'),
         }
 
     def output(self):
