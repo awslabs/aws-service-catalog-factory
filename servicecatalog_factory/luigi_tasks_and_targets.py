@@ -132,7 +132,7 @@ class CreatePortfolioAssociationTask(FactoryTask):
                 },
                 portfolio_id=portfolio_details.get('Id'),
             )
-            stack_name = "-".join([self.portfolios_groups_name, self.display_name, 'associations'])
+            stack_name = "-".join([self.portfolio_group_name, self.display_name, 'associations'])
             cloudformation.create_or_update(
                 StackName=stack_name,
                 TemplateBody=rendered,
