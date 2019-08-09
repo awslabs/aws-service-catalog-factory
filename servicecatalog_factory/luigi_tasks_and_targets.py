@@ -95,6 +95,7 @@ class CreatePortfolioAssociationTask(FactoryTask):
     tags = luigi.ListParameter(default=[], significant=False)
 
     associations = luigi.ListParameter(significant=False, default=[])
+    factory_version = luigi.Parameter()
 
     def requires(self):
         return CreatePortfolioTask(

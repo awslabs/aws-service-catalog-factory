@@ -179,6 +179,7 @@ def generate_via_luigi(p, branch_override=None):
                     create_portfolio_association_task = luigi_tasks_and_targets.CreatePortfolioAssociationTask(
                         **create_portfolio_task_args,
                         associations=portfolio.get('Associations'),
+                        factory_version=factory_version,
                     )
                     all_tasks[
                         f"portfolio_associations_{p_name}_{portfolio.get('DisplayName')}-{region}"
