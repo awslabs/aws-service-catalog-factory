@@ -1,5 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: Associations for {{portfolio.DisplayName}}
+Description: |
+    Associations for {{portfolio.DisplayName}}
+    {"version": "{{ FACTORY_VERSION }}", "framework": "servicecatalog-factory", "role": "portfolio-associations"}
 Resources:
 {% for association in portfolio.Associations %}
   Association{{ loop.index }}:
