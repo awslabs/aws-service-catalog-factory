@@ -37,7 +37,6 @@ class CreatePortfolioTask(FactoryTask):
     display_name = luigi.Parameter()
     description = luigi.Parameter(significant=False)
     provider_name = luigi.Parameter(significant=False)
-    associations = luigi.ListParameter(significant=False, default=[])
     tags = luigi.ListParameter(default=[], significant=False)
 
     def params_for_results_display(self):
@@ -84,6 +83,59 @@ class CreatePortfolioTask(FactoryTask):
                     indent=4,
                     default=str,
                 )
+            )
+
+
+class CreatePortfolioAssociationTask(FactoryTask):
+    region = luigi.Parameter()
+    portfolio_group_name = luigi.Parameter()
+    display_name = luigi.Parameter()
+    description = luigi.Parameter(significant=False)
+    provider_name = luigi.Parameter(significant=False)
+    tags = luigi.ListParameter(default=[], significant=False)
+
+    associations = luigi.ListParameter(significant=False, default=[])
+    factory_version = luigi.Parameter()
+
+    def requires(self):
+        return CreatePortfolioTask(
+            self.region,
+            self.portfolio_group_name,
+            self.display_name,
+            self.description,
+            self.provider_name,
+            self.tags,
+        )
+
+    def params_for_results_display(self):
+        return {
+            "region": self.region,
+            "portfolio_group_name": self.portfolio_group_name,
+            "display_name": self.display_name,
+        }
+
+    def output(self):
+        output_file = f"output/CreatePortfolioAssociationTask/{self.region}-{self.portfolio_group_name}-{self.display_name}.json"
+        return luigi.LocalTarget(output_file)
+
+    def run(self):
+        with betterboto_client.ClientContextManager(
+                'cloudformation', region_name=self.region
+        ) as cloudformation:
+            portfolio_details = json.loads(self.input().open('r').read())
+            template = utils.ENV.get_template(constants.ASSOCIATIONS)
+            rendered = template.render(
+                FACTORY_VERSION=self.factory_version,
+                portfolio={
+                    'DisplayName': portfolio_details.get('DisplayName'),
+                    'Associations': self.associations,
+                },
+                portfolio_id=portfolio_details.get('Id'),
+            )
+            stack_name = "-".join([self.portfolio_group_name, self.display_name, 'associations'])
+            cloudformation.create_or_update(
+                StackName=stack_name,
+                TemplateBody=rendered,
             )
 
 

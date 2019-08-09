@@ -170,13 +170,20 @@ def generate_via_luigi(p, branch_override=None):
                         "display_name": portfolio.get('DisplayName'),
                         "description": portfolio.get('Description'),
                         "provider_name": portfolio.get('ProviderName'),
-                        "associations": portfolio.get('Associations'),
                         "tags": portfolio.get('Tags'),
                     }
                     create_portfolio_task = luigi_tasks_and_targets.CreatePortfolioTask(
                         **create_portfolio_task_args
                     )
                     all_tasks[f"portfolio_{p_name}_{portfolio.get('DisplayName')}-{region}"] = create_portfolio_task
+                    create_portfolio_association_task = luigi_tasks_and_targets.CreatePortfolioAssociationTask(
+                        **create_portfolio_task_args,
+                        associations=portfolio.get('Associations'),
+                        factory_version=factory_version,
+                    )
+                    all_tasks[
+                        f"portfolio_associations_{p_name}_{portfolio.get('DisplayName')}-{region}"
+                    ] = create_portfolio_association_task
                     nested_products = portfolio.get('Products', []) + portfolio.get('Components', [])
                     for product in nested_products:
                         product_uid = f"{product.get('Name')}"
