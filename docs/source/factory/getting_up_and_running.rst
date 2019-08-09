@@ -11,11 +11,13 @@ ServiceCatalog-Factory is bootstrapped from your local machine.  You install a c
 the resources you need into your AWS Account.  Once you have completed the bootstrap you will have the following pipeline
 in your account:
 
-![](./factory-getting-started-what-am-i-going-to-install-pipeline.png)
+
+.. image:: ./factory-getting-started-what-am-i-going-to-install-pipeline.png
 
 using the following services:
 
-![](./factory-getting-started-what-am-i-going-to-install.png)
+.. image:: ./factory-getting-started-what-am-i-going-to-install.png
+
 
 
 Before you install
@@ -126,7 +128,10 @@ You now need to clone the configuration repo and configure your factory:
 
 .. code-block:: bash
 
-    git clone --config 'credential.helper=!aws codecommit credential-helper $@' --config 'credential.UseHttpPath=true' https://git-codecommit.eu-west-1.amazonaws.com/v1/repos/ServiceCatalogFactory
+    git clone \
+        --config 'credential.helper=!aws codecommit credential-helper $@' \
+        --config 'credential.UseHttpPath=true' \
+        https://git-codecommit.eu-west-1.amazonaws.com/v1/repos/ServiceCatalogFactory
     servicecatalog-factory seed simple ServiceCatalogFactory
     cd ServiceCatalogFactory
     git add .
@@ -138,7 +143,10 @@ For Windows users, use git clone command as:
 
 .. code-block:: bash
 
-    git clone --config "credential.helper=!aws codecommit credential-helper $@" --config "credential.UseHttpPath=true" https://git-codecommit.eu-west-1.amazonaws.com/v1/repos/ServiceCatalogFactory
+    git clone \
+        --config "credential.helper=!aws codecommit credential-helper $@" \
+        --config "credential.UseHttpPath=true" \
+        https://git-codecommit.eu-west-1.amazonaws.com/v1/repos/ServiceCatalogFactory
 
 
 Please note ```git clone``` command above includes an AWS Region in it.  You may need to change this or you can use the

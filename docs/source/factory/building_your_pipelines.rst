@@ -124,7 +124,12 @@ By default, the BuildSpec for the AWS CodeBuild project used at the package stag
 
 .. code-block:: bash
 
-    aws cloudformation package --template $(pwd)/product.template.yaml --s3-bucket sc-factory-artifacts-${ACCOUNT_ID}-{{ region }} --s3-prefix ${STACK_NAME} --output-template-file product.template-{{ region }}.yaml
+    aws cloudformation package \
+        --template $(pwd)/product.template.yaml \
+        --s3-bucket sc-factory-artifacts-${ACCOUNT_ID}-{{ region }} \
+        --s3-prefix ${STACK_NAME} \
+        --output-template-file \
+        product.template-{{ region }}.yaml
 
 This allows you to use AWS CloudFormation transform statements within your products meaning you can use AWS::Serverless::Function and other 
 AWS CloudFormation types.
@@ -147,7 +152,11 @@ You can override this behaviour be making a change to your product version, addi
                 build:
                   commands:
                   {% for region in ALL_REGIONS %}
-                    - aws cloudformation package --template $(pwd)/product.template.yaml --s3-bucket sc-factory-artifacts-${ACCOUNT_ID}-{{ region }} --s3-prefix ${STACK_NAME} --output-template-file product.template-{{ region }}.yaml
+                    - aws cloudformation package \
+                        --template $(pwd)/product.template.yaml \
+                        --s3-bucket sc-factory-artifacts-${ACCOUNT_ID}-{{ region }} \
+                        --s3-prefix ${STACK_NAME} \
+                        --output-template-file product.template-{{ region }}.yaml
                   {% endfor %}
               artifacts:
                 files:
