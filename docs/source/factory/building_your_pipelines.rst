@@ -40,6 +40,7 @@ configuration:
             Owner: your-github-user-or-org
             Repo: your-github-repo
             Branch: v1
+            PollForSourceChanges: True
 
 
 Your pipeline will expect a JSON secret in AWS Secrets Manager of the name:
@@ -61,6 +62,7 @@ For example if you have the following in a file named example-simple.yaml:
                     Owner: eamonnfaherty
                     Repo: account-iam
                     Branch: v1
+                    PollForSourceChanges: True
 
 The secret must be named: ```example-simple-central-it-team-portfolio-account-iam-v1``` and must have secret keys 
 for ```SecretToken``` and ```OAuthToken```.  Please note it must be in the same region as the AWS CodePipeline.
