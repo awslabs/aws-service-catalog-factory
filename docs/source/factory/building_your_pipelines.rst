@@ -70,8 +70,12 @@ For example if you have the following in a file named example-simple.yaml:
 
     Setting SecretsManagerSecret was added in version 0.16.0.  Prior to this the name <portfolio_name>-<product_name>-<version>
 
-The secret must have secret keys for ```SecretToken``` and ```OAuthToken``` and it must be in the same region as the AWS
-CodePipeline.
+.. note::
+
+    Since version 0.17.0 you can set your secret using the cli command ``servicecatalog-factory add-secret <name of
+    secret> <value>``.  This will set up the AWS Secrets Manager secret correctly for you otherwise you have to set the
+    secret up yourself.  The secret must have secret keys for ```SecretToken``` and ```OAuthToken``` and it must be in
+    the same region as the AWS CodePipeline.
 
 Tests
 -----

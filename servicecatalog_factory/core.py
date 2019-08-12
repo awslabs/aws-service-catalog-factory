@@ -1058,3 +1058,31 @@ def generate_terraform_template(uid, terraform_version, tf_vars):
         TF_VARS=tf_vars,
         UID=uid,
     )
+
+
+def add_secret(secret_name, oauth_token, secret_token):
+    with betterboto_client.ClientContextManager('secretsmanager') as secretsmanager:
+        try:
+            secretsmanager.create_secret(
+                Name=secret_name,
+                SecretString=json.dumps(
+                    {
+                        'OAuthToken': oauth_token,
+                        'SecretToken': secret_token or oauth_token,
+                    }
+                ),
+            )
+        except secretsmanager.exceptions.ResourceExistsException:
+            secretsmanager.put_secret_value(
+                SecretId=secret_name,
+                SecretString=json.dumps(
+                    {
+                        'OAuthToken': oauth_token,
+                        'SecretToken': secret_token or oauth_token,
+                    }
+                ),
+                VersionStages=[
+                    'AWSCURRENT',
+                ]
+            )
+    click.echo("Uploaded secret")
