@@ -75,12 +75,12 @@ Resources:
                 Owner: {{ Source['Configuration']['Owner'] }}
                 Repo: {{ Source['Configuration']['Repo'] }}
                 Branch: {{ Source['Configuration']['Branch'] }}
-                OAuthToken: !Sub "{{ '{% raw %}{{{% endraw %}' }} resolve:secretsmanager:${friendly_uid}:SecretString:OAuthToken {{ '{% raw %}}}{% endraw %}' }}"
+                OAuthToken: !Sub '{{ '{% raw %}{{{% endraw %}' }}resolve:secretsmanager:{{ Source['Configuration']['SecretsManagerSecret'] }}:SecretString:OAuthToken{{ '{% raw %}}}{% endraw %}' }}'
                 PollForSourceChanges: {{ Source['Configuration']['PollForSourceChanges'] }}{% endif %}
               OutputArtifacts:
                 - Name: Source
               RunOrder: 1
-              RoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliverySourceRole"
+              {% if Source.Provider.lower() == 'aws' %}RoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliverySourceRole"{% endif %}
         - Name: Package
           Actions:
             - Name: Package
@@ -122,7 +122,7 @@ Resources:
     Type: 'AWS::CodePipeline::Webhook'
     Properties:
       AuthenticationConfiguration:
-        SecretToken: !Sub "{{ '{% raw %}{{{% endraw %}' }}resolve:secretsmanager:${friendly_uid}:SecretString:SecretToken{{ '{% raw %}}}{% endraw %}' }}"
+        SecretToken: !Sub '{{ '{% raw %}{{{% endraw %}' }}resolve:secretsmanager:{{ Source['Configuration']['SecretsManagerSecret'] }}:SecretString:SecretToken{{ '{% raw %}}}{% endraw %}' }}'
       Filters:
       - JsonPath: "$.ref"
         MatchEquals: "refs/heads/{{ Source.Configuration.Branch }}"
