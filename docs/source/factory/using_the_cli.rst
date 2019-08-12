@@ -7,6 +7,25 @@ When you bootstrap the framework and upgrade it you use the cli tool to perform 
 
 There are other commands that you may find useful:
 
+add-secret
+----------
+
+.. note::
+
+    This was added in version 0.17.0
+
+You can use the ``servicecatalog-factory`` cli to add Secret Key and OAuth tokens that can be used to create products
+where the source code comes from a GitHub Repo.
+
+.. code-block:: bash
+
+
+    servicecatalog-factory add-secret <secret-name> <oauth_token> <secret_token>
+
+If you do not specify an secret token your oauth token will be used.  You should do this if you are using personal
+access tokens.
+
+
 add-product-to-portfolio
 ------------------------
 

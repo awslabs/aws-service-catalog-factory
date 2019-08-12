@@ -67,6 +67,14 @@ def bootstrap_branch(branch_name):
 
 
 @cli.command()
+@click.argument('secret-name')
+@click.argument('oauth-token')
+@click.argument('secret-token', default=False)
+def add_secret(secret_name, oauth_token, secret_token):
+    core.add_secret(secret_name, oauth_token, secret_token)
+
+
+@cli.command()
 def bootstrap():
     core.bootstrap()
 
