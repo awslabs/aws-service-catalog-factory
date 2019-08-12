@@ -71,7 +71,7 @@ Resources:
               OutputArtifacts:
                 - Name: Source
               RunOrder: 1
-              RoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliverySourceRole"
+              {% if Source.Provider.lower() == 'aws' %}RoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliverySourceRole"{% endif %}
         - Name: Tests
           Actions:
 {% with action="Validate" %}{% include 'test-action.j2' %}{% endwith %}
