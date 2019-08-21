@@ -55,3 +55,26 @@ def remove_version_from_product(portfolio_file_name, portfolio_display_name, pro
     :param version_name: The name of the version you want to remove
     """
     core.remove_version_from_product(portfolio_file_name, portfolio_display_name, product_name, version_name)
+
+
+def upload_config(config):
+    """
+    This function allows you to upload your configuration for factory.  At the moment this should be a dict with an
+    attribute named regions:
+    regions: [
+      'eu-west-3',
+      'sa-east-1',
+    ]
+
+    :param config: The dict containing the configuration used for factory
+    """
+    core.upload_config(config)
+
+
+def bootstrap():
+    """
+    Bootstrap the factory.  This will create the AWS CodeCommit repo containing the config and it will also create the
+    AWS CodePipeline that will run the solution.
+
+    """
+    core.bootstrap()
