@@ -94,7 +94,9 @@ def version():
 @cli.command()
 @click.argument('p', type=click.Path(exists=True))
 def upload_config(p):
-    core.upload_config(p)
+    content = open(p, 'r').read()
+    config = yaml.safe_load(content)
+    core.upload_config(config)
 
 
 @cli.command()
@@ -172,6 +174,7 @@ def generate_terraform_template(uid, terraform_version, tf_vars):
     click.echo(
         core.generate_terraform_template(uid, terraform_version, tf_vars)
     )
+
 
 if __name__ == "__main__":
     cli()

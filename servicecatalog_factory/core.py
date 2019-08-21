@@ -685,13 +685,12 @@ def version():
         )
 
 
-def upload_config(p):
-    content = open(p, 'r').read()
+def upload_config(config):
     with betterboto_client.ClientContextManager('ssm') as ssm:
         ssm.put_parameter(
             Name=constants.CONFIG_PARAM_NAME,
             Type='String',
-            Value=content,
+            Value=yaml.safe_dump(config),
             Overwrite=True,
         )
     click.echo("Uploaded config")
