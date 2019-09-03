@@ -8,6 +8,10 @@
                 ProjectName: !Ref {{ action }}Project
               RunOrder: 1
               InputArtifacts:
+              {% if ShouldParseAsJinja2Template %}
+                - Name: Parse
+              {% else %}
                 - Name: Source
+              {% endif %}
               OutputArtifacts:
                 - Name: Test{{ action }}

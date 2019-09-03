@@ -77,6 +77,39 @@ For example if you have the following in a file named example-simple.yaml:
     secret up yourself.  The secret must have secret keys for ```SecretToken``` and ```OAuthToken``` and it must be in
     the same region as the AWS CodePipeline.
 
+
+Preprocessing templates (using Jinja2)
+--------------------------------------
+
+.. note::
+
+    ShouldParseAsJinja2Template was added in version 0.20.0
+
+When you write your product.template.yaml file you can use Jinja2 to optimise the way you write your CloudFormation
+template.  To enable this you must specify the ``ShouldParseAsJinja2Template`` option and your product.template.yaml
+file must be renamed product.template.yaml.j2
+
+Here is an example showing the option turned on:
+
+.. code-block:: yaml
+
+    Portfolios:
+      -
+        Products:
+          - Name: account-iam
+            Options:
+              ShouldParseAsJinja2Template: True
+            Versions:
+              - Name: v1
+                Description: IAM Policies needed
+                Source:
+                  Provider: CodeCommit
+                  Configuration:
+                    RepositoryName: development-account-networking
+                    BranchName: v1
+
+
+
 Tests
 -----
 Each product pipeline will run aws cloudformation validate-template on your product.template.yaml.
