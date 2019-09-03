@@ -72,11 +72,31 @@ Resources:
                 - Name: Source
               RunOrder: 1
               {% if Source.Provider.lower() == 'aws' %}RoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliverySourceRole"{% endif %}
+
+{% if Options.ShouldParseAsJinja2Template %}
+        - Name: Parse
+          Actions:
+            - Name: Parse
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref ParseProject
+              RunOrder: 1
+              InputArtifacts:
+                - Name: Source
+              OutputArtifacts:
+                - Name: Parse
+{% endif %}
+
         - Name: Tests
           Actions:
-{% with action="Validate" %}{% include 'test-action.j2' %}{% endwith %}
-{% if Options.ShouldCFNNag %}{% with action="CFNNag" %}{% include 'test-action.j2' %}{% endwith %}{% endif %}
-{% if Options.ShouldCloudformationRSpec %}{% with action="CloudformationRSpec" %}{% include 'test-action.j2' %}{% endwith %}{% endif %}
+{% with action="Validate", ShouldParseAsJinja2Template=Options.ShouldParseAsJinja2Template %}{% include 'test-action.j2' %}{% endwith %}
+{% if Options.ShouldCFNNag %}{% with action="CFNNag", ShouldParseAsJinja2Template=Options.ShouldParseAsJinja2Template %}{% include 'test-action.j2' %}{% endwith %}{% endif %}
+{% if Options.ShouldCloudformationRSpec %}{% with action="CloudformationRSpec", ShouldParseAsJinja2Template=Options.ShouldParseAsJinja2Template %}{% include 'test-action.j2' %}{% endwith %}{% endif %}
+
 
         - Name: Package
           Actions:
@@ -90,7 +110,11 @@ Resources:
                 ProjectName: !Ref PackageProject
               RunOrder: 1
               InputArtifacts:
+              {% if Options.ShouldParseAsJinja2Template %}
+                - Name: Parse
+              {% else %}
                 - Name: Source
+              {% endif %}
               OutputArtifacts:
                 - Name: Package
 
@@ -175,3 +199,41 @@ Resources:
         {% endif %}
         {% endif %}
       TimeoutInMinutes: 20
+
+{% if Options.ShouldParseAsJinja2Template %}
+  ParseProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub "${AWS::StackName}-ParseProject"
+      ServiceRole: !Sub "arn:aws:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodeRole"
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: linuxContainer
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:1.0
+        EnvironmentVariables:
+          - Name: STACK_NAME
+            Type: PLAINTEXT
+            Value: !Sub "${AWS::StackName}"
+          - Name: ACCOUNT_ID
+            Type: PLAINTEXT
+            Value: !Sub "${AWS::AccountId}"
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: |
+            version: 0.2
+            phases:
+              install:
+                commands:
+                  - pip install Jinja2==2.10.1
+              build:
+                commands:
+                  - python -c "from jinja2 import Template;print(Template(open('product.template.yaml.j2', 'r').read()).render())" > product.template.yaml
+            artifacts:
+              files:
+                - '*'
+                - '**/*'
+
+      TimeoutInMinutes: 20
+{% endif %}

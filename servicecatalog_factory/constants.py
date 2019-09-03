@@ -27,8 +27,6 @@ PRODUCT = 'product.j2'
 PRODUCT_TERRAFORM = 'product-terraform.j2'
 PRODUCT_CLOUDFORMATION = 'product-cloudformation.j2'
 TERRAFORM_TEMPLATE = 'terraform.template.yaml.j2'
-COMPONENT = 'component.j2'
-COMPONENT_GROUP = 'component_group.j2'
 ASSOCIATIONS = 'associations.j2'
 HOME_REGION = os.environ.get('AWS_REGION', os.environ.get('AWS_DEFAULT_REGION', 'eu-west-1'))
 
