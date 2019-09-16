@@ -1055,6 +1055,7 @@ def generate_terraform_template(uid, terraform_version, tf_vars):
         FACTORY_VERSION=constants.VERSION,
         PROVISIONER_VERSION=terraform_version,
         TF_VARS=tf_vars,
+        PUPPET_ACCOUNT_ID=os.environ.get('ACCOUNT_ID'),
         UID=uid,
     )
 
