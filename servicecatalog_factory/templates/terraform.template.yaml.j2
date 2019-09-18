@@ -196,7 +196,7 @@ Resources:
                 Version: 1
                 Provider: S3
               Configuration:
-                S3Bucket: !Sub "sc-factory-artifacts-${AWS::AccountId}-${AWS::Region}"
+                S3Bucket: !Sub "sc-factory-artifacts-{{ PUPPET_ACCOUNT_ID }}-${AWS::Region}"
                 PollForSourceChanges: true
                 S3ObjectKey: {{ UID }}/tf.zip
               OutputArtifacts:
