@@ -23,6 +23,23 @@ And finally, at the time of publishing:
 Project Management
 ------------------
 
+Quality Assurance
+~~~~~~~~~~~~~~~~~
+
+CICD Process
+^^^^^^^^^^^^
+
+Unit tests are run on every commit.  If unit tests fail a release of the project cannot occur.
+
+The project dependencies are scanned on each commit for known vulnerabilities.  If an issue is discovered a release of the project cannot occur.
+
+
+Review Process
+^^^^^^^^^^^^^^
+
+There are regular reviews of the source code where static analysis results and unit test coverage are assessed.
+
+
 Raising a feature request
 ~~~~~~~~~~~~~~~~~~~~~~~~~
 
