@@ -1,6 +1,6 @@
 # Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-
+import functools
 import logging
 import time
 
@@ -33,6 +33,7 @@ def get_or_create_portfolio(description, provider_name, portfolio_name, tags, se
     return portfolio_detail
 
 
+@functools.lru_cache()
 def get_bucket_name():
     s3_bucket_url = None
     with betterboto_client.ClientContextManager(
