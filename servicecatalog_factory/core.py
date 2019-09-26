@@ -982,17 +982,25 @@ def add_product_to_portfolio(portfolio_file_name, portfolio_display_name, produc
 def remove_product_from_portfolio(portfolio_file_name, portfolio_display_name, product_name):
     logger.info(f"removing product: {product_name} to portfolio: {portfolio_display_name} in: {portfolio_file_name}")
     portfolios = get_portfolios_by_file_name(portfolio_file_name)
+    removed = False
     for portfolio in portfolios.get('Portfolios'):
         if portfolio.get('DisplayName') == portfolio_display_name:
-            if not portfolio_has_product(portfolio, product_name):
-                raise Exception(
-                    f"Portfolio: {portfolio_file_name} {portfolio_display_name} does not contain product: {product_name}"
-                )
-            else:
+            if portfolio_has_product(portfolio, product_name):
                 p, where = get_product_from_portfolio(portfolio, product_name)
                 portfolio.get(where).remove(p)
-                return put_portfolios_by_file_name(portfolio_file_name, portfolios)
-    raise Exception(f"Could not find portfolio {portfolio_display_name}")
+                put_portfolios_by_file_name(portfolio_file_name, portfolios)
+                removed = True
+
+    if not removed:
+        for product in portfolios.get('Products'):
+            if product.get('Name') == product_name:
+                if portfolio_display_name in product.get('Portfolios', []):
+                    product.get('Portfolios').remove(portfolio_display_name)
+                    put_portfolios_by_file_name(portfolio_file_name, portfolios)
+                    removed = True
+
+    if not removed:
+        raise Exception(f"Could not remove product from portfolio")
 
 
 def get_product_from_portfolio(portfolio, product_name):
