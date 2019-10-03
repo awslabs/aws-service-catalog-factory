@@ -23,10 +23,6 @@ Resources:
     Type: AWS::S3::Bucket
     Properties:
       BucketName: !Sub "sc-factory-artifacts-${AWS::AccountId}-${AWS::Region}"
-      LifecycleConfiguration:
-        Rules:
-          - ExpirationInDays: 90
-            Status: Enabled
       VersioningConfiguration:
         Status: Enabled
 
