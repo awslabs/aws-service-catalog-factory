@@ -54,6 +54,13 @@ Resources:
         Type: linuxContainer
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/python:3.7.1
+        EnvironmentVariables:
+          - Name: VERSION
+            Type: PLAINTEXT
+            Value: !Ref Version
+          - Name: ENABLED_REGIONS
+            Type: PLAINTEXT
+            Value: !Ref EnabledRegions
       Source:
         Type: NO_SOURCE
         BuildSpec: !Sub |
@@ -61,8 +68,8 @@ Resources:
           phases:
             install:
               commands:
-                - pip install aws-service-catalog-factory==${Version}
-                - servicecatalog-factory --info set-regions ${EnabledRegions}
+                - pip install aws-service-catalog-factory=={{VERSION}}
+                - servicecatalog-factory --info set-regions {{ENABLED_REGIONS}}
             build:
               commands:
                 - servicecatalog-factory --info bootstrap
