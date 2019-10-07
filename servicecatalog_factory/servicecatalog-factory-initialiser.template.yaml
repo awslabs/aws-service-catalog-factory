@@ -4,12 +4,12 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: |
   Initialiser template used to bring up the install ServiceCatalog-Factory
-  {"version": "0.25.2", "framework": "servicecatalog-factory", "role": "initialiser"}
+  {"version": "0.25.3", "framework": "servicecatalog-factory", "role": "initialiser"}
 
 Parameters:
   Version:
     Type: String
-    Default: "0.25.2"
+    Default: "0.25.3"
     Description: |
       Which version of aws-service-catalog-factory to install
   EnabledRegions:
@@ -60,7 +60,7 @@ Resources:
             Value: !Ref Version
           - Name: ENABLED_REGIONS
             Type: PLAINTEXT
-            Value: !Ref EnabledRegions
+            Value: !Join [ ',', !Split [ ', ', !Ref EnabledRegions]]
       Source:
         Type: NO_SOURCE
         BuildSpec: |
