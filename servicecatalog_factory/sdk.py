@@ -78,3 +78,12 @@ def bootstrap():
 
     """
     core.bootstrap()
+
+
+def set_regions(regions):
+    """
+    Set the regions for the factory.
+
+    :param regions: The list of AWS regions
+    """
+    core.set_regions(regions)

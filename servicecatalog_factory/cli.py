@@ -176,5 +176,11 @@ def generate_terraform_template(uid, terraform_version, tf_vars):
     )
 
 
+@cli.command()
+@click.argument('regions', nargs=-1)
+def set_regions(regions):
+    core.set_regions(regions)
+
+
 if __name__ == "__main__":
     cli()
