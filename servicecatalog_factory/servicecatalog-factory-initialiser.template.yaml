@@ -9,10 +9,13 @@ Description: |
 Parameters:
   Version:
     Type: String
+    Default: "0.25.0"
+    Description: |
+      Which version of aws-service-catalog-factory to install
   EnabledRegions:
     Type: String
     Description: |
-      Space seperated list of 
+      Space or comma seperated list of AWS Regions for which your Factory should operate in
 
 Resources:
   Param:
