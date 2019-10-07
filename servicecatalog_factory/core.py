@@ -1103,6 +1103,5 @@ def set_regions(regions):
             config = yaml.safe_load(response.get('Parameter').get('Value'))
         except ssm.exceptions.ParameterNotFound:
             config = {}
-
-        config['regions'] = regions
+        config['regions'] = regions if len(regions) > 1 else regions[0].split(",")
         upload_config(config)

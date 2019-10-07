@@ -11,6 +11,8 @@ Parameters:
     Type: String
   EnabledRegions:
     Type: String
+    Description: |
+      Space seperated list of 
 
 Resources:
   Param:
@@ -57,9 +59,7 @@ Resources:
             install:
               commands:
                 - pip install aws-service-catalog-factory==${Version}
-                - echo 'regions:[${EnabledRegions}]' > config.yaml
-                - cat config.yaml
-                - servicecatalog-factory --info upload-config config.yaml
+                - servicecatalog-factory --info set-regions ${EnabledRegions}
             build:
               commands:
                 - servicecatalog-factory --info bootstrap
