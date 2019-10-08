@@ -61,6 +61,7 @@ def upload_config(config):
     """
     This function allows you to upload your configuration for factory.  At the moment this should be a dict with an
     attribute named regions:
+
     regions: [
       'eu-west-3',
       'sa-east-1',

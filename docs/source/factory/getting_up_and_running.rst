@@ -24,107 +24,48 @@ Before you install
 ------------------
 You should consider which account will be the home for your factory.  This account will contain the AWS CodePipelines
 and will need to be accessible to any accounts you would like to share with.
- 
+
 
 Installing the tool
 -------------------
-This is a python cli built using Python 3.
-
-It is good practice to install Python libraries in isolated environments.  You can create the a virtual environment using
-the following command:
-
-.. code-block:: bash
-
-    virtualenv --python=python3.7 venv
-    source venv/bin/activate
-
-
-Once you have decided where to install the library you can install the package:
-
-.. code-block:: bash
-
-    pip install aws-service-catalog-factory
-
-
-This will install the library and all of the dependencies.
-
-
-Setting it up
--------------
-The Factory will run in your account and needs some configuration.  You will need to stand up the factory and set up the 
-configuration for it to run smoothly.
-
 
 Bootstrapping the Factory
 +++++++++++++++++++++++++
-There are two parts to bootstrapping the factory.  The first is concerned with setting the global configurations.  To do 
-this we use AWS SSM Parameters.  To get setup you need to create a configuration file with a list of regions you want to 
-use - for example config.yaml:
 
-.. code-block:: yaml
+Installing the framework into your AWS account is easy.  You will need to log into the console and then navigate to the
+AWS CloudFormation service in the region you want to create your Service Catalog portfolios pipelines.
 
-    regions: [
-      'us-east-2',
-      'us-east-1',
-      'us-west-1',
-      'us-west-2',
-      'ap-south-1',
-      'ap-northeast-2',
-      'ap-southeast-1',
-      'ap-southeast-2',
-      'ap-northeast-1',
-      'ca-central-1',
-      'eu-central-1',
-      'eu-west-1',
-      'eu-west-2',
-      'eu-west-3',
-      'sa-east-1',
-    ]
+From there you need to select ``Create stack``.  Ensure you have selected ``Template is ready`` from the ``Prerequisite - Prepare template``
+options and then you will need to select ``Amazon S3 URL`` from the ``Specify template`` options.  There should be an
+input field titled ``Amazon S3 URL`` in which you should paste:
 
-Configure aws cli using aws configure --profile *profilename* command.
+.. code-block::
 
-Export variables:
+    https://service-catalog-tools.s3.eu-west-2.amazonaws.com/factory/latest/servicecatalog-factory-initialiser.template.yaml
 
-For linux:
+Once you have pasted the URL hit ``Next``.  You will be asked to enter a ``Stack name``.  We recommend the name:
+``servicecatalog-factory-initialiser``.
 
-.. code-block:: bash
+One the same screen you will prompted to set the parameters.  Below is explanation of the parameters you can configure:
 
-    export AWS_PROFILE = profilename
-    export AWS_DEFAULT_REGION = region
+- EnabledRegions: the framework will create Service Catalog portfolios in each of the specified regions.
 
-For Windows:
-
-.. code-block:: bash
-
-    set AWS_PROFILE = profilename
-    set AWS_DEFAULT_REGION = region
-
-Note: the profilename should be the profile name used to configure aws cli, and region should be the aws region to bootstrap the factory.
-
-Once you have this file you need to upload the config:
-
-.. code-block:: bash
-
-    servicecatalog-factory upload-config config.yaml
-
-
-If you make changes to this you will need to run upload-config and bootstrap commands again for the changes to occur.
-
-Once that has completed you are ready to bring up the rest of the factory.
-
-
-Use the cli tool to create the AWS CodeCommit repo and AWS CodePipeline resources that run the factory:
-
-.. code-block:: yaml
-
-    servicecatalog-factory bootstrap
-
-This command will take a little while to run.  Once the command completes you can move onto the next step.
-
+When you have set the value for your parameters hit ``Next``, review the next screen, scroll down and hit ``Next`` again.
+Review the final ``Review`` screen, scroll to the bottom, check the box labeled ``I acknowledge that AWS CloudFormation
+might create IAM resources with custom names.`` and then finally hit ``Create Stack``.
 
 Configuring your factory
 ++++++++++++++++++++++++
-You now need to clone the configuration repo and configure your factory:
+
+You now need to configure your factory.  You can clone the repo or edit it in the AWS Console.
+
+Cloning the repo
+~~~~~~~~~~~~~~~~
+
+You now need to clone the configuration repo and configure your factory.  To get the url of the repo look at the
+``servicecatalog-factory-initialiser`` outputs.  If you want to clone via SSH then you can use the value of
+``ServiceCatalogFactoryRepoCloneURLSSH`` or if you want to clone via HTTPS then you can use the value of
+``ServiceCatalogFactoryRepoCloneURLHTTPS``.  Replace the url in the snippet below to get your clone working:
 
 .. code-block:: bash
 
@@ -149,11 +90,9 @@ For Windows users, use git clone command as:
         https://git-codecommit.eu-west-1.amazonaws.com/v1/repos/ServiceCatalogFactory
 
 
-Please note ```git clone``` command above includes an AWS Region in it.  You may need to change this or you can use the
-command the bootstrap command prints to the terminal upon completion for the correct command.
-
-The seed command takes two parameters.  The first is the name of the example file you would like to use.  At the moment
-here is only a _simple_ option.  You can also specify a simple github see using:
+If you would like to get started with a sample setup you can use the seed command.  The seed command takes two parameters.
+The first is the name of the example file you would like to use.  At the moment here is only a _simple_ option. You can
+also specify a simple github see using:
 
 .. code-block:: bash
 
@@ -164,8 +103,22 @@ More will be coming soon to show the flexibility of the Factory.
 
 Once the pipeline has completed you have a working factory!  You will now need to configure at least one product.
 
-Setup your first product
-++++++++++++++++++++++++
+
+Editing in the AWS Console
+~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+If you do not like using git you can build your portfolios directly in the AWS Console.  To get started to go the
+``ServiceCatalogFactory`` git repo.  This will be in CodeCommit in the region you created your pipelines in.  The URL for
+the page in the console is available as a clickable output from the ``servicecatalog-factory-initialiser`` stack named
+``ServiceCatalogFactoryRepoConsoleURL``.
+
+Once you are in your ``ServiceCatalogFactory`` repo you will need to create a new directory in the master branch named
+``portfolios``.  Within that directory you will need to create a YAML file to store your portfolio.  That file should have
+the extension ``.yaml``. Please create the file and read the building your pipelines section to get started.
+
+
+Setting up a product
+++++++++++++++++++++
 The simple example file you used in the previous step declared an account-iam product that is stored in CodeCommit.
 For the product pipeline to work you will need to create the git repo and add the product.template.yaml.
 

@@ -4,27 +4,15 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: |
   Initialiser template used to bring up the install ServiceCatalog-Factory
-  {"version": "0.25.3", "framework": "servicecatalog-factory", "role": "initialiser"}
+  {"version": "latest", "framework": "servicecatalog-factory", "role": "initialiser"}
 
 Parameters:
-  Version:
-    Type: String
-    Default: "0.25.3"
-    Description: |
-      Which version of aws-service-catalog-factory to install
   EnabledRegions:
     Type: String
     Description: |
       Space or comma seperated list of AWS Regions for which your Factory should operate in
 
 Resources:
-  Param:
-    Type: AWS::SSM::Parameter
-    Properties:
-      Name: service-catalog-factory-initialiser-version
-      Type: String
-      Value: !Ref Version
-
   InitialiserRole:
     Type: AWS::IAM::Role
     Properties:
@@ -55,9 +43,6 @@ Resources:
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/python:3.7.1
         EnvironmentVariables:
-          - Name: VERSION
-            Type: PLAINTEXT
-            Value: !Ref Version
           - Name: ENABLED_REGIONS
             Type: PLAINTEXT
             Value: !Join [ ',', !Split [ ', ', !Ref EnabledRegions]]
@@ -68,7 +53,7 @@ Resources:
           phases:
             install:
               commands:
-                - pip install aws-service-catalog-factory==${VERSION}
+                - pip install aws-service-catalog-factory --upgrade
                 - servicecatalog-factory --info set-regions ${ENABLED_REGIONS}
             build:
               commands:
@@ -77,5 +62,9 @@ Resources:
       TimeoutInMinutes: 60
 
 Outputs:
-  Version:
-    Value: !GetAtt Param.Value
+  ServiceCatalogFactoryRepoConsoleURL:
+    Value: !Sub "https://${AWS::Region}.console.aws.amazon.com/codesuite/codecommit/repositories/ServiceCatalogFactory/browse"
+  ServiceCatalogFactoryRepoCloneURLSSH:
+    Value: !Sub "ssh://git-codecommit.${AWS::Region}.amazonaws.com/v1/repos/ServiceCatalogFactory"
+  ServiceCatalogFactoryRepoCloneURLHTTPS:
+    Value: !Sub "https://git-codecommit.${AWS::Region}.amazonaws.com/v1/repos/ServiceCatalogFactory"
