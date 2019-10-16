@@ -143,9 +143,19 @@ Resources:
 
   FactoryPipelineArtifactBucket:
     Type: AWS::S3::Bucket
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+        - ServerSideEncryptionByDefault:
+          SSEAlgorithm: AES256
 
   CatalogBucket:
     Type: AWS::S3::Bucket
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+        - ServerSideEncryptionByDefault:
+          SSEAlgorithm: AES256
 
   Pipeline:
     Type: AWS::CodePipeline::Pipeline
