@@ -29,6 +29,10 @@ Resources:
             Status: Enabled
       VersioningConfiguration:
         Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+        - ServerSideEncryptionByDefault:
+          SSEAlgorithm: AES256
 
 Outputs:
   Version:
