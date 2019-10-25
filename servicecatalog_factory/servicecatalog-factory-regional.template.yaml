@@ -25,6 +25,10 @@ Resources:
       BucketName: !Sub "sc-factory-artifacts-${AWS::AccountId}-${AWS::Region}"
       VersioningConfiguration:
         Status: Enabled
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+        - ServerSideEncryptionByDefault:
+          SSEAlgorithm: AES256
 
 Outputs:
   Version:
