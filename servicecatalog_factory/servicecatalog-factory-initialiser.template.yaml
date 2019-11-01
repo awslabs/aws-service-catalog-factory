@@ -34,7 +34,7 @@ Resources:
     Type: AWS::CodeBuild::Project
     Properties:
       Name: servicecatalog-product-factory-initialiser
-      Description: "Initialiser for the framework"
+      Description: "Initialiser for the factory"
       ServiceRole: !GetAtt InitialiserRole.Arn
       Artifacts:
         Type: NO_ARTIFACTS
@@ -60,6 +60,104 @@ Resources:
                 - servicecatalog-factory --info bootstrap
 
       TimeoutInMinutes: 60
+
+  StartInstallRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /servicefactory-factory/
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
+        - arn:aws:iam::aws:policy/AWSCodeBuildDeveloperAccess
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "lambda.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+
+  StartInstallLambda:
+    Type: AWS::Lambda::Function
+    Properties:
+      Role: !GetAtt StartInstallRole.Arn
+      Handler: "index.handler"
+      Description: Lambda for starting CodeBuild Job
+      Runtime: python3.7
+      Timeout: 900
+      Code:
+        ZipFile: |
+          import boto3
+          import json
+          import logging
+          import time
+          from urllib.request import Request, urlopen
+
+          logger = logging.getLogger()
+          logger.setLevel(logging.INFO)
+
+          def handler(event, context):
+              request_type = event['RequestType']
+              codebuild_projectname = event.get('ResourceProperties').get('ProjectName')
+
+              try:
+                  logger.info(request_type)
+                  if request_type == 'Create':
+                      codebuild_client = boto3.client('codebuild')
+                      logger.info("Starting CodeBuild Job: {}".format(codebuild_projectname))
+                      codebuild_response = codebuild_client.start_build(
+                          projectName = codebuild_projectname
+                      )
+                      build_id = codebuild_response.get('build').get('id')
+                      build_status = 'IN_PROGRESS'
+                      while build_status == 'IN_PROGRESS':
+                          time.sleep(5)
+                          build = codebuild_client.batch_get_builds(ids=[build_id]).get('builds')[0]
+                          build_status = build.get('buildStatus')
+                      if build_status != 'SUCCEEDED':
+                          raise Exception(f"Build did not SUCCEED. Status: {build_status}")
+                      send_response(event, context, "SUCCESS",
+                                    {"Message": "Updated"})
+                  elif request_type == 'Update':
+                      send_response(event, context, "SUCCESS",
+                                    {"Message": "Updated"})
+                  elif request_type == 'Delete':
+                      send_response(event, context, "SUCCESS",
+                                    {"Message": "Deleted"})
+                  else:
+                      send_response(event, context, "FAILED",
+                                    {"Message": "Unexpected"})
+              except Exception as ex:
+                  logger.error(ex)
+                  send_response(event, context,"FAILED",
+                                    {"Message": "Exception"})
+
+          def send_response(e, c, rs, rd):
+              r = json.dumps({
+                  "Status": rs,
+                  "Reason": "CloudWatch Log Stream: " + c.log_stream_name,
+                  "PhysicalResourceId": c.log_stream_name,
+                  "StackId": e['StackId'],
+                  "RequestId": e['RequestId'],
+                  "LogicalResourceId": e['LogicalResourceId'],
+                  "Data": rd
+              })
+              d = str.encode(r)
+              h = {
+                  'content-type': '',
+                  'content-length': str(len(d))
+              }
+              req = Request(e['ResponseURL'], data=d, method='PUT', headers=h)
+              r = urlopen(req)
+              logger.info("Status message: {} {}".format(r.msg, r.getcode()))
+
+  StartInstall:
+    Type: Custom::CustomResource
+    DependsOn: InitialiserProject
+    Properties:
+      ServiceToken: !GetAtt StartInstallLambda.Arn
+      ProjectName: !Ref InitialiserProject
 
 Outputs:
   ServiceCatalogFactoryRepoConsoleURL:
