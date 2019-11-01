@@ -17,7 +17,7 @@ Resources:
     Type: AWS::IAM::Role
     Properties:
       RoleName: Initialiser
-      Path: /servicecatalog-product-factory/
+      Path: /servicecatalog-factory/
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -64,7 +64,8 @@ Resources:
   StartInstallRole:
     Type: AWS::IAM::Role
     Properties:
-      Path: /servicefactory-factory/
+      RoleName: StartFactoryInstallRole
+      Path: /servicecatalog-factory/
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole
         - arn:aws:iam::aws:policy/AWSCodeBuildDeveloperAccess
@@ -83,7 +84,7 @@ Resources:
     Properties:
       Role: !GetAtt StartInstallRole.Arn
       Handler: "index.handler"
-      Description: Lambda for starting CodeBuild Job
+      Description: Lambda for starting Factory CodeBuild Job
       Runtime: python3.7
       Timeout: 900
       Code:
@@ -103,7 +104,7 @@ Resources:
 
               try:
                   logger.info(request_type)
-                  if request_type == 'Create':
+                  if request_type in ['Create', 'Update']:
                       codebuild_client = boto3.client('codebuild')
                       logger.info("Starting CodeBuild Job: {}".format(codebuild_projectname))
                       codebuild_response = codebuild_client.start_build(
@@ -119,15 +120,15 @@ Resources:
                           raise Exception(f"Build did not SUCCEED. Status: {build_status}")
                       send_response(event, context, "SUCCESS",
                                     {"Message": "Updated"})
-                  elif request_type == 'Update':
-                      send_response(event, context, "SUCCESS",
-                                    {"Message": "Updated"})
+
                   elif request_type == 'Delete':
                       send_response(event, context, "SUCCESS",
                                     {"Message": "Deleted"})
+
                   else:
                       send_response(event, context, "FAILED",
                                     {"Message": "Unexpected"})
+
               except Exception as ex:
                   logger.error(ex)
                   send_response(event, context,"FAILED",
