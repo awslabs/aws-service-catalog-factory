@@ -110,7 +110,7 @@ def generate_portfolios(portfolios_file_path):
         portfolios_file_contents = portfolios_file.read()
         portfolios = yaml.safe_load(portfolios_file_contents)
         logger.info("Checking for external config")
-        for portfolio in portfolios.get('Portfolios'):
+        for portfolio in portfolios.get('Portfolios', []):
             check_for_external_definitions_for(portfolio, portfolio_file_name, 'Components')
             check_for_external_definitions_for(portfolio, portfolio_file_name, 'Products')
         return portfolios
