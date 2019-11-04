@@ -13,3 +13,7 @@ output
 results
 ignored
 account-iam-terraform/
+.gitignore
+Would skip repository aws-iam-assume-roles-spoke/
+Would skip repository aws-iam-groups-security-account/
+e2e.sh
