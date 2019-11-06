@@ -10,6 +10,7 @@ pytest-cov = "*"
 codecov = "*"
 pylint = "*"
 pytest-mock = "*"
+pipenv-setup = "*"
 
 [packages]
 pyyaml = "==5.1"
