@@ -8,12 +8,13 @@ help:
 
 setup:
 	pip install pipenv
-	pipenv install --dev --three
+	pipenv sync --dev --three
 
 activate:
 	pipenv shell -c
 
 test:
+	pipenv run pip install .
 	pipenv check
 	pipenv run -- py.test --cov=./servicecatalog_factory --cov-branch
 
