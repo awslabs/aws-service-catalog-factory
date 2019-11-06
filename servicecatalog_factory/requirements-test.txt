@@ -1,6 +1,0 @@
-pytest==4.4.0
-pytest-cov==2.6.1
-codecov==2.0.15
-pylint==2.3.1
-pytest-mock==1.10.4
-safety
