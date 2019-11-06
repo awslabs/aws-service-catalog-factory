@@ -1,24 +1,21 @@
 # Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-import setuptools
+from setuptools import setup, find_packages
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
-with open("servicecatalog_factory/requirements.txt", "r") as fh:
-    requirements = fh.read().split("\n")
-
-setuptools.setup(
+setup(
     name="aws-service-catalog-factory",
-    version="0.26.0",
+    version="0.27.0",
     author="Eamonn Faherty",
     author_email="aws-service-catalog-tools@amazon.com",
     description="Making it easier to build out ServiceCatalog products",
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/awslabs/aws-service-catalog-factory",
-    packages=setuptools.find_packages(),
+    packages=find_packages(),
     package_data={'servicecatalog_factory': ['*','*/*','*/*/*']},
     classifiers=[
         "Development Status :: 5 - Production/Stable",
@@ -32,5 +29,5 @@ setuptools.setup(
         'console_scripts': [
             'servicecatalog-factory = servicecatalog_factory.cli:cli'
         ]},
-    install_requires=requirements,
+    install_requires=[],
 )

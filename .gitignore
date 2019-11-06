@@ -1,6 +1,7 @@
 .idea
 *.iml
 venv
+.venv
 ServiceCatalogFactory
 repos
 aws_service_catalog_factory.egg-info/
