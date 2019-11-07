@@ -18,6 +18,8 @@ Resources:
       Name: service-catalog-factory-version
       Type: String
       Value: !Ref Version
+      Tags:
+        "ServiceCatalogFactory:Actor": "Framework"
 
   SourceRole:
     Type: AWS::IAM::Role
@@ -40,12 +42,18 @@ Resources:
               - "sts:AssumeRole"
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AdministratorAccess
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Framework"
 
   CodeRepo:
     Type: AWS::CodeCommit::Repository
     Properties:
       RepositoryDescription: Repo to store the product factory config
       RepositoryName: ServiceCatalogFactory
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Framework"
 
   BuildRole:
     Type: AWS::IAM::Role
@@ -63,6 +71,9 @@ Resources:
               - "sts:AssumeRole"
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AdministratorAccess
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Framework"
 
   BuildProject:
     Type: AWS::CodeBuild::Project
@@ -96,7 +107,9 @@ Resources:
               - results/*/*
               - output/*/*
             name: BuildOutput
-
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Framework"
       TimeoutInMinutes: 60
 
   CodePipelineTriggerRole:
@@ -121,8 +134,9 @@ Resources:
               - Effect: Allow
                 Action: codepipeline:StartPipelineExecution
                 Resource: !Sub "arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:*-pipeline"
-
-
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Framework"
 
   PipelineRole:
     Type: AWS::IAM::Role
@@ -140,6 +154,9 @@ Resources:
                 - "codepipeline.amazonaws.com"
             Action:
               - "sts:AssumeRole"
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Framework"
 
   FactoryPipelineArtifactBucket:
     Type: AWS::S3::Bucket
@@ -153,6 +170,9 @@ Resources:
         BlockPublicPolicy: TRUE
         IgnorePublicAcls: TRUE
         RestrictPublicBuckets: TRUE
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Framework"
 
   CatalogBucket:
     Type: AWS::S3::Bucket
@@ -166,6 +186,9 @@ Resources:
         BlockPublicPolicy: TRUE
         IgnorePublicAcls: TRUE
         RestrictPublicBuckets: TRUE
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Framework"
 
   Pipeline:
     Type: AWS::CodePipeline::Pipeline
@@ -207,6 +230,9 @@ Resources:
                 - Name: Source
               OutputArtifacts:
                 - Name: BuildOutput
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Framework"
 
   DeliverySourceRole:
     Type: AWS::IAM::Role
@@ -229,6 +255,9 @@ Resources:
               - "sts:AssumeRole"
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AdministratorAccess
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Framework"
 
   DeliveryBuildRole:
     Type: AWS::IAM::Role
@@ -246,6 +275,9 @@ Resources:
               - "sts:AssumeRole"
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AdministratorAccess
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Framework"
 
   DeliveryPipelineRole:
     Type: AWS::IAM::Role
@@ -263,6 +295,9 @@ Resources:
                 - "codepipeline.amazonaws.com"
             Action:
               - "sts:AssumeRole"
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Framework"
 
 Outputs:
   CatalogBucketUrl:

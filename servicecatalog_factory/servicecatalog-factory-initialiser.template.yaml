@@ -29,6 +29,9 @@ Resources:
               - "sts:AssumeRole"
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AdministratorAccess
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Framework"
 
   InitialiserProject:
     Type: AWS::CodeBuild::Project
@@ -60,6 +63,9 @@ Resources:
                 - servicecatalog-factory --info bootstrap
 
       TimeoutInMinutes: 60
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Framework"
 
   StartInstallRole:
     Type: AWS::IAM::Role
@@ -78,6 +84,9 @@ Resources:
                 - "lambda.amazonaws.com"
             Action:
               - "sts:AssumeRole"
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Framework"
 
   StartInstallLambda:
     Type: AWS::Lambda::Function
@@ -87,6 +96,9 @@ Resources:
       Description: Lambda for starting Factory CodeBuild Job
       Runtime: python3.7
       Timeout: 900
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Framework"
       Code:
         ZipFile: |
           import boto3
