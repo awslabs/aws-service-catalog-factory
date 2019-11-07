@@ -18,6 +18,8 @@ Resources:
       Name: service-catalog-factory-regional-version
       Type: String
       Value: !Ref Version
+      Tags:
+        "ServiceCatalogFactory:Actor": "Framework"
 
   PipelineArtifactBucket:
     Type: AWS::S3::Bucket
@@ -34,6 +36,9 @@ Resources:
         BlockPublicPolicy: TRUE
         IgnorePublicAcls: TRUE
         RestrictPublicBuckets: TRUE
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Framework"
 
 Outputs:
   Version:
