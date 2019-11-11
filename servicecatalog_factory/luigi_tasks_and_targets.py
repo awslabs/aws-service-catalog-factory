@@ -394,6 +394,17 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
                 TF_VARS=" ".join(self.provisioner.get('TFVars', [])),
                 FACTORY_VERSION=self.factory_version,
             )
+            rendered = jinja2.Template(rendered).render(
+                friendly_uid=f"{friendly_uid}-{self.version.get('Name')}",
+                version=self.version,
+                product=self.product,
+                Options=utils.merge(self.product.get('Options', {}), self.version.get('Options', {})),
+                Source=utils.merge(self.product.get('Source', {}), self.version.get('Source', {})),
+                ALL_REGIONS=self.all_regions,
+                product_ids_by_region=product_ids_by_region,
+                TF_VARS=" ".join(self.provisioner.get('TFVars', [])),
+                FACTORY_VERSION=self.factory_version,
+            )
 
         else:
             raise Exception(f"Unknown type: {self.type}")
