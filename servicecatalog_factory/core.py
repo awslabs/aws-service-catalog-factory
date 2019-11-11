@@ -1059,13 +1059,21 @@ def remove_version_from_product(portfolio_file_name, portfolio_display_name, pro
 
 def generate_terraform_template(uid, terraform_version, tf_vars):
     template = utils.ENV.get_template(constants.TERRAFORM_TEMPLATE)
-    return template.render(
+    rendered = template.render(
         FACTORY_VERSION=constants.VERSION,
         PROVISIONER_VERSION=terraform_version,
         TF_VARS=tf_vars,
         PUPPET_ACCOUNT_ID=os.environ.get('ACCOUNT_ID'),
         UID=uid,
     )
+    rendered = Template(rendered).render(
+        FACTORY_VERSION=constants.VERSION,
+        PROVISIONER_VERSION=terraform_version,
+        TF_VARS=tf_vars,
+        PUPPET_ACCOUNT_ID=os.environ.get('ACCOUNT_ID'),
+        UID=uid,
+    )
+    return rendered
 
 
 def add_secret(secret_name, oauth_token, secret_token):
