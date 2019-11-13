@@ -4,3 +4,5 @@ venv
 ServiceCatalogFactory
 aws-iam-administrator-access-assumable-role-account/
 aws-iam-administrator-access-assumable-role-service/
+aws-servicecatalog-factory-provisioners-terraform/
+terra-role
