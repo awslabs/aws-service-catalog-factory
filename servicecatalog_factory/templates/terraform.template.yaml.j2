@@ -62,7 +62,7 @@ Resources:
           - Name: REGION
             Value: !Ref AWS::Region
   {% for TF_VAR in TF_VARS %}
-          - Name: {{TF_VAR}}
+          - Name: TF_VAR_{{TF_VAR}}
             Value: !Ref {{TF_VAR}}
   {% endfor %}
 
@@ -120,7 +120,7 @@ Resources:
           - Name: REGION
             Value: !Ref AWS::Region
   {% for TF_VAR in TF_VARS %}
-          - Name: {{TF_VAR}}
+          - Name: TF_VAR_{{TF_VAR}}
             Value: !Ref {{TF_VAR}}
   {% endfor %}
 
