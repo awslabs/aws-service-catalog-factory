@@ -1,0 +1,23 @@
+---
+
+# Landing Zone Core Account Structure
+organizational_units:
+  # Landing Zone OU for Core accounts
+  - name: {{ core_ou }}
+    core_accounts:
+      # Security account
+      - name: {{ core_account }}
+        core_resources:
+        - name: AWS-Service-Catalog-Factory
+          template_file: templates/core_accounts/aws-service-catalog-factory.template
+          parameter_file: parameters/core_accounts/aws-service-catalog-factory.json
+          deploy_method: stack
+          ssm_parameters:
+            - name: /org/member/awsservicecatalogfactory/servicecatalogfactoryrepoconsoleurl
+              value: $[output_ServiceCatalogFactoryRepoConsoleURL]
+            - name: /org/member/awsservicecatalogfactory/servicecatalogfactoryrepocloneurlssh
+              value: $[output_ServiceCatalogFactoryRepoCloneURLSSH]
+            - name: /org/member/awsservicecatalogfactory/servicecatalogfactoryrepocloneurlhttps
+              value: $[output_ServiceCatalogFactoryRepoCloneURLHTTPS]
+          regions:
+            - {{ region }}

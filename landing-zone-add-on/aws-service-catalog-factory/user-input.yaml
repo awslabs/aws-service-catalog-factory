@@ -1,0 +1,16 @@
+# Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+input_parameters:
+  - file_name: add_on_manifest.yaml
+    parameters:
+      core_ou: {{ core_ou }}
+      core_account: {{ core_account }}
+      region: {{ region }}
+      avm_products: {{ avm_products }}
+      enabled_regions: {{ enabled_regions }}
+  - file_name: parameters/core_accounts/aws-service-catalog-factory.json
+    parameters:
+      domain_name: {{ domain_name }}
+      domain_admin_email: {{ domain_admin_email }}
+      cognito_admin_email: {{ cognito_admin_email }}
+      cluster_size: {{ cluster_size }}
