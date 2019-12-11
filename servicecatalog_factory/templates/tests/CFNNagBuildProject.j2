@@ -24,3 +24,10 @@
             artifacts:
               files: '**/*'
       TimeoutInMinutes: 20
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Generated"
+{% for tag in tags %}
+        - Key: {{ tag.get("Key") }}
+          Value: {{ tag.get("Value") }}
+{% endfor %}

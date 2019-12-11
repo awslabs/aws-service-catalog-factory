@@ -30,6 +30,13 @@ Resources:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Generated"
+{% for tag in tags %}
+        - Key: {{ tag.get("Key") }}
+          Value: {{ tag.get("Value") }}
+{% endfor %}
 
   S3CodePipelineBucket:
     Type: AWS::S3::Bucket
@@ -40,12 +47,26 @@ Resources:
         ServerSideEncryptionConfiguration:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Generated"
+{% for tag in tags %}
+        - Key: {{ tag.get("Key") }}
+          Value: {{ tag.get("Value") }}
+{% endfor %}
 
   BuildProjectPlan:
     Type: AWS::CodeBuild::Project
     Properties:
       Description: !Sub "Run a terraform plan for ${AWS::StackName}"
       ServiceRole: !GetAtt CodeBuildRole.Arn
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Generated"
+{% for tag in tags %}
+        - Key: {{ tag.get("Key") }}
+          Value: {{ tag.get("Value") }}
+{% endfor %}
       Artifacts:
         Type: CODEPIPELINE
       Environment:
@@ -104,6 +125,13 @@ Resources:
     Properties:
       Description: !Sub "Run a terraform apply for ${AWS::StackName}"
       ServiceRole: !GetAtt CodeBuildRole.Arn
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Generated"
+{% for tag in tags %}
+        - Key: {{ tag.get("Key") }}
+          Value: {{ tag.get("Value") }}
+{% endfor %}
       Artifacts:
         Type: CODEPIPELINE
       Environment:
@@ -179,6 +207,13 @@ Resources:
             Action:
               - sts:AssumeRole
         Version: 2012-10-17
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Generated"
+{% for tag in tags %}
+        - Key: {{ tag.get("Key") }}
+          Value: {{ tag.get("Value") }}
+{% endfor %}
 
   Pipeline:
     Type: AWS::CodePipeline::Pipeline
@@ -237,6 +272,13 @@ Resources:
           ArtifactStore:
             Location: !Ref S3CodePipelineBucket
             Type: S3
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Generated"
+{% for tag in tags %}
+        - Key: {{ tag.get("Key") }}
+          Value: {{ tag.get("Value") }}
+{% endfor %}
 
 Outputs:
   PipelineUrl:
