@@ -16,7 +16,6 @@ Resources:
       Type: String
       Value: !Ref Version
 
-
 {% if Source.Provider.lower() == 'codecommit' and Source.Configuration.get('PollForSourceChanges', 'FALSE').upper() == 'FALSE' %}
   PipeLineEventTrigger:
     Type: AWS::Events::Rule
@@ -49,6 +48,13 @@ Resources:
     Properties:
       RoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodePipelineRole"
       Name: !Sub "${AWS::StackName}-pipeline"
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Generated"
+{% for tag in tags %}
+        - Key: {{ tag.get("Key") }}
+          Value: {{ tag.get("Value") }}
+{% endfor %}
       ArtifactStores:
       {% for region in ALL_REGIONS %}
         - Region: {{ region }}
@@ -138,6 +144,13 @@ Resources:
     Type: AWS::CodeBuild::Project
     Properties:
       Name: !Sub "${AWS::StackName}-PackageProject"
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Generated"
+{% for tag in tags %}
+        - Key: {{ tag.get("Key") }}
+          Value: {{ tag.get("Value") }}
+{% endfor %}
       ServiceRole: !Sub "arn:aws:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodeRole"
       Artifacts:
         Type: CODEPIPELINE

@@ -289,6 +289,15 @@ def generate_via_luigi(p, branch_override=None):
     logger.info("Going to create pipeline tasks")
     for version_pipeline_to_build in version_pipelines_to_build:
         product_name = version_pipeline_to_build.get('product').get('Name')
+        tags = {}
+        for tag in version_pipeline_to_build.get('product').get('Tags', []):
+            tags[tag.get('Key')] = tag.get('Value')
+        for tag in version_pipeline_to_build.get('version').get('Tags', []):
+            tags[tag.get('Key')] = tag.get('Value')
+        tag_list = []
+        for tag_name, value in tags.items():
+            tag_list.append({'Key': tag_name, 'Value': value})
+
         create_args = {
             "all_regions": all_regions,
             "version": version_pipeline_to_build.get('version'),
@@ -296,6 +305,7 @@ def generate_via_luigi(p, branch_override=None):
             "provisioner": version_pipeline_to_build.get('version').get('Provisioner', {'Type': 'CloudFormation'}),
             "products_args_by_region": products_by_region.get(product_name),
             "factory_version": factory_version,
+            "tags": tag_list,
         }
         t = luigi_tasks_and_targets.CreateVersionPipelineTemplateTask(
             **create_args
@@ -304,7 +314,7 @@ def generate_via_luigi(p, branch_override=None):
         all_tasks[f"pipeline_template_{product_name}-{version_pipeline_to_build.get('version').get('Name')}"] = t
 
         t = luigi_tasks_and_targets.CreateVersionPipelineTask(
-            **create_args,
+            **create_args
         )
         logger.info(f"created pipeline_{product_name}-{version_pipeline_to_build.get('version').get('Name')}")
         all_tasks[f"pipeline_{product_name}-{version_pipeline_to_build.get('version').get('Name')}"] = t

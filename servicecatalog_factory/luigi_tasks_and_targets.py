@@ -325,6 +325,8 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
 
     products_args_by_region = luigi.DictParameter()
 
+    tags = luigi.ListParameter()
+
     def params_for_results_display(self):
         return {
             "version": self.version.get('Name'),
@@ -354,6 +356,14 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
 
         product_ids_by_region = {}
         friendly_uid = None
+
+        tags = []
+        for tag in self.tags:
+            tags.append({
+                "Key": tag.get("Key"),
+                "Value": tag.get("Value"),
+            })
+
         for region, product_details_content in self.input().get('create_products_tasks').items():
             product_details = json.loads(product_details_content.open('r').read())
             product_ids_by_region[region] = product_details.get('ProductId')
@@ -370,6 +380,7 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
                 ALL_REGIONS=self.all_regions,
                 product_ids_by_region=product_ids_by_region,
                 FACTORY_VERSION=self.factory_version,
+                tags=tags,
             )
             rendered = jinja2.Template(rendered).render(
                 friendly_uid=f"{friendly_uid}-{self.version.get('Name')}",
@@ -393,6 +404,7 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
                 product_ids_by_region=product_ids_by_region,
                 TF_VARS=" ".join(self.provisioner.get('TFVars', [])),
                 FACTORY_VERSION=self.factory_version,
+                tags=tags,
             )
             rendered = jinja2.Template(rendered).render(
                 friendly_uid=f"{friendly_uid}-{self.version.get('Name')}",
@@ -424,6 +436,8 @@ class CreateVersionPipelineTask(FactoryTask):
 
     factory_version = luigi.Parameter()
 
+    tags = luigi.ListParameter()
+
     def output(self):
         return luigi.LocalTarget(
             f"output/CreateVersionPipelineTask/"
@@ -437,7 +451,8 @@ class CreateVersionPipelineTask(FactoryTask):
             product=self.product,
             provisioner=self.provisioner,
             products_args_by_region=self.products_args_by_region,
-            factory_version=self.factory_version
+            factory_version=self.factory_version,
+            tags=self.tags,
         )
 
     def run(self):
@@ -446,11 +461,18 @@ class CreateVersionPipelineTask(FactoryTask):
         template = cfn_tools.load_yaml(template_contents)
         friendly_uid = template.get('Description').split('\n')[0]
         logger.info(f"{logger_prefix} creating the stack: {friendly_uid}")
+        tags = []
+        for tag in self.tags:
+            tags.append({
+                "Key": tag.get("Key"),
+                "Value": tag.get("Value"),
+            })
         with betterboto_client.ClientContextManager('cloudformation') as cloudformation:
             if self.provisioner.get('Type') == 'CloudFormation':
                 response = cloudformation.create_or_update(
                     StackName=friendly_uid,
                     TemplateBody=template_contents,
+                    Tags=tags,
                 )
             elif self.provisioner.get('Type') == 'Terraform':
                 response = cloudformation.create_or_update(
@@ -463,6 +485,7 @@ class CreateVersionPipelineTask(FactoryTask):
                             'UsePreviousValue': False,
                         },
                     ],
+                    Tags=tags,
                 )
 
         with self.output().open('w') as f:
