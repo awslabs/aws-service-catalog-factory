@@ -320,9 +320,6 @@ Resources:
           Value: "Framework"
 
 Outputs:
-  FactoryTemplateValidateBucketName:
-    Value: !Ref FactoryTemplateValidateBucket
-
   CatalogBucketUrl:
     Value: !GetAtt CatalogBucket.WebsiteURL
 
