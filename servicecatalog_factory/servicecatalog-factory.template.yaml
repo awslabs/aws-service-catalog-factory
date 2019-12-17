@@ -158,6 +158,26 @@ Resources:
         - Key: "ServiceCatalogFactory:Actor"
           Value: "Framework"
 
+  FactoryTemplateValidateBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: TRUE
+        BlockPublicPolicy: TRUE
+        IgnorePublicAcls: TRUE
+        RestrictPublicBuckets: TRUE
+      LifecycleConfiguration:
+        Rules:
+          - ExpirationInDays: 2
+            Status: Enabled
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Framework"
+
   FactoryPipelineArtifactBucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -300,6 +320,9 @@ Resources:
           Value: "Framework"
 
 Outputs:
+  FactoryTemplateValidateBucketName:
+    Value: !Ref FactoryTemplateValidateBucket
+
   CatalogBucketUrl:
     Value: !GetAtt CatalogBucket.WebsiteURL
 
