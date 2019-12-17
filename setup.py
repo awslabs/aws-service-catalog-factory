@@ -8,7 +8,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="aws-service-catalog-factory",
-    version="0.32.0",
+    version="0.33.0",
     author="Eamonn Faherty",
     author_email="aws-service-catalog-tools@amazon.com",
     description="Making it easier to build out ServiceCatalog products",
@@ -16,7 +16,7 @@ setup(
     long_description_content_type="text/markdown",
     url="https://github.com/awslabs/aws-service-catalog-factory",
     packages=find_packages(),
-    package_data={'servicecatalog_factory': ['*','*/*','*/*/*']},
+    package_data={"servicecatalog_factory": ["*", "*/*", "*/*/*"]},
     classifiers=[
         "Development Status :: 5 - Production/Stable",
         "Intended Audience :: Developers",
@@ -26,8 +26,8 @@ setup(
         "Natural Language :: English",
     ],
     entry_points={
-        'console_scripts': [
-            'servicecatalog-factory = servicecatalog_factory.cli:cli'
-        ]},
-    install_requires=[],
+        "console_scripts": ["servicecatalog-factory = servicecatalog_factory.cli:cli"]
+    },
+    install_requires=[
+    ],
 )
