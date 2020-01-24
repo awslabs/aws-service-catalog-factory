@@ -371,6 +371,20 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
 
         if self.provisioner.get('Type') == 'CloudFormation':
             template = utils.ENV.get_template(constants.PRODUCT_CLOUDFORMATION)
+            logger.info(f"EPF")
+            logger.info(f"EPF")
+            logger.info(f"EPF")
+            logger.info(f"EPF")
+            logger.info(f"EPF")
+            logger.info(f"EPF")
+            logger.info(f"EPF {json.dumps(self.provisioner, default=str, indent=4)}")
+            logger.info(f"EPF")
+            logger.info(f"EPF")
+            logger.info(f"EPF")
+            logger.info(f"EPF")
+            logger.info(f"EPF")
+            logger.info(f"EPF")
+            logger.info(f"EPF")
             rendered = template.render(
                 friendly_uid=f"{friendly_uid}-{self.version.get('Name')}",
                 version=self.version,
