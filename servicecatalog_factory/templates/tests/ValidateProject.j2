@@ -17,8 +17,8 @@
               build:
                 commands:
                   - export FactoryTemplateValidateBucket=$(aws cloudformation list-stack-resources --stack-name servicecatalog-factory --query 'StackResourceSummaries[?LogicalResourceId==`FactoryTemplateValidateBucket`].PhysicalResourceId' --output text)
-                  - aws s3 cp product.template.yaml s3://$FactoryTemplateValidateBucket/$CODEBUILD_BUILD_ID.yaml
-                  - aws cloudformation validate-template --template-url https://$FactoryTemplateValidateBucket.s3.$AWS_REGION.amazonaws.com/$CODEBUILD_BUILD_ID.yaml
+                  - aws s3 cp product.template.{{ template_format }} s3://$FactoryTemplateValidateBucket/$CODEBUILD_BUILD_ID.{{ template_format }}
+                  - aws cloudformation validate-template --template-url https://$FactoryTemplateValidateBucket.s3.$AWS_REGION.amazonaws.com/$CODEBUILD_BUILD_ID.{{ template_format }}
             artifacts:
               files: '**/*'
       TimeoutInMinutes: 20

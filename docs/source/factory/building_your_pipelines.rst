@@ -110,6 +110,40 @@ Here is an example showing the option turned on:
 
 
 
+Using JSON
+----------
+By default factory assumes you will be using YAML based CloudFormation templates.  You can use JSON based products by
+changing the provisioning configuration for CloudFormation:
+
+.. code-block:: yaml
+
+    Products:
+      - Name: json-product
+        Portfolios:
+          - mandatory
+        Versions:
+          - Name: v1
+            Provisioner:
+              Type: CloudFormation
+              Format: json
+            Source:
+              Configuration:
+                BranchName: master
+                RepositoryName: aws-iam-administrator-access-assumable-role-account
+              Provider: CodeCommit
+            Tags:
+              - Key: provider
+                Value: central-it-team
+
+Please note the example above is not complete, it is just illustrating how to set a provisioner.
+
+.. note::
+
+    ShouldParseAsJinja2Template was added in version 0.35.0
+
+
+
+
 Tests
 -----
 Each product pipeline will run aws cloudformation validate-template on your product.template.yaml.
