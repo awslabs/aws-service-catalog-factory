@@ -336,9 +336,7 @@ To specify the Versions section of the ``account-vending-account-creation`` defi
 
 You create this structure within the root of your ``ServiceCatalogFactory`` repository. 
 
-.. note::
-
-  Note that the demo.yaml file should already be under the ``/portfolios`` folder.
+.. note::  Note that the demo.yaml file should already be under the ``/portfolios`` folder.
 
 Under the ``Versions`` folder, you can now create a folder for each version of your component/product which you place a ``specification.yaml`` file which contains the relevant version information.
 version you wish to define:
