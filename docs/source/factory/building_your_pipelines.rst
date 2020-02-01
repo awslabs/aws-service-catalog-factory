@@ -298,8 +298,11 @@ You may find that your portfolio file increases in size fairly quickly.  Having 
 complicated than having multiple, smaller files.  If you find yourself in this situation you can provide the 
 specification for component versions outside of your main portfolio file.
 
-For example if you have a portfolio file named ``demo.yaml`` and it defines a portfolio named
-``central-it-team-portfolio`` as this snippet shows:
+**For example:**
+
+You have a portfolio file named ``demo.yaml`` under your ``portfolios`` directory.
+
+In ``demo.yaml`` you define a portfolio named ``central-it-team-portfolio`` under the ``Portfolios`` section:
 
 .. code-block:: yaml
 
@@ -311,7 +314,7 @@ For example if you have a portfolio file named ``demo.yaml`` and it defines a po
         Associations:
           - arn:aws:iam::${AWS::AccountId}:role/Admin
 
-and you have a component named ``account-vending-account-creation`` as this snippet shows:
+.... and a component/product named ``account-vending-account-creation`` under the ``Products`` section:
 
 .. code-block:: yaml
 
@@ -321,12 +324,21 @@ and you have a component named ``account-vending-account-creation`` as this snip
         Description: template used to interact with custom resources in the shared projects
         Distributor: central-it-team
         SupportDescription: Contact us on Chime for help #central-it-team
-      
-you can create a directory named 
-``/portfolios/demo/Portfolios/central-it-team-portfolio/Components/account-vending-account-bootstrap-shared/Versions/``
-or
-``/portfolios/demo/Portfolios/central-it-team-portfolio/Products/account-vending-account-bootstrap-shared/Versions/``
-within the root of your ``ServiceCatalogFactory`` repository and within that directory you can add sub directories for each
+
+Rather than specifying your ``Versions`` section for the component/product, you can specify it in a specifications file within a directory structure which matches the flow of the manifest file.
+
+**For example:**
+
+To specify the Versions section of the ``account-vending-account-creation`` defined in the 'demo.yaml' file, you can create a directory named in one of the following two ways:
+
+  - ``/portfolios/demo/Portfolios/central-it-team-portfolio/Components/account-vending-account-bootstrap-shared/Versions/``
+  - ``/portfolios/demo/Portfolios/central-it-team-portfolio/Products/account-vending-account-bootstrap-shared/Versions/``
+
+You create this structure within the root of your ``ServiceCatalogFactory`` repository. 
+
+.. note::  Note that the demo.yaml file should already be under the ``/portfolios`` folder.
+
+Under the ``Versions`` folder, you can now create a folder for each version of your component/product which you place a ``specification.yaml`` file which contains the relevant version information.
 version you wish to define:
 
 .. code-block:: bash
@@ -354,7 +366,30 @@ The files named specification need to contain the details for the version:
         BranchName: master
 
 
-Please note, the name of the directory is used as the name of the version.
+**Example of the full folder structure:**
 
-When your service-catalog-factory pipeline runs it will treat these versions as if they were defined within the portfolio 
-file.
+Folder Structure for above examples should look like this under ``ServiceCatalogFactory``
+
+.. code-block:: bash
+
+    # tree .
+
+    .
+    └── portfolios
+        ├── demo
+        │   └── Portfolios
+        │       └── central-it-team-portfolio
+        │           └── Products
+        │               └── account-vending-account-creation
+        │                   └── Versions
+        │                       ├── v1
+        │                       │   └── specification.yaml
+        │                       └── v2
+        │                           └── specification.yaml
+        └── main.yaml
+
+    9 directories, 3 files
+
+
+
+When your service-catalog-factory pipeline runs it will treat these versions as if they were defined within the portfolio file.
