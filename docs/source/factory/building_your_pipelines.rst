@@ -336,7 +336,7 @@ To specify the Versions section of the ``account-vending-account-creation`` defi
 
 You create this structure within the root of your ``ServiceCatalogFactory`` repository. 
 
-.. NOTE::
+.. note::
 
   Note that the demo.yaml file should already be under the ``/portfolios`` folder.
 
@@ -371,25 +371,26 @@ The files named specification need to contain the details for the version:
 **Example of the full folder structure:**
 
 Folder Structure for above examples should look like this under ``ServiceCatalogFactory``
+
 .. code-block:: bash
 
-  # tree .
+    # tree .
 
-  .
-  └── portfolios
-      ├── demo
-      │   └── Portfolios
-      │       └── central-it-team-portfolio
-      │           └── Products
-      │               └── account-vending-account-creation
-      │                   └── Versions
-      │                       ├── v1
-      │                       │   └── specification.yaml
-      │                       └── v2
-      │                           └── specification.yaml
-      └── main.yaml
+    .
+    └── portfolios
+        ├── demo
+        │   └── Portfolios
+        │       └── central-it-team-portfolio
+        │           └── Products
+        │               └── account-vending-account-creation
+        │                   └── Versions
+        │                       ├── v1
+        │                       │   └── specification.yaml
+        │                       └── v2
+        │                           └── specification.yaml
+        └── main.yaml
 
-  9 directories, 3 files
+    9 directories, 3 files
 
 
 
