@@ -335,8 +335,8 @@ Rather than specifying your ``Versions`` section for the component/product, you 
 
 To specify the Versions section of the ``account-vending-account-creation`` defined in the 'demo.yaml' file, you can create a directory named in one of the following two ways:
 
-  - ``/portfolios/demo/Portfolios/central-it-team-portfolio/Components/account-vending-account-bootstrap-shared/Versions/``
-  - ``/portfolios/demo/Portfolios/central-it-team-portfolio/Products/account-vending-account-bootstrap-shared/Versions/``
+  - ``/portfolios/demo/Portfolios/central-it-team-portfolio/Components/account-vending-account-creation/Versions/``
+  - ``/portfolios/demo/Portfolios/central-it-team-portfolio/Products/account-vending-account-creation/Versions/``
 
 .. note::  
 
