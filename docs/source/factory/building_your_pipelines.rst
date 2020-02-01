@@ -329,13 +329,16 @@ Rather than specifying your ``Versions`` section for the component/product, you 
 
 **For example:**
 
-To specify the Versions section of the ``account-vending-account-creation`` defined in the 'demo.yaml' file, you can create a directory named either:
+To specify the Versions section of the ``account-vending-account-creation`` defined in the 'demo.yaml' file, you can create a directory named in one of the following two ways:
+
   - ``/portfolios/demo/Portfolios/central-it-team-portfolio/Components/account-vending-account-bootstrap-shared/Versions/``
   - ``/portfolios/demo/Portfolios/central-it-team-portfolio/Products/account-vending-account-bootstrap-shared/Versions/``
 
 You create this structure within the root of your ``ServiceCatalogFactory`` repository. 
 
-> Note that the demo.yaml file should already be under the ``/portfolios`` folder.
+.. NOTE::
+
+  Note that the demo.yaml file should already be under the ``/portfolios`` folder.
 
 Under the ``Versions`` folder, you can now create a folder for each version of your component/product which you place a ``specification.yaml`` file which contains the relevant version information.
 version you wish to define:
