@@ -325,7 +325,11 @@ In ``demo.yaml`` you define a portfolio named ``central-it-team-portfolio`` unde
         Distributor: central-it-team
         SupportDescription: Contact us on Chime for help #central-it-team
 
-Rather than specifying your ``Versions`` section for the component/product, you can specify it in a specifications file within a directory structure which matches the flow of the manifest file.
+Rather than specifying your ``Versions`` section for the component/product, you can specify it in a specifications file within a directory structure which matches the flow of the manifest file using the following syntax:
+
+  - ``/portfolios/<name_of_manifest_without.yaml>/Portfolios/<DisplayName_of_portfolio>/Products/<name_of_product>/Versions``
+
+  .. note:: You can alternatively use 'Components' instead of 'Products'
 
 **For example:**
 
@@ -334,9 +338,10 @@ To specify the Versions section of the ``account-vending-account-creation`` defi
   - ``/portfolios/demo/Portfolios/central-it-team-portfolio/Components/account-vending-account-bootstrap-shared/Versions/``
   - ``/portfolios/demo/Portfolios/central-it-team-portfolio/Products/account-vending-account-bootstrap-shared/Versions/``
 
-You create this structure within the root of your ``ServiceCatalogFactory`` repository. 
+.. note::  
 
-.. note::  Note that the demo.yaml file should already be under the ``/portfolios`` folder.
+  - You create this structure within the root of your ``ServiceCatalogFactory`` repository. 
+  - The ``demo.yaml`` file should already be under the ``/portfolios`` folder.
 
 Under the ``Versions`` folder, you can now create a folder for each version of your component/product which you place a ``specification.yaml`` file which contains the relevant version information:
 
