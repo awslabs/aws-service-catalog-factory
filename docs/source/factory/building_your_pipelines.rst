@@ -390,7 +390,7 @@ Folder Structure for above examples should look like this under ``ServiceCatalog
         │                       │   └── specification.yaml
         │                       └── v2
         │                           └── specification.yaml
-        └── main.yaml
+        └── demo.yaml
 
     9 directories, 3 files
 
