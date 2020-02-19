@@ -220,7 +220,7 @@ Resources:
     Properties:
       RoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/servicecatalog-puppet/PuppetRoleForTerraform"
       Name: !Ref AWS::StackName
-      RestartExecutionOnUpdate: true
+      RestartExecutionOnUpdate: false
       Stages:
         - Name: Source
           Actions:

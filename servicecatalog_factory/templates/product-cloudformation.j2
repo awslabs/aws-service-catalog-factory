@@ -55,7 +55,7 @@ Resources:
             Location: !Sub "sc-factory-artifacts-${AWS::AccountId}-{{ region }}"
       {% endfor %}
 
-      RestartExecutionOnUpdate: true
+      RestartExecutionOnUpdate: false
       Stages:
         - Name: Source
           Actions:
