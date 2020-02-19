@@ -5,6 +5,7 @@ import hashlib
 import json
 import logging
 import os
+import sys
 from glob import glob
 
 import cfn_tools
@@ -24,6 +25,8 @@ from copy import deepcopy
 from betterboto import client as betterboto_client
 from threading import Thread
 import shutil
+from luigi import LuigiStatusCode
+
 
 from . import utils
 from . import constants
@@ -330,6 +333,16 @@ def generate_via_luigi(p, branch_override=None):
         log_level='INFO',
     )
 
+    exit_status_codes = {
+        LuigiStatusCode.SUCCESS: 0,
+        LuigiStatusCode.SUCCESS_WITH_RETRY: 0,
+        LuigiStatusCode.FAILED: 1,
+        LuigiStatusCode.FAILED_AND_SCHEDULING_FAILED: 2,
+        LuigiStatusCode.SCHEDULING_FAILED: 3,
+        LuigiStatusCode.NOT_RUN: 4,
+        LuigiStatusCode.MISSING_EXT: 5,
+    }
+
     table_data = [
         ['Result', 'Task', 'Significant Parameters', 'Duration'],
 
@@ -351,6 +364,8 @@ def generate_via_luigi(p, branch_override=None):
         click.echo(f"{yaml.safe_dump({'parameters':result.get('task_params')})}")
         click.echo("\n".join(result.get('exception_stack_trace')))
         click.echo('')
+
+    sys.exit(exit_status_codes.get(run_result.status))
 
 
 def show_pipelines(p, format):
