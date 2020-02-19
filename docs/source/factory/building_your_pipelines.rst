@@ -228,6 +228,9 @@ You can override this behaviour be making a change to your product version, addi
             BuildSpec: |
               version: 0.2
               phases:
+                install:
+                  runtime-versions:
+                    python: 3.8
                 build:
                   commands:
                   {% for region in ALL_REGIONS %}
@@ -241,6 +244,8 @@ You can override this behaviour be making a change to your product version, addi
                 files:
                   - '*'
                   - '**/*'
+
+Please note, you need to specify the runtime-versions you intend to use.
 
 Please note, when using this your BuildSpec will be rendered as a Jinja2 template with the following variables available
 in the context:
