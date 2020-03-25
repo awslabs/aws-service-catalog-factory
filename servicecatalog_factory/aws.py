@@ -94,6 +94,7 @@ def ensure_portfolio_association_for_product(portfolio_id, product_id, service_c
     for portfolio_detail in portfolio_details:
         if portfolio_detail.get('Id') == portfolio_id:
             logger.info(f"Found an existing association between {portfolio_id} and {product_id}")
+            found = True
             break
     if not found:
         logger.info(f"Creating an association between {portfolio_id} and {product_id}")
