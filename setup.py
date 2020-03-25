@@ -8,7 +8,7 @@ with open("README.md", "r") as fh:
 
 setup(
     name="aws-service-catalog-factory",
-    version="0.38.0",
+    version="0.38.2",
     author="Eamonn Faherty",
     author_email="aws-service-catalog-tools@amazon.com",
     description="Making it easier to build out ServiceCatalog products",
