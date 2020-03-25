@@ -7,7 +7,7 @@ verify_ssl = true
 pytest-datadir = "*"
 pytest = "*"
 pytest-cov = "*"
-codecov = "*"
+codecov = "==2.0.22"
 pylint = "*"
 pytest-mock = "*"
 pipenv-setup = "*"
