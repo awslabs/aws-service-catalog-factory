@@ -180,7 +180,7 @@ def generate_via_luigi(p, branch_override=None):
                     )
                     all_tasks[f"portfolio_{p_name}_{portfolio.get('DisplayName')}-{region}"] = create_portfolio_task
 
-                    get_portfolio_default_constraint_task = luigi_tasks_and_targets.CreatePortfolioTask(
+                    get_portfolio_default_constraint_task = luigi_tasks_and_targets.GetPortfolioDefaultConstraintsTask(
                         **create_portfolio_task_args,
                         constraints=portfolio.get('Constraints')
                     )

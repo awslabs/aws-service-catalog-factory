@@ -296,6 +296,24 @@ You set Versions[].Active to False to stop users from provisioning your product 
 Please note the ```servicecatalog-factory-pipeline``` updates the active setting.  If you find the value is not in sync 
 run the pipeline. 
 
+Using Default Constraints for Products
+--------------------------------------
+
+You can set constraints at the Portfolio level to be applied to every product.
+Currently only LAUNCH constraints are supported. The Type and Parameters are as defined by the CreateConstraint API
+
+.. code-block:: yaml
+
+    Portfolios:
+      - DisplayName: central-it-team-portfolio
+        Constraints:
+          - Type: LAUNCH
+            Parameters:
+              - LocalRoleName: ProductLaunchRole
+        Products:
+
+
+
 Specifying versions of a component outside of the main portfolio file
 ---------------------------------------------------------------------
 
