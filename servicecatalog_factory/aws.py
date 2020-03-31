@@ -3,6 +3,7 @@
 import functools
 import logging
 import time
+import json
 
 from betterboto import client as betterboto_client
 
@@ -101,6 +102,45 @@ def ensure_portfolio_association_for_product(portfolio_id, product_id, service_c
             ProductId=product_id,
             PortfolioId=portfolio_id,
         )
+
+
+def ensure_constraints_for_product(portfolio_id, product_id, service_catalog, constraints):
+    # Get all constraints for product in portfolio
+    existing_constraints = []
+    response = service_catalog.list_constraints_for_portfolio(
+        PortfolioId=portfolio_id,
+        ProductId=product_id,
+    )
+    existing_constraints.extend(response['ConstraintDetails'])
+    while 'NextPageToken' in response:
+        response = service_catalog.list_constraints_for_portfolio(
+            PortfolioId=portfolio_id,
+            ProductId=product_id,
+            PageToken=response['NextPageToken'],
+        )
+        existing_constraints.extend(response['ConstraintDetails'])
+
+    supported_constraint_types = ['LAUNCH']
+
+    for constraint in constraints:
+        found = False
+        if constraint['Type'] not in supported_constraint_types:
+            logger.info(f"Constraint type not supported, supported types are {supported_constraint_types}")
+            break
+        same_type_constraint = [item['ConstraintId'] for item in existing_constraints if item['Type'] == constraint['Type']]
+        # Check against existing list
+        if same_type_constraint:
+            logger.info(f"Found an existing {constraint['Type']} constraint {constraint} for {portfolio_id} and {product_id}")
+            found = True
+            break
+        if not found:
+            logger.info(f"Creating a new constraint {constraint} for {portfolio_id} and {product_id}")
+            service_catalog.create_constraint(
+                PortfolioId=portfolio_id,
+                ProductId=product_id,
+                Parameters=json.dumps(constraint['Parameters']),
+                Type=constraint['Type']
+            )
 
 
 def get_product(service_catalog, product_name):

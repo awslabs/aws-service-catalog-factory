@@ -179,6 +179,13 @@ def generate_via_luigi(p, branch_override=None):
                         **create_portfolio_task_args
                     )
                     all_tasks[f"portfolio_{p_name}_{portfolio.get('DisplayName')}-{region}"] = create_portfolio_task
+
+                    get_portfolio_default_constraint_task = luigi_tasks_and_targets.CreatePortfolioTask(
+                        **create_portfolio_task_args,
+                        constraints=portfolio.get('Constraints')
+                    )
+                    all_tasks[f"portfolio_constraints_{p_name}_{portfolio.get('DisplayName')}-{region}"] = get_portfolio_default_constraint_task
+
                     create_portfolio_association_task = luigi_tasks_and_targets.CreatePortfolioAssociationTask(
                         **create_portfolio_task_args,
                         associations=portfolio.get('Associations'),

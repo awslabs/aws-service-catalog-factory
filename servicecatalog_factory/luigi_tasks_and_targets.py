@@ -139,6 +139,40 @@ class CreatePortfolioAssociationTask(FactoryTask):
             )
 
 
+class GetPortfolioDefaultConstraintsTask(FactoryTask):
+    region = luigi.Parameter()
+    portfolio_group_name = luigi.Parameter()
+    display_name = luigi.Parameter()
+    description = luigi.Parameter(significant=False)
+    provider_name = luigi.Parameter(significant=False)
+    tags = luigi.ListParameter(default=[], significant=False)
+
+    constraints = luigi.ListParameter(significant=False, default=[])
+
+    def params_for_results_display(self):
+        return {
+            "region": self.region,
+            "portfolio_group_name": self.portfolio_group_name,
+            "display_name": self.display_name,
+        }
+
+    def output(self):
+        output_file = f"output/GetPortfolioDefaultConstraintsTask/{self.region}-{self.portfolio_group_name}-{self.display_name}.json"
+        return luigi.LocalTarget(output_file)
+
+    def run(self):
+        logger_prefix = f"{self.region}-{self.portfolio_group_name}-{self.display_name}"
+        with self.output().open('w') as f:
+            logger.info(f"{logger_prefix}: about to write! {self.constraints}")
+            f.write(
+                json.dumps(
+                    self.constraints,
+                    indent=4,
+                    default=str,
+                )
+            )
+
+
 class CreateProductTask(FactoryTask):
     uid = luigi.Parameter()
     region = luigi.Parameter()
@@ -245,6 +279,9 @@ class AssociateProductWithPortfolioTask(FactoryTask):
             ),
             'create_product_task': CreateProductTask(
                 **self.product_args
+            ),
+            'get_default_constraints_task': GetPortfolioDefaultConstraintsTask(
+                **self.portfolio_args
             )
         }
 
@@ -253,6 +290,7 @@ class AssociateProductWithPortfolioTask(FactoryTask):
         portfolio = json.loads(self.input().get('create_portfolio_task').open('r').read())
         portfolio_id = portfolio.get('Id')
         product = json.loads(self.input().get('create_product_task').open('r').read())
+        constraints = json.loads(self.input().get('get_default_constraints_task').open('r').read())
         product_id = product.get('ProductId')
         with betterboto_client.ClientContextManager(
                 'servicecatalog', region_name=self.region
@@ -260,6 +298,9 @@ class AssociateProductWithPortfolioTask(FactoryTask):
             logger.info(f"{logger_prefix}: Searching for existing association")
 
             aws.ensure_portfolio_association_for_product(portfolio_id, product_id, service_catalog)
+
+            logger.info(f"{logger_prefix}: Ensuring Constraints {constraints}")
+            aws.ensure_constraints_for_product(portfolio_id, product_id, service_catalog, constraints)
 
             with self.output().open('w') as f:
                 logger.info(f"{logger_prefix}: about to write!")
