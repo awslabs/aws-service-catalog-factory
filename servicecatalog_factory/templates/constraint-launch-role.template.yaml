@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: |
   template for generating launch role constraints
-  {"version": "{{ FACTORY_VERSION }}", "framework": "servicecatalog-factory", "role": "constraint-launch-role", "type": "cloudformation"}
+  {"version": "{{ VERSION }}", "framework": "servicecatalog-factory", "role": "constraint-launch-role", "type": "cloudformation"}
 
 Conditions:
   ShouldDoAnything: !Equals [ true, false]
