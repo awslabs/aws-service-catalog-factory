@@ -1199,7 +1199,7 @@ def generate_launch_constraints(p):
                     portfolio_json = json.loads(portfolio_json_file.read())
                     portfolio_id = portfolio_json.get('Id')
                 template_context.append({
-                    'uid': f'{portfolio_id}--{product_id}',
+                    'uid': f'{portfolio_id}{product_id}'.replace("-", ""),
                     'product_id': product_id,
                     'portfolio_id': portfolio_id,
                     'local_role_name': launch_role_constraint.get('local_role_name'),
