@@ -1,0 +1,21 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: |
+  template for generating launch role constraints
+  {"version": "{{ VERSION }}", "framework": "servicecatalog-factory", "role": "constraint-launch-role", "type": "cloudformation"}
+
+Conditions:
+  ShouldDoAnything: !Equals [ true, false]
+
+Resources:
+  NoOp:
+    Type: AWS::S3::Bucket
+    Condition: ShouldDoAnything
+
+{% for constraint in constraints %}
+  {{ constraint.uid }}:
+    Type: AWS::ServiceCatalog::LaunchRoleConstraint
+    Properties:
+      LocalRoleName: {{ constraint.local_role_name }}
+      PortfolioId: {{ constraint.portfolio_id }}
+      ProductId: {{ constraint.product_id }}
+    {% endfor %}

@@ -84,3 +84,23 @@ should be the display name of the portfolio as specified in the portfolio file:
         Description: A place for self service products ready for your account
         ProviderName: central-it-team
         ...
+
+
+
+Within the product specification you can also specify a LocalRoleName for a LaunchRoleConstraint:
+
+.. code-block:: yaml
+
+    Schema: factory-2019-04-01
+
+    Products:
+      - Name: account-iam-standalone
+        Owner: central-it@customer.com
+        Distributor: central-it-team
+        Constraints:
+            Launch:
+                LocalRoleName: ServiceCatalogLaunchRole
+
+.. note::
+
+    LocalRoleName was added in version 0.39.0
