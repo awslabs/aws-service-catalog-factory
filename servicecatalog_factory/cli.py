@@ -182,5 +182,11 @@ def set_regions(regions):
     core.set_regions(regions)
 
 
+@cli.command()
+@click.argument('p', type=click.Path(exists=True))
+def generate_launch_constraints(p):
+    core.generate_launch_constraints(p)
+
+
 if __name__ == "__main__":
     cli()

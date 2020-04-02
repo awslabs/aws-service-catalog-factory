@@ -40,6 +40,23 @@ Resources:
         - Key: "ServiceCatalogFactory:Actor"
           Value: "Framework"
 
+  FactoryPipelineArtifactBucket:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketName: !Sub "sc-factory-pipeline-artifacts-${AWS::AccountId}-${AWS::Region}"
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: TRUE
+        BlockPublicPolicy: TRUE
+        IgnorePublicAcls: TRUE
+        RestrictPublicBuckets: TRUE
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Framework"
+
 Outputs:
   Version:
     Value: !GetAtt Param.Value

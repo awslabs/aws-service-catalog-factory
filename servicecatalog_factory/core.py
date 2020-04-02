@@ -27,7 +27,6 @@ from threading import Thread
 import shutil
 from luigi import LuigiStatusCode
 
-
 from . import utils
 from . import constants
 from . import aws
@@ -152,7 +151,8 @@ def check_for_external_definitions_for(portfolio, portfolio_file_name, type):
 
 
 def generate_via_luigi(p, branch_override=None):
-    factory_version = constants.VERSION if branch_override is None else "https://github.com/awslabs/aws-service-catalog-factory/archive/{}.zip".format(branch_override)
+    factory_version = constants.VERSION if branch_override is None else "https://github.com/awslabs/aws-service-catalog-factory/archive/{}.zip".format(
+        branch_override)
     logger.info('Generating')
     all_tasks = {}
     all_regions = get_regions()
@@ -234,8 +234,8 @@ def generate_via_luigi(p, branch_override=None):
                             )
                             version_pipelines_to_build.append({
                                 'create_product_task_args': create_product_task_args,
-                                'product':product,
-                                'version':version,
+                                'product': product,
+                                'version': version,
                             })
                             all_tasks[
                                 f"version_{p_name}_{portfolio.get('Name')}_{product.get('Name')}_{version.get('Name')}-{region}"
@@ -279,9 +279,9 @@ def generate_via_luigi(p, branch_override=None):
                             'version': version,
                         })
                         ensure_product_version_details_correct_task = luigi_tasks_and_targets.EnsureProductVersionDetailsCorrect(
-                                region=region,
-                                version=version,
-                                product_args=create_product_task_args,
+                            region=region,
+                            version=version,
+                            product_args=create_product_task_args,
                         )
                         all_tasks[
                             f"version_{product.get('Name')}_{version.get('Name')}-{region}"
@@ -360,8 +360,8 @@ def generate_via_luigi(p, branch_override=None):
 
     for filename in glob('results/failure/*.json'):
         result = json.loads(open(filename, 'r').read())
-        click.echo(colorclass.Color("{red}"+result.get('task_type')+" failed{/red}"))
-        click.echo(f"{yaml.safe_dump({'parameters':result.get('task_params')})}")
+        click.echo(colorclass.Color("{red}" + result.get('task_type') + " failed{/red}"))
+        click.echo(f"{yaml.safe_dump({'parameters': result.get('task_params')})}")
         click.echo("\n".join(result.get('exception_stack_trace')))
         click.echo('')
 
@@ -435,7 +435,6 @@ def show_pipelines(p, format):
 
     elif format == "json":
         click.echo(json.dumps(results, indent=4, default=str))
-
 
 
 def get_stacks():
@@ -599,7 +598,7 @@ def bootstrap():
         template = read_from_site_packages(
             '{}.template.yaml'.format('{}-regional'.format(constants.BOOTSTRAP_STACK_NAME))
         )
-        template = Template(template).render(VERSION=constants.VERSION)
+        template = Template(template).render(VERSION=constants.VERSION, ALL_REGIONS=all_regions)
         args = {
             'StackName': '{}-regional'.format(constants.BOOTSTRAP_STACK_NAME),
             'TemplateBody': template,
@@ -626,7 +625,8 @@ def bootstrap():
     with betterboto_client.ClientContextManager('cloudformation') as cloudformation:
         logger.info('Creating {}'.format(constants.BOOTSTRAP_STACK_NAME))
         template = read_from_site_packages('{}.template.yaml'.format(constants.BOOTSTRAP_STACK_NAME))
-        template = Template(template).render(VERSION=constants.VERSION)
+        template = Template(template).render(VERSION=constants.VERSION, ALL_REGIONS=all_regions)
+        print(template)
         args = {
             'StackName': constants.BOOTSTRAP_STACK_NAME,
             'TemplateBody': template,
@@ -869,7 +869,8 @@ def import_product_set(f, name, portfolio_name):
             source_portfolio["Portfolios"].append(p)
 
     portfolio_segment = yaml.safe_load(response.text)
-    products = portfolio_segment.get('Portfolios').get('Components', []) + portfolio_segment.get('Portfolios').get('Products', [])
+    products = portfolio_segment.get('Portfolios').get('Components', []) + portfolio_segment.get('Portfolios').get(
+        'Products', [])
     for product in products:
         target.append(product)
         for version in product.get('Versions'):
@@ -880,17 +881,18 @@ def import_product_set(f, name, portfolio_name):
 
                 os.system(f'aws codecommit create-repository --repository-name {repository_name}')
                 command = "git clone " \
-                              "--config 'credential.helper=!aws codecommit credential-helper $@' " \
-                              "--config 'credential.UseHttpPath=true' " \
-                              f"https://git-codecommit.{constants.HOME_REGION}.amazonaws.com/v1/repos/{repository_name}"
+                          "--config 'credential.helper=!aws codecommit credential-helper $@' " \
+                          "--config 'credential.UseHttpPath=true' " \
+                          f"https://git-codecommit.{constants.HOME_REGION}.amazonaws.com/v1/repos/{repository_name}"
                 os.system(command)
-                remote_name = repository_name.replace(f"{name}-",'')
+                remote_name = repository_name.replace(f"{name}-", '')
                 source = f"https://github.com/awslabs/aws-service-catalog-products/trunk/{name}/{remote_name}/{version.get('Name')}"
                 os.system(f"svn export {source} {repository_name} --force")
                 if branch_name == "master":
                     os.system(f"cd {repository_name} && git add . && git commit -am 'initial add' && git push")
                 else:
-                    os.system(f"cd {repository_name} && git checkout -b {branch_name} && git add . && git commit -am 'initial add' && git push")
+                    os.system(
+                        f"cd {repository_name} && git checkout -b {branch_name} && git add . && git commit -am 'initial add' && git push")
 
     with open(f.name, 'w') as f:
         f.write(
@@ -987,7 +989,8 @@ def ensure_code_commit_repo(details):
 
 
 def add_product_to_portfolio(portfolio_file_name, portfolio_display_name, product):
-    logger.info(f"adding product: {product.get('Name')} to portfolio: {portfolio_display_name} in: {portfolio_file_name}")
+    logger.info(
+        f"adding product: {product.get('Name')} to portfolio: {portfolio_display_name} in: {portfolio_file_name}")
     portfolios = get_portfolios_by_file_name(portfolio_file_name)
     for portfolio in portfolios.get('Portfolios'):
         if portfolio.get('DisplayName') == portfolio_display_name:
@@ -1038,7 +1041,8 @@ def get_product_from_portfolio(portfolio, product_name):
 
 
 def add_version_to_product(portfolio_file_name, portfolio_display_name, product_name, version):
-    logger.info(f"adding version: {version.get('Name')} to product: {product_name} portfolio: {portfolio_display_name} in: {portfolio_file_name}")
+    logger.info(
+        f"adding version: {version.get('Name')} to product: {product_name} portfolio: {portfolio_display_name} in: {portfolio_file_name}")
     portfolios = get_portfolios_by_file_name(portfolio_file_name)
     for portfolio in portfolios.get('Portfolios'):
         if portfolio.get('DisplayName') == portfolio_display_name:
@@ -1062,7 +1066,8 @@ def add_version_to_product(portfolio_file_name, portfolio_display_name, product_
 
 
 def remove_version_from_product(portfolio_file_name, portfolio_display_name, product_name, version_name):
-    logger.info(f"removing version: {version_name} from product: {product_name} portfolio: {portfolio_display_name} in: {portfolio_file_name}")
+    logger.info(
+        f"removing version: {version_name} from product: {product_name} portfolio: {portfolio_display_name} in: {portfolio_file_name}")
     portfolios = get_portfolios_by_file_name(portfolio_file_name)
     for portfolio in portfolios.get('Portfolios'):
         if portfolio.get('DisplayName') == portfolio_display_name:
@@ -1130,3 +1135,77 @@ def set_regions(regions):
             config = {}
         config['regions'] = regions if len(regions) > 1 else regions[0].split(",")
         upload_config(config)
+
+
+def generate_launch_constraints(p):
+    all_regions = get_regions()
+    products_by_portfolio = {}
+    for portfolio_file_name in os.listdir(p):
+        if '.yaml' in portfolio_file_name:
+            p_name = portfolio_file_name.split(".")[0]
+            output_path = os.path.sep.join([constants.OUTPUT, p_name])
+            portfolios_file_path = os.path.sep.join([p, portfolio_file_name])
+            portfolios = generate_portfolios(portfolios_file_path)
+            for portfolio in portfolios.get('Portfolios', []):
+                portfolio_name = f"{p_name}-{portfolio.get('DisplayName')}"
+                products_by_portfolio[portfolio_name] = []
+                products = portfolio.get('Products', []) + portfolio.get('Components', [])
+                for product in products:
+                    if product.get('Constraints', {}).get('Launch', {}).get('LocalRoleName') is not None:
+                        products_by_portfolio[portfolio_name].append(
+                            {
+                                'product_name': product.get('Name'),
+                                'local_role_name': product.get('Constraints', {}).get('Launch', {}).get(
+                                    'LocalRoleName'),
+                            }
+                        )
+
+            products = portfolios.get('Products', []) + portfolios.get('Components', [])
+            for product in products:
+                if product.get('Constraints', {}).get('Launch', {}).get('LocalRoleName') is not None:
+                    for portfolio_name in product.get('Portfolios'):
+                        products_by_portfolio[f"{p_name}-{portfolio_name}"].append(
+                            {
+                                'product_name': product.get('Name'),
+                                'local_role_name': product.get('Constraints', {}).get('Launch', {}).get(
+                                    'LocalRoleName'),
+                            }
+                        )
+
+    template = read_from_site_packages(
+        'templates/constraint-launch-role.template.yaml'
+    )
+    for region in all_regions:
+        template_context = []
+        for portfolios_name, launch_role_constraints in products_by_portfolio.items():
+            for launch_role_constraint in launch_role_constraints:
+                with open(
+                        os.path.sep.join(
+                            [
+                                "output",
+                                "CreateProductTask",
+                                f'{region}-{launch_role_constraint.get("product_name")}.json'
+                            ]
+                        ), 'r') as product_json_file:
+                    product_json = json.loads(product_json_file.read())
+                    product_id = product_json.get("ProductId")
+                with open(
+                        os.path.sep.join(["output", "CreatePortfolioTask", f'{region}-{portfolios_name}.json']),
+                        'r') as portfolio_json_file:
+                    portfolio_json = json.loads(portfolio_json_file.read())
+                    portfolio_id = portfolio_json.get('Id')
+                template_context.append({
+                    'uid': f'{portfolio_id}--{product_id}',
+                    'product_id': product_id,
+                    'portfolio_id': portfolio_id,
+                    'local_role_name': launch_role_constraint.get('local_role_name'),
+                })
+
+        if not os.path.exists(f"output/constraints/launch-role"):
+            os.makedirs(f"output/constraints/launch-role")
+        with open(f"output/constraints/launch-role/{region}.template.yaml", 'w') as cfn:
+            cfn.write(
+                Template(template).render(
+                    VERSION=constants.VERSION, ALL_REGIONS=all_regions, constraints=template_context
+                )
+            )
