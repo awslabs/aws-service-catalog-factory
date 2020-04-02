@@ -148,6 +148,7 @@ Resources:
             files:
               - results/*/*
               - output/*/*
+              - output/constraints/launch-role/*.template.yaml
             name: GenerateLaunchConstraintsOutput
           Tags:
             - Key: "ServiceCatalogFactory:Actor"
