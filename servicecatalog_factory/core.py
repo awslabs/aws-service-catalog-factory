@@ -1137,12 +1137,13 @@ def set_regions(regions):
 
 
 def generate_launch_constraints(p):
+    logger.info("generating launch contraints")
     all_regions = get_regions()
     products_by_portfolio = {}
+    logger.info("Building up portfolios list")
     for portfolio_file_name in os.listdir(p):
         if '.yaml' in portfolio_file_name:
             p_name = portfolio_file_name.split(".")[0]
-            output_path = os.path.sep.join([constants.OUTPUT, p_name])
             portfolios_file_path = os.path.sep.join([p, portfolio_file_name])
             portfolios = generate_portfolios(portfolios_file_path)
             for portfolio in portfolios.get('Portfolios', []):
@@ -1171,10 +1172,14 @@ def generate_launch_constraints(p):
                             }
                         )
 
+    logger.info(f"Finished building up portfolio list: {products_by_portfolio}")
+
     template = read_from_site_packages(
         'templates/constraint-launch-role.template.yaml'
     )
+    logger.info('writing the template')
     for region in all_regions:
+        logger.info(f"looking at region {region}")
         template_context = []
         for portfolios_name, launch_role_constraints in products_by_portfolio.items():
             for launch_role_constraint in launch_role_constraints:
@@ -1202,9 +1207,11 @@ def generate_launch_constraints(p):
 
         if not os.path.exists(f"output/constraints/launch-role"):
             os.makedirs(f"output/constraints/launch-role")
+        logger.info(f"About to write a templaste: output/constraints/launch-role/{region}.template.yaml")
         with open(f"output/constraints/launch-role/{region}.template.yaml", 'w') as cfn:
             cfn.write(
                 Template(template).render(
                     VERSION=constants.VERSION, ALL_REGIONS=all_regions, constraints=template_context
                 )
             )
+    logger.info('finished writing the template')
