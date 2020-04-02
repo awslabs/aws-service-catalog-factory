@@ -108,6 +108,7 @@ Resources:
             files:
               - results/*/*
               - output/*/*
+              - portfolios/*
             name: BuildOutput
       Tags:
         - Key: "ServiceCatalogFactory:Actor"
@@ -194,6 +195,26 @@ Resources:
             Principal:
               Service:
                 - "codepipeline.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Framework"
+
+  FactoryCloudFormationDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: FactoryCloudFormationDeployRole
+      Path: /servicecatalog-factory/
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AdministratorAccess
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "cloudformation.amazonaws.com"
             Action:
               - "sts:AssumeRole"
       Tags:
@@ -309,8 +330,9 @@ Resources:
               Version: '1'
             Configuration:
               ActionMode: CREATE_UPDATE
-              StackName: 'servicecatalog-factory-constraints-launch-role-{{region}}'
-              TemplatePath: "GeneratePortfolioConstraintsOutput::output/constraints/launch-role/{region}.template.yaml"
+              StackName: 'servicecatalog-factory-constraints-launch-role-{{ region }}'
+              TemplatePath: "GeneratePortfolioConstraintsOutput::output/constraints/launch-role/{{ region }}.template.yaml"
+              RoleArn: !GetAtt FactoryCloudFormationDeployRole.Arn
           {% endfor %}
       Tags:
         - Key: "ServiceCatalogFactory:Actor"

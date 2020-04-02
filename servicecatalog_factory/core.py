@@ -626,7 +626,6 @@ def bootstrap():
         logger.info('Creating {}'.format(constants.BOOTSTRAP_STACK_NAME))
         template = read_from_site_packages('{}.template.yaml'.format(constants.BOOTSTRAP_STACK_NAME))
         template = Template(template).render(VERSION=constants.VERSION, ALL_REGIONS=all_regions)
-        print(template)
         args = {
             'StackName': constants.BOOTSTRAP_STACK_NAME,
             'TemplateBody': template,
