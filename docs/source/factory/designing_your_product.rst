@@ -111,3 +111,9 @@ Within the product specification you can also specify a LocalRoleName for a Laun
             Launch:
                 LocalRoleName: ServiceCatalogLaunchRole
 
+
+.. note::
+
+    The rolename you specify must exist in the puppet account and should exist in any spoke account where you want the
+    association to take affect.  The role must be assumable by the Service Catalog principal and should have the
+    permissions needed to provision your product.
