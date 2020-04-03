@@ -57,6 +57,10 @@ this you must specify the product in a Products attribute at the root of the por
                 BranchName: v1
 
 
+
+Adding associations to a portfolio
+----------------------------------
+
 Within the products specification you can list the portfolios it should be associated with.  The values for the portfolios
 should be the display name of the portfolio as specified in the portfolio file:
 
@@ -86,6 +90,12 @@ should be the display name of the portfolio as specified in the portfolio file:
         ...
 
 
+Adding launch role constraints to a product
+-------------------------------------------
+
+.. note::
+
+    This was added in version 0.39.0
 
 Within the product specification you can also specify a LocalRoleName for a LaunchRoleConstraint:
 
@@ -101,6 +111,3 @@ Within the product specification you can also specify a LocalRoleName for a Laun
             Launch:
                 LocalRoleName: ServiceCatalogLaunchRole
 
-.. note::
-
-    LocalRoleName was added in version 0.39.0
