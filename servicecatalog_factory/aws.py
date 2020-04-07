@@ -33,24 +33,6 @@ def get_or_create_portfolio(description, provider_name, portfolio_name, tags, se
     return portfolio_detail
 
 
-@functools.lru_cache()
-def get_bucket_name():
-    s3_bucket_url = None
-    with betterboto_client.ClientContextManager(
-            'cloudformation', region_name=constants.HOME_REGION
-    ) as cloudformation:
-        response = cloudformation.describe_stacks(
-            StackName=constants.BOOTSTRAP_STACK_NAME
-        )
-        assert len(response.get('Stacks')) == 1, "There should only be one stack with the name"
-        outputs = response.get('Stacks')[0].get('Outputs')
-        for output in outputs:
-            if output.get('OutputKey') == "CatalogBucketName":
-                s3_bucket_url = output.get('OutputValue')
-        assert s3_bucket_url is not None, "Could not find bucket"
-        return s3_bucket_url
-
-
 def get_or_create_product(name, args, service_catalog):
     logger.info(f'Looking for product: {name}')
     search_products_as_admin_response = service_catalog.search_products_as_admin_single_page(

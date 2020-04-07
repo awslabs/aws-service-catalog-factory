@@ -18,8 +18,38 @@ logger = logging.getLogger(__file__)
 
 class FactoryTask(luigi.Task):
 
+    def load_from_input(self, input_name):
+        with self.input().get(input_name).open('r') as f:
+            return json.loads(f.read())
+
+    def info(self, message):
+        logger.info(f"{self.uid}: {message}")
+
     def params_for_results_display(self):
         return "Omitted"
+
+    def write_output(self, content):
+        with self.output().open('w') as f:
+            f.write(
+                json.dumps(
+                    content,
+                    indent=4,
+                    default=str,
+                )
+            )
+
+    def output(self):
+        return luigi.LocalTarget(
+            f"output/{self.uid}.json"
+        )
+
+    @property
+    def uid(self):
+        return f"{self.__class__.__name__}/{self.node_id}"
+
+    @property
+    def node_id(self):
+        return f"{self.__class__.__name__}_{'|'.join(self.params_for_results_display().values())}"
 
     @property
     def resources(self):
@@ -29,6 +59,34 @@ class FactoryTask(luigi.Task):
             resources_for_this_task[self.region] = 1
 
         return resources_for_this_task
+
+
+class GetBucketTask(FactoryTask):
+    region = luigi.Parameter(default=constants.HOME_REGION)
+
+    def params_for_results_display(self):
+        return {
+            'region': self.region,
+        }
+
+    def run(self):
+        s3_bucket_url = None
+        with betterboto_client.ClientContextManager(
+                'cloudformation', region_name=self.region
+        ) as cloudformation:
+            response = cloudformation.describe_stacks(
+                StackName=constants.BOOTSTRAP_STACK_NAME
+            )
+            assert len(response.get('Stacks')) == 1, "There should only be one stack with the name"
+            outputs = response.get('Stacks')[0].get('Outputs')
+            for output in outputs:
+                if output.get('OutputKey') == "CatalogBucketName":
+                    s3_bucket_url = output.get('OutputValue')
+            assert s3_bucket_url is not None, "Could not find bucket"
+            self.write_output({
+                's3_bucket_url': s3_bucket_url
+            })
+
 
 
 class CreatePortfolioTask(FactoryTask):
@@ -158,6 +216,11 @@ class CreateProductTask(FactoryTask):
             "name": self.name,
         }
 
+    def requires(self):
+        return {
+            "s3_bucket_url": GetBucketTask()
+        }
+
     def output(self):
         return luigi.LocalTarget(
             f"output/CreateProductTask/{self.region}-{self.name}.json"
@@ -176,7 +239,7 @@ class CreateProductTask(FactoryTask):
                 })
             tags.append({"Key": "ServiceCatalogFactory:Actor", "Value": "Product"})
 
-            s3_bucket_name = aws.get_bucket_name()
+            s3_bucket_name = self.load_from_input('s3_bucket_url').get('s3_bucket_url')
 
             args = {
                 'ProductType': 'CLOUD_FORMATION_TEMPLATE',
@@ -436,6 +499,7 @@ class CreateVersionPipelineTask(FactoryTask):
     products_args_by_region = luigi.DictParameter()
 
     factory_version = luigi.Parameter()
+    region = luigi.Parameter()
 
     tags = luigi.ListParameter()
 
