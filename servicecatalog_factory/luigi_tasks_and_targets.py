@@ -436,6 +436,7 @@ class CreateVersionPipelineTask(FactoryTask):
     products_args_by_region = luigi.DictParameter()
 
     factory_version = luigi.Parameter()
+    region = luigi.Parameter()
 
     tags = luigi.ListParameter()
 

@@ -317,7 +317,8 @@ def generate_via_luigi(p, branch_override=None):
         all_tasks[f"pipeline_template_{product_name}-{version_pipeline_to_build.get('version').get('Name')}"] = t
 
         t = luigi_tasks_and_targets.CreateVersionPipelineTask(
-            **create_args
+            **create_args,
+            region=constants.HOME_REGION,
         )
         logger.info(f"created pipeline_{product_name}-{version_pipeline_to_build.get('version').get('Name')}")
         all_tasks[f"pipeline_{product_name}-{version_pipeline_to_build.get('version').get('Name')}"] = t
