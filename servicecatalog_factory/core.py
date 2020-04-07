@@ -74,23 +74,6 @@ def merge(dict1, dict2):
     return result
 
 
-def get_bucket_name():
-    s3_bucket_url = None
-    with betterboto_client.ClientContextManager(
-            'cloudformation', region_name=constants.HOME_REGION
-    ) as cloudformation:
-        response = cloudformation.describe_stacks(
-            StackName=constants.BOOTSTRAP_STACK_NAME
-        )
-        assert len(response.get('Stacks')) == 1, "There should only be one stack with the name"
-        outputs = response.get('Stacks')[0].get('Outputs')
-        for output in outputs:
-            if output.get('OutputKey') == "CatalogBucketName":
-                s3_bucket_url = output.get('OutputValue')
-        assert s3_bucket_url is not None, "Could not find bucket"
-        return s3_bucket_url
-
-
 def validate(p):
     for portfolio_file_name in os.listdir(p):
         portfolios_file_path = os.path.sep.join([p, portfolio_file_name])
