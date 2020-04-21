@@ -15,10 +15,6 @@ Resources:
   {{ template.uid }}:
     Type: AWS::CloudFormation::Stack
     Properties: 
-      Tags: 
-        - 
-          Key: Hash
-          Value: {{ template.hash }}
       TemplateURL: {{ template.url }}
       TimeoutInMinutes: 10
     {% endfor %}
