@@ -1123,6 +1123,7 @@ def set_regions(regions):
 
 def generate_launch_constraints(p):
     logger.info("generating launch contraints")
+    account_id = os.getenv('CODEBUILD_BUILD_ARN').split(":")[4]
     all_regions = get_regions()
     products_by_portfolio = {}
     logger.info("Building up portfolios list")
@@ -1220,7 +1221,7 @@ def generate_launch_constraints(p):
                 s3 = boto3.resource('s3')
                 s3.meta.client.upload_file(
                     nested_content_file,
-                    s3_bucket_name,
+                    f"sc-factory-pipeline-artifacts-{account_id}-{region}",
                     object_key,
                 )
                 nested_template_url = f'https://{s3_bucket_name}.s3.amazonaws.com/{object_key}'
