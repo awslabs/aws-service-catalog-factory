@@ -25,7 +25,7 @@ from copy import deepcopy
 from betterboto import client as betterboto_client
 from threading import Thread
 import shutil
-import datetime
+from datetime import datetime
 from luigi import LuigiStatusCode
 
 from . import utils
