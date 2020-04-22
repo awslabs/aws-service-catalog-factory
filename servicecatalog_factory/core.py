@@ -25,6 +25,7 @@ from copy import deepcopy
 from betterboto import client as betterboto_client
 from threading import Thread
 import shutil
+import datetime
 from luigi import LuigiStatusCode
 
 from . import utils
@@ -1213,7 +1214,7 @@ def generate_launch_constraints(p):
                 )
                 logger.info(f'Adding nested launch constraints template to s3: {nested_template_name}')
                 s3 = boto3.resource('s3')
-                hash_suffix = hashlib.sha256(cfn).hexdigest()[0:16]
+                hash_suffix = datetime.now().strftime("%Y-%d-%m--%H:%M:%S-%f")
                 object_key = f'templates/constraints/launch-role/{nested_template_name}-{hash_suffix}'
                 obj = s3.Object(s3_bucket_name, object_key)
                 obj.put(Body=cfn)
