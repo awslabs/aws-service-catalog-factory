@@ -1,0 +1,20 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: |
+  template for generating launch role constraints
+  {"version": "{{ VERSION }}", "framework": "servicecatalog-factory", "role": "constraint-launch-role", "type": "cloudformation"}
+
+Conditions:
+  ShouldDoAnything: !Equals [ true, false]
+
+Resources:
+  NoOp:
+    Type: AWS::S3::Bucket
+    Condition: ShouldDoAnything
+
+{% for template in nested_templates %}
+  {{ template.uid }}:
+    Type: AWS::CloudFormation::Stack
+    Properties: 
+      TemplateURL: {{ template.url }}
+      TimeoutInMinutes: 10
+    {% endfor %}

@@ -87,6 +87,9 @@ class GetBucketTask(FactoryTask):
                 's3_bucket_url': s3_bucket_url
             })
 
+    def output(self):
+        output_file = f"output/GetBucketTask/output.json"
+        return luigi.LocalTarget(output_file)
 
 
 class CreatePortfolioTask(FactoryTask):
