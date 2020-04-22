@@ -1206,18 +1206,23 @@ def generate_launch_constraints(p):
 
             nested_template_name = f'{region}-{portfolio_id}.template.yaml'
             logger.info(f"About to write a template: output/constraints/launch-role/{nested_template_name}")
-            with open(f"output/constraints/launch-role/{nested_template_name}", 'w') as cfn:
+            nested_content_file = f"output/constraints/launch-role/{nested_template_name}"
+            with open(nested_content_file, 'w') as cfn:
+                nested_content = Template(nested_template).render(
+                    VERSION=constants.VERSION, ALL_REGIONS=all_regions, constraints=nested_template_context
+                )
                 cfn.write(
-                    Template(nested_template).render(
-                        VERSION=constants.VERSION, ALL_REGIONS=all_regions, constraints=nested_template_context
-                    )
+                    nested_content
                 )
                 logger.info(f'Adding nested launch constraints template to s3: {nested_template_name}')
-                s3 = boto3.resource('s3')
                 hash_suffix = datetime.now().strftime("%Y-%d-%m--%H:%M:%S-%f")
                 object_key = f'templates/constraints/launch-role/{nested_template_name}-{hash_suffix}'
-                obj = s3.Object(s3_bucket_name, object_key)
-                obj.put(Body=cfn)
+                s3 = boto3.resource('s3')
+                s3.meta.client.upload_file(
+                    nested_content_file,
+                    s3_bucket_name,
+                    object_key,
+                )
                 nested_template_url = f'https://{s3_bucket_name}.s3.amazonaws.com/{object_key}'
                 logger.info(f'Finished adding nested launch constraints template to s3: {nested_template_name}')
             parent_template_context.append({
