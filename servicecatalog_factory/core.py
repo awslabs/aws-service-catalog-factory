@@ -1209,6 +1209,7 @@ def generate_launch_constraints(p):
             logger.info(f"About to write a template: output/constraints/launch-role/{nested_template_name}")
             hash_suffix = datetime.now().strftime("%Y-%d-%m--%H:%M:%S-%f")
             nested_content_file = f"output/constraints/launch-role/{nested_template_name}-{hash_suffix}.template.yaml"
+            bucket_name = f"sc-factory-pipeline-artifacts-{account_id}-{region}"
             object_key = f'templates/constraints/launch-role/{nested_template_name}-{hash_suffix}.template.yaml'
 
             nested_content = Template(nested_template).render(
@@ -1216,14 +1217,14 @@ def generate_launch_constraints(p):
             )
             with open(nested_content_file, 'w') as cfn:
                 cfn.write(nested_content)
-                logger.info(f'Adding nested launch constraints template to s3: {nested_template_name}')
+                logger.info(f'Adding nested launch constraints template to s3://sc-factory-pipeline-artifacts-{account_id}-{region}:{object_key}')
                 s3 = boto3.resource('s3')
                 s3.meta.client.upload_file(
                     nested_content_file,
-                    f"sc-factory-pipeline-artifacts-{account_id}-{region}",
+                    bucket_name,
                     object_key,
                 )
-                nested_template_url = f'https://{s3_bucket_name}.s3.amazonaws.com/{object_key}'
+                nested_template_url = f'https://{bucket_name}.s3.{region}.amazonaws.com/{object_key}'
                 logger.info(f'Finished adding nested launch constraints template to s3: {nested_template_name}')
             parent_template_context.append({
                 'uid': f'{region}{portfolio_id}'.replace("-", ""),
