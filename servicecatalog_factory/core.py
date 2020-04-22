@@ -1217,26 +1217,27 @@ def generate_launch_constraints(p):
             )
             with open(nested_content_file, 'w') as cfn:
                 cfn.write(nested_content)
-                logger.info(f'Adding nested launch constraints template to s3://sc-factory-pipeline-artifacts-{account_id}-{region}:{object_key}')
-                s3 = boto3.resource('s3')
-                s3.meta.client.upload_file(
-                    nested_content_file,
-                    bucket_name,
-                    object_key,
-                )
-                nested_template_url = f'https://{bucket_name}.s3.{region}.amazonaws.com/{object_key}'
-                logger.info(f'Finished adding nested launch constraints template to s3: {nested_template_name}')
+            logger.info(f'Wrote nested template to {nested_content_file}')
+            s3 = boto3.resource('s3')
+            s3.meta.client.upload_file(
+                nested_content_file,
+                bucket_name,
+                object_key,
+            )
+            logger.info(f'Uploaded nested template to s3://{bucket_name}:{object_key}')
+            nested_template_url = f'https://{bucket_name}.s3.{region}.amazonaws.com/{object_key}'
             parent_template_context.append({
                 'uid': f'{region}{portfolio_id}'.replace("-", ""),
                 'url': nested_template_url,
             })
 
-        
         logger.info(f"About to write a template: output/constraints/launch-role/{region}.template.yaml")
         with open(f"output/constraints/launch-role/{region}.template.yaml", 'w') as cfn:
+            main_template = Template(parent_template).render(
+                VERSION=constants.VERSION, ALL_REGIONS=all_regions, nested_templates=parent_template_context
+            )
+            logger.info(main_template)
             cfn.write(
-                Template(parent_template).render(
-                    VERSION=constants.VERSION, ALL_REGIONS=all_regions, nested_templates=parent_template_context
-                )
+                main_template
             )
     logger.info('finished writing the template')
