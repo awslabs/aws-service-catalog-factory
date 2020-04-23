@@ -320,7 +320,7 @@ def generate_via_luigi(p, branch_override=None):
 
             for region, product_args in products_by_region.get(product_name).items():
                 task_id = f"pipeline_template_{product_name}-{version_details.get('Name')}-{region}"
-                all_tasks[task_id] = luigi_tasks_and_targets.DeleteAVersionPipelineTask(
+                all_tasks[task_id] = luigi_tasks_and_targets.DeleteAVersionTask(
                     product_args=product_args,
                     version=version_details.get('Name'),
                 )

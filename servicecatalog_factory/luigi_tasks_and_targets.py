@@ -642,7 +642,7 @@ class CreateVersionPipelineTask(FactoryTask):
         logger.info(f"{logger_prefix} - Finished")
 
 
-class DeleteAVersionPipelineTask(FactoryTask):
+class DeleteAVersionTask(FactoryTask):
     product_args = luigi.DictParameter()
     version = luigi.Parameter()
 
