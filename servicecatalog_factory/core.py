@@ -1205,31 +1205,32 @@ def generate_launch_constraints(p):
                     'local_role_name': launch_role_constraint.get('local_role_name'),
                 })
 
-            nested_template_name = f'{region}-{portfolio_id}.template.yaml'
-            logger.info(f"About to write a template: output/constraints/launch-role/{nested_template_name}")
-            hash_suffix = datetime.now().strftime("%Y-%d-%m--%H:%M:%S-%f")
-            nested_content_file = f"output/constraints/launch-role/{nested_template_name}-{hash_suffix}.template.yaml"
-            bucket_name = f"sc-factory-pipeline-artifacts-{account_id}-{region}"
-            object_key = f'templates/constraints/launch-role/{nested_template_name}-{hash_suffix}.template.yaml'
+            if len(nested_template_context) > 0:
+                nested_template_name = f'{region}-{portfolio_id}.template.yaml'
+                logger.info(f"About to write a template: output/constraints/launch-role/{nested_template_name}")
+                hash_suffix = datetime.now().strftime("%Y-%d-%m--%H:%M:%S-%f")
+                nested_content_file = f"output/constraints/launch-role/{nested_template_name}-{hash_suffix}.template.yaml"
+                bucket_name = f"sc-factory-pipeline-artifacts-{account_id}-{region}"
+                object_key = f'templates/constraints/launch-role/{nested_template_name}-{hash_suffix}.template.yaml'
 
-            nested_content = Template(nested_template).render(
-                VERSION=constants.VERSION, ALL_REGIONS=all_regions, constraints=nested_template_context
-            )
-            with open(nested_content_file, 'w') as cfn:
-                cfn.write(nested_content)
-            logger.info(f'Wrote nested template to {nested_content_file}')
-            s3 = boto3.resource('s3')
-            s3.meta.client.upload_file(
-                nested_content_file,
-                bucket_name,
-                object_key,
-            )
-            logger.info(f'Uploaded nested template to s3://{bucket_name}:{object_key}')
-            nested_template_url = f'https://{bucket_name}.s3.{region}.amazonaws.com/{object_key}'
-            parent_template_context.append({
-                'uid': f'{region}{portfolio_id}'.replace("-", ""),
-                'url': nested_template_url,
-            })
+                nested_content = Template(nested_template).render(
+                    VERSION=constants.VERSION, ALL_REGIONS=all_regions, constraints=nested_template_context
+                )
+                with open(nested_content_file, 'w') as cfn:
+                    cfn.write(nested_content)
+                logger.info(f'Wrote nested template to {nested_content_file}')
+                s3 = boto3.resource('s3')
+                s3.meta.client.upload_file(
+                    nested_content_file,
+                    bucket_name,
+                    object_key,
+                )
+                logger.info(f'Uploaded nested template to s3://{bucket_name}:{object_key}')
+                nested_template_url = f'https://{bucket_name}.s3.{region}.amazonaws.com/{object_key}'
+                parent_template_context.append({
+                    'uid': f'{region}{portfolio_id}'.replace("-", ""),
+                    'url': nested_template_url,
+                })
 
         logger.info(f"About to write a template: output/constraints/launch-role/{region}.template.yaml")
         with open(f"output/constraints/launch-role/{region}.template.yaml", 'w') as cfn:
