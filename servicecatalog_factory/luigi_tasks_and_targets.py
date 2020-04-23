@@ -588,71 +588,58 @@ class CreateVersionPipelineTask(FactoryTask):
         logger.info(f"{logger_prefix} - Finished")
 
 
-class DeleteVersionPipelineTask(FactoryTask):
-    all_regions = luigi.ListParameter()
-    version = luigi.DictParameter()
-    product = luigi.DictParameter()
+class DeleteAVersionPipelineTask(FactoryTask):
+    product_args = luigi.DictParameter()
+    version = luigi.Parameter()
 
-    region = luigi.Parameter()
+    @property
+    def resources(self):
+        return {
+            self.product_args.get('region'): 1
+        }
 
-    def output(self):
-        return luigi.LocalTarget(
-            f"output/DeleteVersionPipelineTask/"
-            f"{self.product.get('Name')}_{self.version.get('Name')}.template.yaml"
-        )
+    def params_for_results_display(self):
+        return {
+            "uid": self.product_args.get('uid'),
+            "region": self.product_args.get('region'),
+            "name": self.product_args.get('name'),
+            "version": self.version,
+        }
 
     def requires(self):
-        return CreateVersionPipelineTemplateTask(
-            all_regions=self.all_regions,
-            version=self.version,
-            product=self.product,
-            provisioner=self.provisioner,
-            products_args_by_region=self.products_args_by_region,
-            factory_version=self.factory_version,
-            tags=self.tags,
-        )
+        return {
+            'create_product': CreateProductTask(
+                **self.product_args
+            )
+        }
 
     def run(self):
-        logger_prefix = f"{self.product.get('Name')}-{self.version.get('Name')}"
-        template_contents = self.input().open('r').read()
-        template = cfn_tools.load_yaml(template_contents)
-        friendly_uid = template.get('Description').split('\n')[0]
-        logger.info(f"{logger_prefix} creating the stack: {friendly_uid}")
-        tags = []
-        for tag in self.tags:
-            tags.append({
-                "Key": tag.get("Key"),
-                "Value": tag.get("Value"),
-            })
-        with betterboto_client.ClientContextManager('cloudformation') as cloudformation:
-            if self.provisioner.get('Type') == 'CloudFormation':
-                response = cloudformation.create_or_update(
-                    StackName=friendly_uid,
-                    TemplateBody=template_contents,
-                    Tags=tags,
-                )
-            elif self.provisioner.get('Type') == 'Terraform':
-                response = cloudformation.create_or_update(
-                    StackName=friendly_uid,
-                    TemplateBody=template_contents,
-                    Parameters=[
-                        {
-                            'ParameterKey': 'Version',
-                            'ParameterValue': self.factory_version,
-                            'UsePreviousValue': False,
-                        },
-                    ],
-                    Tags=tags,
-                )
+        product = self.load_from_input('create_product')
+        product_id = product.get('ProductId')
+        self.info(f"Starting delete of {product_id} {self.version}")
+        region = self.product_args.get('region')
+        found = False
+        with betterboto_client.ClientContextManager('servicecatalog', region_name=region) as servicecatalog:
+            provisioning_artifact_details = servicecatalog.list_provisioning_artifacts_single_page(
+                ProductId=product_id,
+            ).get('ProvisioningArtifactDetails', [])
 
-        with self.output().open('w') as f:
-            f.write(json.dumps(
-                response,
-                indent=4,
-                default=str,
-            ))
+            for provisioning_artifact_detail in provisioning_artifact_details:
+                if provisioning_artifact_detail.get('Name') == self.version:
+                    provisioning_artifact_id = provisioning_artifact_detail.get('Id')
+                    self.info(f"Found version: {provisioning_artifact_id}, deleting it")
+                    servicecatalog.delete_provisioning_artifact(
+                        ProductId=product_id,
+                        ProvisioningArtifactId=provisioning_artifact_id,
+                    )
+                    found = True
+                    break
 
-        logger.info(f"{logger_prefix} - Finished")
+        if not found:
+            self.info("Did not find product version to delete")
+
+        product['found'] = found
+        self.write_output(product)
 
 
 def record_event(event_type, task, extra_event_data=None):

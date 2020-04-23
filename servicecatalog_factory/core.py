@@ -175,7 +175,7 @@ def generate_via_luigi(p, branch_override=None):
                     for product in nested_products:
                         product_uid = f"{product.get('Name')}"
 
-                        if product.get('Status', None) == 'terminated':
+                        if product.get('Status', None) == 'terminated' and True == False:
                             delete_product_task_args = {
                                 "region": region,
                                 "name": product.get('Name'),
@@ -313,37 +313,51 @@ def generate_via_luigi(p, branch_override=None):
 
     logger.info("Going to create pipeline tasks")
     for version_pipeline_to_build in version_pipelines_to_build:
-        product_name = version_pipeline_to_build.get('product').get('Name')
-        tags = {}
-        for tag in version_pipeline_to_build.get('product').get('Tags', []):
-            tags[tag.get('Key')] = tag.get('Value')
-        for tag in version_pipeline_to_build.get('version').get('Tags', []):
-            tags[tag.get('Key')] = tag.get('Value')
-        tag_list = []
-        for tag_name, value in tags.items():
-            tag_list.append({'Key': tag_name, 'Value': value})
+        version_details = version_pipeline_to_build.get('version')
 
-        create_args = {
-            "all_regions": all_regions,
-            "version": version_pipeline_to_build.get('version'),
-            "product": version_pipeline_to_build.get('product'),
-            "provisioner": version_pipeline_to_build.get('version').get('Provisioner', {'Type': 'CloudFormation'}),
-            "products_args_by_region": products_by_region.get(product_name),
-            "factory_version": factory_version,
-            "tags": tag_list,
-        }
-        t = luigi_tasks_and_targets.CreateVersionPipelineTemplateTask(
-            **create_args
-        )
-        logger.info(f"created pipeline_template_{product_name}-{version_pipeline_to_build.get('version').get('Name')}")
-        all_tasks[f"pipeline_template_{product_name}-{version_pipeline_to_build.get('version').get('Name')}"] = t
+        if version_details.get('Status', 'active') == 'terminated':
+            product_name = version_pipeline_to_build.get('product').get('Name')
 
-        t = luigi_tasks_and_targets.CreateVersionPipelineTask(
-            **create_args,
-            region=constants.HOME_REGION,
-        )
-        logger.info(f"created pipeline_{product_name}-{version_pipeline_to_build.get('version').get('Name')}")
-        all_tasks[f"pipeline_{product_name}-{version_pipeline_to_build.get('version').get('Name')}"] = t
+            for region, product_args in products_by_region.get(product_name).items():
+                task_id = f"pipeline_template_{product_name}-{version_details.get('Name')}-{region}"
+                all_tasks[task_id] = luigi_tasks_and_targets.DeleteAVersionPipelineTask(
+                    product_args=product_args,
+                    version=version_details.get('Name'),
+                )
+
+        else:
+            product_name = version_pipeline_to_build.get('product').get('Name')
+            tags = {}
+            for tag in version_pipeline_to_build.get('product').get('Tags', []):
+                tags[tag.get('Key')] = tag.get('Value')
+
+            for tag in version_details.get('Tags', []):
+                tags[tag.get('Key')] = tag.get('Value')
+            tag_list = []
+            for tag_name, value in tags.items():
+                tag_list.append({'Key': tag_name, 'Value': value})
+
+            create_args = {
+                "all_regions": all_regions,
+                "version": version_details,
+                "product": version_pipeline_to_build.get('product'),
+                "provisioner": version_details.get('Provisioner', {'Type': 'CloudFormation'}),
+                "products_args_by_region": products_by_region.get(product_name),
+                "factory_version": factory_version,
+                "tags": tag_list,
+            }
+            t = luigi_tasks_and_targets.CreateVersionPipelineTemplateTask(
+                **create_args
+            )
+            logger.info(f"created pipeline_template_{product_name}-{version_details.get('Name')}")
+            all_tasks[f"pipeline_template_{product_name}-{version_details.get('Name')}"] = t
+
+            t = luigi_tasks_and_targets.CreateVersionPipelineTask(
+                **create_args,
+                region=constants.HOME_REGION,
+            )
+            logger.info(f"created pipeline_{product_name}-{version_details.get('Name')}")
+            all_tasks[f"pipeline_{product_name}-{version_details.get('Name')}"] = t
 
     for type in ["failure", "success", "timeout", "process_failure", "processing_time", "broken_task", ]:
         os.makedirs(Path(constants.RESULTS_DIRECTORY) / type)
