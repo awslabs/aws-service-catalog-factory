@@ -175,7 +175,7 @@ def generate_via_luigi(p, branch_override=None):
                     for product in nested_products:
                         product_uid = f"{product.get('Name')}"
 
-                        if product.get('Status', None) == 'terminated' and True == False:
+                        if product.get('Status', None) == 'terminated':
                             delete_product_task_args = {
                                 "region": region,
                                 "name": product.get('Name'),

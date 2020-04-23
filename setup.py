@@ -29,10 +29,10 @@ setup(
         "console_scripts": ["servicecatalog-factory = servicecatalog_factory.cli:cli"]
     },
     install_requires=[
-        "better-boto==0.23.0",
-        "boto3==1.12.35",
-        "botocore==1.15.35",
-        "certifi==2019.11.28",
+        "better-boto==0.26.0",
+        "boto3==1.12.45",
+        "botocore==1.15.45",
+        "certifi==2020.4.5.1",
         "cfn-flip==1.2.1",
         "chardet==3.0.4",
         "click==7.0",
@@ -54,6 +54,6 @@ setup(
         "six==1.14.0",
         "terminaltables==3.1.0",
         "tornado==4.5.3",
-        "urllib3==1.25.8; python_version != '3.4'",
+        "urllib3==1.25.9; python_version != '3.4'",
     ],
 )

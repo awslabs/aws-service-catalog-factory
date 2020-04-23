@@ -291,18 +291,72 @@ class DeleteProductTask(FactoryTask):
             "name": self.name,
         }
 
-    def output(self):
-        return luigi.LocalTarget(
-            f"output/DeleteProductTask/{self.region}-{self.name}.json"
-        )
-
     def run(self):
-        logger_prefix = f"{self.region}-{self.name}"
         with betterboto_client.ClientContextManager(
                 'servicecatalog', region_name=self.region
         ) as service_catalog:
-            logger.info(f"{logger_prefix}: about to delete")
-            aws.delete_product(self.name, service_catalog, self.region)
+            self.info(f'Looking for product to delete: {self.name}')
+            search_products_as_admin_response = service_catalog.search_products_as_admin_single_page(
+                Filters={'FullTextSearch': [self.name]}
+            )
+            product_view_summary = None
+            for product_view_details in search_products_as_admin_response.get('ProductViewDetails'):
+                product_view_summary = product_view_details.get('ProductViewSummary')
+                if product_view_summary.get('Name') == self.name:
+                    found_product = True
+                    logger.info(f'Found product: {self.name}: {product_view_summary}')
+                    break
+
+            if found_product:
+                product_id = product_view_summary.get('ProductId')
+
+                list_portfolios_response = service_catalog.list_portfolios_for_product_single_page(
+                    ProductId=product_id,
+                )
+                portfolio_ids = [
+                    portfolio_detail['Id'] for portfolio_detail in list_portfolios_response.get('PortfolioDetails')
+                ]
+                portfolio_names = [
+                    portfolio_detail['Name'] for portfolio_detail in list_portfolios_response.get('PortfolioDetails')
+                ]
+
+                list_versions_response = service_catalog.list_provisioning_artifacts_single_page(
+                    ProductId=product_id
+                )
+
+                version_names = [
+                    version['Name'] for version in list_versions_response.get('ProvisioningArtifactDetails')
+                ]
+                if version_names:
+                    self.info(f'Deleting Pipeline stacks for versions: {version_names} of {self.name}')
+                    with betterboto_client.ClientContextManager('cloudformation', region_name=self.region) as cloudformation:
+                        list_stacks_response = cloudformation.list_stacks_single_page()
+                        cloudformation_stack_names = [
+                            stack['StackName'] for stack in list_stacks_response.get('StackSummaries', [])
+                        ]
+
+                        for version_name in version_names:
+                            for portfolio_name in portfolio_names:
+                                stack_name = "-".join([portfolio_name, self.name, version_name])
+                                if stack_name in cloudformation_stack_names:
+                                    self.info("Deleting pipeline stack: {}".format(stack_name))
+                                    cloudformation.ensure_deleted(StackName=stack_name)
+
+                for portfolio_id in portfolio_ids:
+                    self.info(f'Disassociating {self.name} {product_id} from {portfolio_id}')
+                    service_catalog.disassociate_product_from_portfolio(
+                        ProductId=product_id,
+                        PortfolioId=portfolio_id
+                    )
+
+                self.info(f'Deleting {self.name} {product_id} from {portfolio_id}')
+
+                service_catalog.delete_product(
+                    ProductId=product_id,
+                )
+
+                self.info(f'Finished Deleting {self.name}')
+        self.write_output({})
 
 
 class AssociateProductWithPortfolioTask(FactoryTask):
@@ -639,6 +693,12 @@ class DeleteAVersionPipelineTask(FactoryTask):
             self.info("Did not find product version to delete")
 
         product['found'] = found
+
+        with betterboto_client.ClientContextManager('cloudformation', region_name=region) as cloudformation:
+            cloudformation.ensure_deleted(
+                StackName=f"{product.get('uid')}-{self.version}"
+            )
+
         self.write_output(product)
 
 
