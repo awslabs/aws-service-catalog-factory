@@ -112,7 +112,7 @@ def delete_product(product_name, service_catalog, region):
 
                 for version_name in version_names:
                     for portfolio_name in portfolio_names:
-                        stack_name = "-".join([portfolio_name, product_name, version_name)
+                        stack_name = "-".join([portfolio_name, product_name, version_name])
                         if stack_name in cloudformation_stack_names:
                             logger.info("Deleting pipeline stack: {}".format(stack_name))
                             cloudformation.delete_stack(StackName=stack_name)
