@@ -68,6 +68,73 @@ def get_or_create_product(name, args, service_catalog):
     return product_view_summary
 
 
+def delete_product(product_name, service_catalog, region):
+    logger.info(f'Looking for product to delete: {product_name}')
+    search_products_as_admin_response = service_catalog.search_products_as_admin_single_page(
+        Filters={'FullTextSearch': [product_name]}
+    )
+    found_product_id = False
+    product_view_summary = None
+    for product_view_details in search_products_as_admin_response.get('ProductViewDetails'):
+        product_view_summary = product_view_details.get('ProductViewSummary')
+        if product_view_summary.get('Name') == product_name:
+            found_product = True
+            logger.info(f'Found product: {product_name}: {product_view_summary}')
+            break
+
+    if found_product:
+        product_id = product_view_summary.get('ProductId')
+
+        list_portfolios_response = service_catalog.list_portfolios_for_product_single_page(
+            ProductId=product_id,
+        )
+        portfolio_ids = [portfolio_detail['Id'] for portfolio_detail in list_portfolios_response.get('PortfolioDetails')]
+        portfolio_names = [portfolio_detail['Name'] for portfolio_detail in list_portfolios_response.get('PortfolioDetails')]
+
+        #get all versions to be able to delete their pipeline stacks
+        list_versions_response = service_catalog.list_provisioning_artifacts_single_page(
+            ProductId=product_id
+        )
+
+        version_names = [version['Name'] for version in list_versions_response.get('ProvisioningArtifactDetails')]
+        if version_names:
+            logger.info(f'Deleting Pipeline stacks for versions: {version_names} of {product_name}')
+            
+            cloudformation_stacks = []
+            with betterboto_client.ClientContextManager('cloudformation') as cloudformation:
+                list_stacks_response = cloudformation.list_stacks()
+                cloudformation_stacks.append(list_stacks_response['StackSummaries'])
+                while 'NextToken' in list_stacks_response:
+                    list_stacks_response = cloudformation.list_stacks()
+                    cloudformation_stacks.append(list_stacks_response['StackSummaries'])
+
+                cloudformation_stack_names = [stack['StackName'] for stack in cloudformation_stacks]
+
+                for version_name in version_names:
+                    for portfolio_name in portfolio_names:
+                        stack_name = "-".join([portfolio_name, product_name, version_name)
+                        if stack_name in cloudformation_stack_names:
+                            logger.info("Deleting pipeline stack: {}".format(stack_name))
+                            cloudformation.delete_stack(StackName=stack_name)
+                            waiter = cloudformation.get_waiter('stack_delete_complete')
+                            waiter.wait(StackName=stack_name)
+
+        for portfolio_id in portfolio_ids:
+            logger.info(f'Disassociating {name} {product_id} from {portfolio_id}')
+            service_catalog.disassociate_product_from_portfolio(
+                ProductId=product_id,
+                PortfolioId=portfolio_id
+            )
+
+        logger.info(f'Deleting {name} {product_id} from {portfolio_id}')
+
+        service_catalog.delete_product(
+            ProductId=product_id,
+        )
+
+        logger.info(f'Finished Deleting {name}')
+        
+
 def ensure_portfolio_association_for_product(portfolio_id, product_id, service_catalog):
     portfolio_details = service_catalog.list_portfolios_for_product_single_page(
         ProductId=product_id
