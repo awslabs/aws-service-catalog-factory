@@ -299,16 +299,27 @@ class DeleteProductTask(FactoryTask):
             search_products_as_admin_response = service_catalog.search_products_as_admin_single_page(
                 Filters={'FullTextSearch': [self.name]}
             )
-            product_view_summary = None
             for product_view_details in search_products_as_admin_response.get('ProductViewDetails'):
                 product_view_summary = product_view_details.get('ProductViewSummary')
                 if product_view_summary.get('Name') == self.name:
                     found_product = True
+                    product_id = product_view_summary.get('ProductId')
                     logger.info(f'Found product: {self.name}: {product_view_summary}')
                     break
 
             if found_product:
-                product_id = product_view_summary.get('ProductId')
+                list_versions_response = service_catalog.list_provisioning_artifacts_single_page(
+                    ProductId=product_id
+                )
+                version_names = [
+                    version['Name'] for version in list_versions_response.get('ProvisioningArtifactDetails', [])
+                ]
+                if len(version_names) > 0:
+                    self.info(f'Deleting Pipeline stacks for versions: {version_names} of {self.name}')
+                    with betterboto_client.ClientContextManager('cloudformation', region_name=self.region) as cloudformation:
+                        for version_name in version_names:
+                            self.info(f"Ensuring {self.uid}-{version_name} is deleted")
+                            cloudformation.ensure_deleted(StackName=f"{self.uid}-{version_name}")
 
                 list_portfolios_response = service_catalog.list_portfolios_for_product_single_page(
                     ProductId=product_id,
@@ -316,32 +327,6 @@ class DeleteProductTask(FactoryTask):
                 portfolio_ids = [
                     portfolio_detail['Id'] for portfolio_detail in list_portfolios_response.get('PortfolioDetails', [])
                 ]
-                portfolio_names = [
-                    portfolio_detail['DisplayName'] for portfolio_detail in list_portfolios_response.get('PortfolioDetails', [])
-                ]
-
-                list_versions_response = service_catalog.list_provisioning_artifacts_single_page(
-                    ProductId=product_id
-                )
-
-                version_names = [
-                    version['Name'] for version in list_versions_response.get('ProvisioningArtifactDetails', [])
-                ]
-                if version_names:
-                    self.info(f'Deleting Pipeline stacks for versions: {version_names} of {self.name}')
-                    with betterboto_client.ClientContextManager('cloudformation', region_name=self.region) as cloudformation:
-                        list_stacks_response = cloudformation.list_stacks_single_page()
-                        cloudformation_stack_names = [
-                            stack['StackName'] for stack in list_stacks_response.get('StackSummaries', [])
-                        ]
-
-                        for version_name in version_names:
-                            for portfolio_name in portfolio_names:
-                                stack_name = "-".join([portfolio_name, self.name, version_name])
-                                if stack_name in cloudformation_stack_names:
-                                    self.info("Deleting pipeline stack: {}".format(stack_name))
-                                    cloudformation.ensure_deleted(StackName=stack_name)
-
                 for portfolio_id in portfolio_ids:
                     self.info(f'Disassociating {self.name} {product_id} from {portfolio_id}')
                     service_catalog.disassociate_product_from_portfolio(
@@ -350,7 +335,6 @@ class DeleteProductTask(FactoryTask):
                     )
 
                 self.info(f'Deleting {self.name} {product_id} from {portfolio_id}')
-
                 service_catalog.delete_product(
                     ProductId=product_id,
                 )
