@@ -1167,13 +1167,7 @@ def generate_launch_constraints(p):
         'templates/constraint-launch-role-parent.template.yaml'
     )
 
-    with open(
-            os.path.sep.join(["output", "GetBucketTask", 'output.json']),
-            'r') as s3_bucket_json_file:
-        s3_bucket_json = json.loads(s3_bucket_json_file.read())
-        s3_bucket_name = s3_bucket_json.get('s3_bucket_url')
-
-    logger.info('writing the template')
+    logger.info('starting to write the template')
     if not os.path.exists(f"output/constraints/launch-role"):
         os.makedirs(f"output/constraints/launch-role")
 
