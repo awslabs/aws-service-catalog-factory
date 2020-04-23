@@ -314,10 +314,10 @@ class DeleteProductTask(FactoryTask):
                     ProductId=product_id,
                 )
                 portfolio_ids = [
-                    portfolio_detail['Id'] for portfolio_detail in list_portfolios_response.get('PortfolioDetails')
+                    portfolio_detail['Id'] for portfolio_detail in list_portfolios_response.get('PortfolioDetails', [])
                 ]
                 portfolio_names = [
-                    portfolio_detail['Name'] for portfolio_detail in list_portfolios_response.get('PortfolioDetails')
+                    portfolio_detail['DisplayName'] for portfolio_detail in list_portfolios_response.get('PortfolioDetails', [])
                 ]
 
                 list_versions_response = service_catalog.list_provisioning_artifacts_single_page(
@@ -325,7 +325,7 @@ class DeleteProductTask(FactoryTask):
                 )
 
                 version_names = [
-                    version['Name'] for version in list_versions_response.get('ProvisioningArtifactDetails')
+                    version['Name'] for version in list_versions_response.get('ProvisioningArtifactDetails', [])
                 ]
                 if version_names:
                     self.info(f'Deleting Pipeline stacks for versions: {version_names} of {self.name}')
