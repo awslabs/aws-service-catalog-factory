@@ -250,11 +250,7 @@ def generate_via_luigi(p, branch_override=None):
                         delete_product_task_args = {
                             "region": region,
                             "name": product.get('Name'),
-                            "uid": "-".join([
-                                create_portfolio_task_args.get('portfolio_group_name'),
-                                create_portfolio_task_args.get('display_name'),
-                                product.get('Name'),
-                            ])
+                            "uid": product.get('Name'),
                         }
                         delete_product_task = luigi_tasks_and_targets.DeleteProductTask(
                             **delete_product_task_args
