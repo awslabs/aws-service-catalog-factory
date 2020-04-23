@@ -174,6 +174,25 @@ def generate_via_luigi(p, branch_override=None):
                     nested_products = portfolio.get('Products', []) + portfolio.get('Components', [])
                     for product in nested_products:
                         product_uid = f"{product.get('Name')}"
+
+                        if product.get('Status', None) == 'terminated':
+                            delete_product_task_args = {
+                                "region": region,
+                                "name": product.get('Name'),
+                                "uid": "-".join([
+                                    create_portfolio_task_args.get('portfolio_group_name'),
+                                    create_portfolio_task_args.get('display_name'),
+                                    product.get('Name'),
+                                ])
+                            }
+                            delete_product_task = luigi_tasks_and_targets.DeleteProductTask(
+                                **delete_product_task_args
+                            )
+                            all_tasks[
+                                f"delete_product_{p_name}_{portfolio.get('DisplayName')}_{product.get('Name')}-{region}"
+                            ] = delete_product_task
+                            continue
+
                         if products_by_region.get(product_uid) is None:
                             products_by_region[product_uid] = {}
 
@@ -226,6 +245,25 @@ def generate_via_luigi(p, branch_override=None):
                             ] = ensure_product_version_details_correct_task
                 for product in portfolios.get('Products', []):
                     product_uid = f"{product.get('Name')}"
+
+                    if product.get('Status', None) == 'terminated':
+                        delete_product_task_args = {
+                            "region": region,
+                            "name": product.get('Name'),
+                            "uid": "-".join([
+                                create_portfolio_task_args.get('portfolio_group_name'),
+                                create_portfolio_task_args.get('display_name'),
+                                product.get('Name'),
+                            ])
+                        }
+                        delete_product_task = luigi_tasks_and_targets.DeleteProductTask(
+                            **delete_product_task_args
+                        )
+                        all_tasks[
+                            f"delete_product_{p_name}_{portfolio.get('DisplayName')}_{product.get('Name')}-{region}"
+                        ] = delete_product_task
+                        continue
+
                     if products_by_region.get(product_uid) is None:
                         products_by_region[product_uid] = {}
                     create_product_task_args = {

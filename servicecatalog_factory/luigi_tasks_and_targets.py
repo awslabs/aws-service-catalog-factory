@@ -279,6 +279,32 @@ class CreateProductTask(FactoryTask):
                 )
 
 
+class DeleteProductTask(FactoryTask):
+    uid = luigi.Parameter()
+    region = luigi.Parameter()
+    name = luigi.Parameter()
+
+    def params_for_results_display(self):
+        return {
+            "region": self.region,
+            "uid": self.uid,
+            "name": self.name,
+        }
+
+    def output(self):
+        return luigi.LocalTarget(
+            f"output/DeleteProductTask/{self.region}-{self.name}.json"
+        )
+
+    def run(self):
+        logger_prefix = f"{self.region}-{self.name}"
+        with betterboto_client.ClientContextManager(
+                'servicecatalog', region_name=self.region
+        ) as service_catalog:
+            logger.info(f"{logger_prefix}: about to delete")
+            aws.delete_product(self.name, service_catalog, self.region)
+
+
 class AssociateProductWithPortfolioTask(FactoryTask):
     region = luigi.Parameter()
     portfolio_args = luigi.DictParameter()
@@ -505,6 +531,73 @@ class CreateVersionPipelineTask(FactoryTask):
     def output(self):
         return luigi.LocalTarget(
             f"output/CreateVersionPipelineTask/"
+            f"{self.product.get('Name')}_{self.version.get('Name')}.template.yaml"
+        )
+
+    def requires(self):
+        return CreateVersionPipelineTemplateTask(
+            all_regions=self.all_regions,
+            version=self.version,
+            product=self.product,
+            provisioner=self.provisioner,
+            products_args_by_region=self.products_args_by_region,
+            factory_version=self.factory_version,
+            tags=self.tags,
+        )
+
+    def run(self):
+        logger_prefix = f"{self.product.get('Name')}-{self.version.get('Name')}"
+        template_contents = self.input().open('r').read()
+        template = cfn_tools.load_yaml(template_contents)
+        friendly_uid = template.get('Description').split('\n')[0]
+        logger.info(f"{logger_prefix} creating the stack: {friendly_uid}")
+        tags = []
+        for tag in self.tags:
+            tags.append({
+                "Key": tag.get("Key"),
+                "Value": tag.get("Value"),
+            })
+        with betterboto_client.ClientContextManager('cloudformation') as cloudformation:
+            if self.provisioner.get('Type') == 'CloudFormation':
+                response = cloudformation.create_or_update(
+                    StackName=friendly_uid,
+                    TemplateBody=template_contents,
+                    Tags=tags,
+                )
+            elif self.provisioner.get('Type') == 'Terraform':
+                response = cloudformation.create_or_update(
+                    StackName=friendly_uid,
+                    TemplateBody=template_contents,
+                    Parameters=[
+                        {
+                            'ParameterKey': 'Version',
+                            'ParameterValue': self.factory_version,
+                            'UsePreviousValue': False,
+                        },
+                    ],
+                    Tags=tags,
+                )
+
+        with self.output().open('w') as f:
+            f.write(json.dumps(
+                response,
+                indent=4,
+                default=str,
+            ))
+
+        logger.info(f"{logger_prefix} - Finished")
+
+
+class DeleteVersionPipelineTask(FactoryTask):
+    all_regions = luigi.ListParameter()
+    version = luigi.DictParameter()
+    product = luigi.DictParameter()
+
+    region = luigi.Parameter()
+
+    def output(self):
+        return luigi.LocalTarget(
+            f"output/DeleteVersionPipelineTask/"
             f"{self.product.get('Name')}_{self.version.get('Name')}.template.yaml"
         )
 

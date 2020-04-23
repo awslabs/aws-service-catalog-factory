@@ -115,3 +115,24 @@ Within the product specification you can also specify a LocalRoleName for a Laun
 The rolename you specify must exist in the puppet account and should exist in any spoke account where you want the
 association to take affect.  The role must be assumable by the Service Catalog principal and should have the permissions
 needed to provision your product.
+
+Deleting a Product from all portfolios
+--------------------------------------
+
+.. note::
+
+    This was added in version 0.xxx
+
+Add "Status: terminated" to your product metadata.
+Any products matching this product Name will be disassociated from any portfolios, then deleted.
+The minimum necessary information is as below, although adding a Status line is sufficient - all other metadata will be ignored.
+
+This will also delete all Product Version pipelines relating to this product and any portfolios it is associated with from Cloudformation
+
+.. code-block:: yaml
+
+    Schema: factory-2019-04-01
+
+    Products:
+      - Name: account-iam-standalone
+        Status: terminated
