@@ -25,6 +25,7 @@ from copy import deepcopy
 from betterboto import client as betterboto_client
 from threading import Thread
 import shutil
+from datetime import datetime
 from luigi import LuigiStatusCode
 
 from . import utils
@@ -1122,6 +1123,7 @@ def set_regions(regions):
 
 def generate_launch_constraints(p):
     logger.info("generating launch contraints")
+    account_id = os.getenv('CODEBUILD_BUILD_ARN').split(":")[4]
     all_regions = get_regions()
     products_by_portfolio = {}
     logger.info("Building up portfolios list")
@@ -1158,14 +1160,27 @@ def generate_launch_constraints(p):
 
     logger.info(f"Finished building up portfolio list: {products_by_portfolio}")
 
-    template = read_from_site_packages(
-        'templates/constraint-launch-role.template.yaml'
+    nested_template = read_from_site_packages(
+        'templates/constraint-launch-role-nested.template.yaml'
     )
-    logger.info('writing the template')
+    parent_template = read_from_site_packages(
+        'templates/constraint-launch-role-parent.template.yaml'
+    )
+
+    logger.info('starting to write the template')
+    if not os.path.exists(f"output/constraints/launch-role"):
+        os.makedirs(f"output/constraints/launch-role")
+
     for region in all_regions:
         logger.info(f"looking at region {region}")
-        template_context = []
+        parent_template_context = []
         for portfolios_name, launch_role_constraints in products_by_portfolio.items():
+            nested_template_context = []
+            with open(
+                    os.path.sep.join(["output", "CreatePortfolioTask", f'{region}-{portfolios_name}.json']),
+                    'r') as portfolio_json_file:
+                portfolio_json = json.loads(portfolio_json_file.read())
+                portfolio_id = portfolio_json.get('Id')
             for launch_role_constraint in launch_role_constraints:
                 with open(
                         os.path.sep.join(
@@ -1177,25 +1192,47 @@ def generate_launch_constraints(p):
                         ), 'r') as product_json_file:
                     product_json = json.loads(product_json_file.read())
                     product_id = product_json.get("ProductId")
-                with open(
-                        os.path.sep.join(["output", "CreatePortfolioTask", f'{region}-{portfolios_name}.json']),
-                        'r') as portfolio_json_file:
-                    portfolio_json = json.loads(portfolio_json_file.read())
-                    portfolio_id = portfolio_json.get('Id')
-                template_context.append({
+                nested_template_context.append({
                     'uid': f'{portfolio_id}{product_id}'.replace("-", ""),
                     'product_id': product_id,
                     'portfolio_id': portfolio_id,
                     'local_role_name': launch_role_constraint.get('local_role_name'),
                 })
 
-        if not os.path.exists(f"output/constraints/launch-role"):
-            os.makedirs(f"output/constraints/launch-role")
-        logger.info(f"About to write a templaste: output/constraints/launch-role/{region}.template.yaml")
-        with open(f"output/constraints/launch-role/{region}.template.yaml", 'w') as cfn:
-            cfn.write(
-                Template(template).render(
-                    VERSION=constants.VERSION, ALL_REGIONS=all_regions, constraints=template_context
+            if len(nested_template_context) > 0:
+                nested_template_name = f'{region}-{portfolio_id}.template.yaml'
+                logger.info(f"About to write a template: output/constraints/launch-role/{nested_template_name}")
+                hash_suffix = datetime.now().strftime("%Y-%d-%m--%H:%M:%S-%f")
+                nested_content_file = f"output/constraints/launch-role/{nested_template_name}-{hash_suffix}.template.yaml"
+                bucket_name = f"sc-factory-pipeline-artifacts-{account_id}-{region}"
+                object_key = f'templates/constraints/launch-role/{nested_template_name}-{hash_suffix}.template.yaml'
+
+                nested_content = Template(nested_template).render(
+                    VERSION=constants.VERSION, ALL_REGIONS=all_regions, constraints=nested_template_context
                 )
+                with open(nested_content_file, 'w') as cfn:
+                    cfn.write(nested_content)
+                logger.info(f'Wrote nested template to {nested_content_file}')
+                s3 = boto3.resource('s3')
+                s3.meta.client.upload_file(
+                    nested_content_file,
+                    bucket_name,
+                    object_key,
+                )
+                logger.info(f'Uploaded nested template to s3://{bucket_name}:{object_key}')
+                nested_template_url = f'https://{bucket_name}.s3.{region}.amazonaws.com/{object_key}'
+                parent_template_context.append({
+                    'uid': f'{region}{portfolio_id}'.replace("-", ""),
+                    'url': nested_template_url,
+                })
+
+        logger.info(f"About to write a template: output/constraints/launch-role/{region}.template.yaml")
+        with open(f"output/constraints/launch-role/{region}.template.yaml", 'w') as cfn:
+            main_template = Template(parent_template).render(
+                VERSION=constants.VERSION, ALL_REGIONS=all_regions, nested_templates=parent_template_context
+            )
+            logger.info(main_template)
+            cfn.write(
+                main_template
             )
     logger.info('finished writing the template')

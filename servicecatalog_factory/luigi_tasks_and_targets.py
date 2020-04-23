@@ -88,7 +88,6 @@ class GetBucketTask(FactoryTask):
             })
 
 
-
 class CreatePortfolioTask(FactoryTask):
     region = luigi.Parameter()
     portfolio_group_name = luigi.Parameter()
