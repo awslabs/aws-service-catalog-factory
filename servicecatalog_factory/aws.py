@@ -101,7 +101,7 @@ def delete_product(product_name, service_catalog, region):
             logger.info(f'Deleting Pipeline stacks for versions: {version_names} of {product_name}')
             
             cloudformation_stacks = []
-            with betterboto_client.ClientContextManager('cloudformation') as cloudformation:
+            with betterboto_client.ClientContextManager('cloudformation', region_name=region) as cloudformation:
                 list_stacks_response = cloudformation.list_stacks()
                 cloudformation_stacks.append(list_stacks_response['StackSummaries'])
                 while 'NextToken' in list_stacks_response:

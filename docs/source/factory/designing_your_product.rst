@@ -127,6 +127,8 @@ Add "Status: terminated" to your product metadata.
 Any products matching this product Name will be disassociated from any portfolios, then deleted.
 The minimum necessary information is as below, although adding a Status line is sufficient - all other metadata will be ignored.
 
+This will also delete all Product Version pipelines relating to this product and any portfolios it is associated with from Cloudformation
+
 .. code-block:: yaml
 
     Schema: factory-2019-04-01
