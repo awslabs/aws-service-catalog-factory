@@ -115,3 +115,54 @@ Within the product specification you can also specify a LocalRoleName for a Laun
 The rolename you specify must exist in the puppet account and should exist in any spoke account where you want the
 association to take affect.  The role must be assumable by the Service Catalog principal and should have the permissions
 needed to provision your product.
+
+
+Deleting a Product Version
+--------------------------
+
+.. note::
+
+    This was added in version 0.42.0
+
+Add "Status: terminated" to your product version.  The product version will be delete from AWS Service Catalog and the
+AWS CloudFormation stack will be deleted also - deleting the AWS CodePipeline it created.
+
+.. code-block:: yaml
+
+    Schema: factory-2019-04-01
+
+    Products:
+      - Name: account-iam-standalone
+        Versions:
+        Versions:
+          - Name: v1
+            Description: The iam roles needed for you to do your jobs
+            Status: terminated
+            Active: True
+            Source:
+              Provider: CodeCommit
+              Configuration:
+                RepositoryName: account-iam
+                BranchName: v1
+
+
+Deleting a Product
+--------------------------------------
+
+.. note::
+
+    This was added in version 0.42.0
+
+Add "Status: terminated" to your product.  Any products matching this product Name will be disassociated from any
+portfolios, then deleted.
+
+This will also delete all Product Version pipelines relating to this product and any portfolios it is associated with
+from AWS CloudFormation
+
+.. code-block:: yaml
+
+    Schema: factory-2019-04-01
+
+    Products:
+      - Name: account-iam-standalone
+        Status: terminated
