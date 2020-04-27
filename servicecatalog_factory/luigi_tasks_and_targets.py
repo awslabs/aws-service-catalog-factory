@@ -335,7 +335,7 @@ class DeleteProductTask(FactoryTask):
                         PortfolioId=portfolio_id
                     )
 
-                self.info(f'Deleting {self.name} {product_id} from {portfolio_id}')
+                self.info(f'Deleting {self.name} {product_id} from Service Catalog')
                 service_catalog.delete_product(
                     Id=product_id,
                 )
