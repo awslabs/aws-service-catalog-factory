@@ -299,6 +299,7 @@ class DeleteProductTask(FactoryTask):
             search_products_as_admin_response = service_catalog.search_products_as_admin_single_page(
                 Filters={'FullTextSearch': [self.name]}
             )
+            found_product = False
             for product_view_details in search_products_as_admin_response.get('ProductViewDetails'):
                 product_view_summary = product_view_details.get('ProductViewSummary')
                 if product_view_summary.get('Name') == self.name:
