@@ -235,7 +235,15 @@ Resources:
       Environment:
         Type: linuxContainer
         ComputeType: BUILD_GENERAL1_SMALL
+        {% if version.BuildSpecImage %}
+        Image: {{ version.BuildSpecImage }}
+        {% else %}
+        {% if product.BuildSpecImage %}
+        Image: {{ product.BuildSpecImage }}
+        {% else %}
         Image: aws/codebuild/standard:4.0
+        {% endif %}
+        {% endif %}
         EnvironmentVariables:
           - Name: STACK_NAME
             Type: PLAINTEXT
