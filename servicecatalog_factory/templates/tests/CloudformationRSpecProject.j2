@@ -2,7 +2,7 @@
     Type: AWS::CodeBuild::Project
     Properties:
       Name: !Sub "${AWS::StackName}-CloudformationRSpecProject"
-      ServiceRole: !Sub "arn:aws:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodeRole"
+      ServiceRole: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodeRole"
       Artifacts:
         Type: CODEPIPELINE
       Environment:

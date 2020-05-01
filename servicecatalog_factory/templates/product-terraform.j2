@@ -27,7 +27,7 @@ Resources:
         detail-type:
           - "CodeCommit Repository State Change"
         resources:
-          - !Sub "arn:aws:codecommit:${AWS::Region}:${AWS::AccountId}:{{ Source.Configuration.RepositoryName }}"
+          - !Sub "arn:${AWS::Partition}:codecommit:${AWS::Region}:${AWS::AccountId}:{{ Source.Configuration.RepositoryName }}"
         detail:
           event:
             - "referenceCreated"
@@ -38,15 +38,15 @@ Resources:
             - "{{ Source.Configuration.BranchName }}"
       State: ENABLED
       Targets:
-        - Arn: !Sub "arn:aws:codepipeline:${AWS::Region}:${AWS::AccountId}:${AWS::StackName}-pipeline"
+        - Arn: !Sub "arn:${AWS::Partition}:codepipeline:${AWS::Region}:${AWS::AccountId}:${AWS::StackName}-pipeline"
           Id: "sc-pipeline"
-          RoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/servicecatalog-product-factory/CodePipelineTriggerRole"
+          RoleArn: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/CodePipelineTriggerRole"
 {% endif %}
 
   Pipeline:
     Type: AWS::CodePipeline::Pipeline
     Properties:
-      RoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodePipelineRole"
+      RoleArn: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodePipelineRole"
       Name: !Sub "${AWS::StackName}-pipeline"
       Tags:
         - Key: "ServiceCatalogFactory:Actor"
@@ -86,7 +86,7 @@ Resources:
               OutputArtifacts:
                 - Name: Source
               RunOrder: 1
-              {% if Source.Provider.lower() == 'aws' %}RoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliverySourceRole"{% endif %}
+              {% if Source.Provider.lower() == 'aws' %}RoleArn: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliverySourceRole"{% endif %}
         - Name: Package
           Actions:
             - Name: Package
@@ -151,7 +151,7 @@ Resources:
         - Key: {{ tag.get("Key") }}
           Value: {{ tag.get("Value") }}
 {% endfor %}
-      ServiceRole: !Sub "arn:aws:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodeRole"
+      ServiceRole: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodeRole"
       Artifacts:
         Type: CODEPIPELINE
       Environment:
