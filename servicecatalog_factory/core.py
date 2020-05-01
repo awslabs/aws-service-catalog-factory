@@ -146,7 +146,6 @@ def generate_via_luigi(p, branch_override=None):
     for portfolio_file_name in os.listdir(p):
         if '.yaml' in portfolio_file_name:
             p_name = portfolio_file_name.split(".")[0]
-            output_path = os.path.sep.join([constants.OUTPUT, p_name])
             portfolios_file_path = os.path.sep.join([p, portfolio_file_name])
             portfolios = generate_portfolios(portfolios_file_path)
             for region in all_regions:
@@ -256,7 +255,7 @@ def generate_via_luigi(p, branch_override=None):
                             **delete_product_task_args
                         )
                         all_tasks[
-                            f"delete_product_{p_name}_{portfolio.get('DisplayName')}_{product.get('Name')}-{region}"
+                            f"delete_product_{p_name}_{product.get('Name')}-{region}"
                         ] = delete_product_task
                         continue
 

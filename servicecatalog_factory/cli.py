@@ -41,7 +41,7 @@ def generate_via_luigi(p, branch_override=None):
 
 @cli.command()
 @click.argument('p', type=click.Path(exists=True))
-@click.option('--format','-f', type=click.Choice(['table', 'json']),default='table')
+@click.option('--format', '-f', type=click.Choice(['table', 'json']), default='table')
 def show_pipelines(p, format):
     core.show_pipelines(p, format)
 
