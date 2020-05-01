@@ -26,7 +26,7 @@ colorclass = "==2.2.0"
 luigi = "==2.8.6"
 requests = "==2.22.0"
 aws-service-catalog-factory = {path = "."}
-pylint = "==2.4.4"
+pylint = "==2.5.0"
 
 [requires]
 python_version = "3.7"
