@@ -6,7 +6,7 @@ Portfolios:
     Description: hello world
     ProviderName: ccoe
     Associations:
-      - arn:aws:iam::${AWS::AccountId}:role/Admin
+      - arn:${AWS::Partition}:iam::${AWS::AccountId}:role/Admin
     Tags:
     - Key: team
       Value: ccoe

@@ -6,7 +6,7 @@ Portfolios:
     Description: A place for self service products ready for your account
     ProviderName: central-it-team
     Associations:
-      - arn:aws:iam::${AWS::AccountId}:role/Admin
+      - arn:${AWS::Partition}:iam::${AWS::AccountId}:role/Admin
     Tags:
     - Key: provider
       Value: central-it-team
