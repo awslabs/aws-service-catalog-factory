@@ -2,7 +2,15 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: |
     Associations for {{portfolio.DisplayName}}
     {"version": "{{ FACTORY_VERSION }}", "framework": "servicecatalog-factory", "role": "portfolio-associations"}
+
+Conditions:
+  ShouldDoAnything: !Equals [ true, false]
+
 Resources:
+  NoOp:
+    Type: AWS::S3::Bucket
+    Condition: ShouldDoAnything
+
 {% for association in portfolio.Associations %}
   Association{{ loop.index }}:
     Type: AWS::ServiceCatalog::PortfolioPrincipalAssociation

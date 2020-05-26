@@ -156,7 +156,7 @@ def generate_via_luigi(p, branch_override=None):
                         "display_name": portfolio.get('DisplayName'),
                         "description": portfolio.get('Description'),
                         "provider_name": portfolio.get('ProviderName'),
-                        "tags": portfolio.get('Tags'),
+                        "tags": portfolio.get('Tags', []),
                     }
                     create_portfolio_task = luigi_tasks_and_targets.CreatePortfolioTask(
                         **create_portfolio_task_args
@@ -164,7 +164,7 @@ def generate_via_luigi(p, branch_override=None):
                     all_tasks[f"portfolio_{p_name}_{portfolio.get('DisplayName')}-{region}"] = create_portfolio_task
                     create_portfolio_association_task = luigi_tasks_and_targets.CreatePortfolioAssociationTask(
                         **create_portfolio_task_args,
-                        associations=portfolio.get('Associations'),
+                        associations=portfolio.get('Associations', []),
                         factory_version=factory_version,
                     )
                     all_tasks[
@@ -204,7 +204,7 @@ def generate_via_luigi(p, branch_override=None):
                             "support_description": product.get('SupportDescription'),
                             "support_email": product.get('SupportEmail'),
                             "support_url": product.get('SupportUrl'),
-                            "tags": product.get('Tags'),
+                            "tags": product.get('Tags', []),
                             "uid": "-".join([
                                 create_portfolio_task_args.get('portfolio_group_name'),
                                 create_portfolio_task_args.get('display_name'),
@@ -270,7 +270,7 @@ def generate_via_luigi(p, branch_override=None):
                         "support_description": product.get('SupportDescription'),
                         "support_email": product.get('SupportEmail'),
                         "support_url": product.get('SupportUrl'),
-                        "tags": product.get('Tags'),
+                        "tags": product.get('Tags', []),
                         "uid": product.get('Name'),
                     }
                     products_by_region[product_uid][region] = create_product_task_args
