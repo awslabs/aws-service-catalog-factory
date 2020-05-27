@@ -2,8 +2,6 @@ AWSTemplateFormatVersion: '2010-09-09'
 Description: |
   {{friendly_uid}}
   {"version": "{{ FACTORY_VERSION }}", "framework": "servicecatalog-factory", "role": "product-pipeline", "type": "cloudformation"}
-  version: {{ version.get_wrapped()|tojson }}
-  product: {{ product.get_wrapped()|tojson }}
 Resources:
 
 {% include 'tests/ValidateProject.j2' %}
