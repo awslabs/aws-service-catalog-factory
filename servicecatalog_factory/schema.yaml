@@ -27,6 +27,8 @@ schema;map_component:
     SupportUrl:
       type: str
       pattern: https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+
+    BuildSpecImage:
+      type: str
     BuildSpec:
       type: str
     Source:
@@ -81,6 +83,8 @@ schema;map_component:
                   type: bool
                 ShouldCloudformationRSpec:
                   type: bool
+            BuildSpecImage:
+              type: str
             BuildSpec:
               type: str
             Source:

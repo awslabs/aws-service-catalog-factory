@@ -255,6 +255,19 @@ in the context:
 
 If you do decide to override the default build spec please ensure you capture the artifacts needed for the deploy stage.
 
+The default image used for the Package stage of the pipeline is ```aws/codebuild/standard:4.0```.
+To choose the image, add a BuildSpecImage configuration to either the product or version.
+
+.. code-block:: yaml
+
+        Versions:
+          - Name: v1
+            Description: MVP for iam development account.
+            BuildSpecImage: aws/codebuild/standard:4.0
+            BuildSpec: |
+              mybuildspec...
+
+
 Deploy
 ------
 
