@@ -332,6 +332,10 @@ def generate_via_luigi(p, branch_override=None):
             for tag_name, value in tags.items():
                 tag_list.append({'Key': tag_name, 'Value': value})
 
+            logger.info("------")
+            logger.info(f"{product_name} {version.get('Name')}")
+            logger.info(version)
+            logger.info("++++++")
             create_args = {
                 "all_regions": all_regions,
                 "version": version_details,
