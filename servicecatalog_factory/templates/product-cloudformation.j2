@@ -3,7 +3,6 @@ Description: |
   {{friendly_uid}}
   {"version": "{{ FACTORY_VERSION }}", "framework": "servicecatalog-factory", "role": "product-pipeline", "type": "cloudformation"}
   version: {{ version|tojson }}
-  product: {{ product|tojson }}
 Resources:
 
 {% include 'tests/ValidateProject.j2' %}
