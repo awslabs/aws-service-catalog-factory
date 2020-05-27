@@ -15,7 +15,6 @@ activate:
 
 test:
 	pipenv run pip install .
-	pipenv check
 	pipenv run -- py.test --cov=./servicecatalog_factory --cov-branch
 
 prepare-deploy:
