@@ -1,0 +1,67 @@
+.PHONY: unit-tests test-factory-install test-factory-configure test-puppet-hub-install test-puppet-hub-configure test-bootstrap-spoke test-setup-manifest
+
+WS=ignored/testing/$(ENV_NUMBER)
+FACTORY_VENV=${WS}/factory
+PUPPET_VENV=${WS}/puppet
+
+define MANIFEST
+schema: puppet-2019-04-01
+parameters:
+  SecurityAccountId:
+    default: ${HUB_ACCOUNT_ID_WRAPPED}
+accounts:
+  - account_id: ${HUB_ACCOUNT_ID_WRAPPED}
+    name: ${HUB}
+    default_region: eu-west-1
+    regions_enabled:
+      - eu-west-1
+      - eu-west-2
+      - eu-west-3
+    tags:
+      - scope:hub
+      - scope:all
+  - account_id: ${SPOKE_ACCOUNT_ID_WRAPPED}
+    name: ${SPOKE}
+    default_region: eu-west-1
+    regions_enabled:
+      - eu-west-1
+      - eu-west-2
+      - eu-west-3
+    tags:
+      - scope:spoke
+      - scope:all
+
+spoke-local-portfolios:
+  core2:
+    portfolio: core2-central-it-team-portfolio
+    associations:
+      - arn:aws:iam::\${AWS::AccountId}:role/IT-FinOpsRole
+    depends_on:
+      - iam-assume-roles-spoke
+    deploy_to:
+      tags:
+        - regions: default_region
+          tag: scope:all
+  core3:
+    portfolio: core3-central-it-team-portfolio
+    product_generation_method: import
+    associations:
+      - arn:aws:iam::\${AWS::AccountId}:role/IT-FinOpsRole
+    depends_on:
+      - iam-assume-roles-spoke
+    deploy_to:
+      tags:
+        - regions: default_region
+          tag: scope:all
+endef
+export MANIFEST
+
+unit-tests: ## runs unit tests for the project
+	poetry run pytest -vv --exitfirst -k unit --junit-xml=reports/junit/junit.xml --cov=./servicecatalog_factory --cov-branch
+
+test-factory-install:
+	@echo "Installing factory"
+	poetry install
+	poetry run servicecatalog-factory upload-config servicecatalog_factory/example-config-small.yaml
+	poetry run servicecatalog-factory bootstrap-branch "$$(git rev-parse --abbrev-ref HEAD)"
+
