@@ -14,7 +14,7 @@ bump-major:
 
 ## @Project_setup Cleans up after a build
 clean:
-	rm -rf data results output config.yaml
+	rm -rf results output
 	rm -rf dist aws-service-catalog-factory-* aws_service_catalog_factory.egg-info/ reports
 
 ## @Project_setup Generates a setup.py so you can test bootstrapped branches in AWS Codecommit

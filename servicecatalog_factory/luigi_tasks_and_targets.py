@@ -17,9 +17,8 @@ logger = logging.getLogger(__file__)
 
 
 class FactoryTask(luigi.Task):
-
     def load_from_input(self, input_name):
-        with self.input().get(input_name).open('r') as f:
+        with self.input().get(input_name).open("r") as f:
             return json.loads(f.read())
 
     def info(self, message):
@@ -29,19 +28,14 @@ class FactoryTask(luigi.Task):
         return "Omitted"
 
     def write_output(self, content):
-        with self.output().open('w') as f:
-            f.write(
-                json.dumps(
-                    content,
-                    indent=4,
-                    default=str,
-                )
-            )
+        self.write_output_raw(json.dumps(content, indent=4, default=str,))
+
+    def write_output_raw(self, content):
+        with self.output().open("w") as f:
+            f.write(content)
 
     def output(self):
-        return luigi.LocalTarget(
-            f"output/{self.uid}.json"
-        )
+        return luigi.LocalTarget(f"output/{self.uid}.json")
 
     @property
     def uid(self):
@@ -55,7 +49,7 @@ class FactoryTask(luigi.Task):
     def resources(self):
         resources_for_this_task = {}
 
-        if hasattr(self, 'region'):
+        if hasattr(self, "region"):
             resources_for_this_task[self.region] = 1
 
         return resources_for_this_task
@@ -66,26 +60,26 @@ class GetBucketTask(FactoryTask):
 
     def params_for_results_display(self):
         return {
-            'region': self.region,
+            "region": self.region,
         }
 
     def run(self):
         s3_bucket_url = None
         with betterboto_client.ClientContextManager(
-                'cloudformation', region_name=self.region
+            "cloudformation", region_name=self.region
         ) as cloudformation:
             response = cloudformation.describe_stacks(
                 StackName=constants.BOOTSTRAP_STACK_NAME
             )
-            assert len(response.get('Stacks')) == 1, "There should only be one stack with the name"
-            outputs = response.get('Stacks')[0].get('Outputs')
+            assert (
+                len(response.get("Stacks")) == 1
+            ), "There should only be one stack with the name"
+            outputs = response.get("Stacks")[0].get("Outputs")
             for output in outputs:
-                if output.get('OutputKey') == "CatalogBucketName":
-                    s3_bucket_url = output.get('OutputValue')
+                if output.get("OutputKey") == "CatalogBucketName":
+                    s3_bucket_url = output.get("OutputValue")
             assert s3_bucket_url is not None, "Could not find bucket"
-            self.write_output({
-                's3_bucket_url': s3_bucket_url
-            })
+            self.write_output({"s3_bucket_url": s3_bucket_url})
 
 
 class CreatePortfolioTask(FactoryTask):
@@ -110,15 +104,16 @@ class CreatePortfolioTask(FactoryTask):
     def run(self):
         logger_prefix = f"{self.region}-{self.portfolio_group_name}-{self.display_name}"
         with betterboto_client.ClientContextManager(
-                'servicecatalog', region_name=self.region
+            "servicecatalog", region_name=self.region
         ) as service_catalog:
-            generated_portfolio_name = f"{self.portfolio_group_name}-{self.display_name}"
+            generated_portfolio_name = (
+                f"{self.portfolio_group_name}-{self.display_name}"
+            )
             tags = []
             for t in self.tags:
-                tags.append({
-                    "Key": t.get('Key'),
-                    "Value": t.get('Value'),
-                })
+                tags.append(
+                    {"Key": t.get("Key"), "Value": t.get("Value"),}
+                )
             tags.append({"Key": "ServiceCatalogFactory:Actor", "Value": "Portfolio"})
 
             portfolio_detail = aws.get_or_create_portfolio(
@@ -126,21 +121,15 @@ class CreatePortfolioTask(FactoryTask):
                 self.provider_name,
                 generated_portfolio_name,
                 tags,
-                service_catalog
+                service_catalog,
             )
 
         if portfolio_detail is None:
             raise Exception("portfolio_detail was not found or created")
 
-        with self.output().open('w') as f:
+        with self.output().open("w") as f:
             logger.info(f"{logger_prefix}: about to write! {portfolio_detail}")
-            f.write(
-                json.dumps(
-                    portfolio_detail,
-                    indent=4,
-                    default=str,
-                )
-            )
+            f.write(json.dumps(portfolio_detail, indent=4, default=str,))
 
 
 class CreatePortfolioAssociationTask(FactoryTask):
@@ -177,22 +166,23 @@ class CreatePortfolioAssociationTask(FactoryTask):
 
     def run(self):
         with betterboto_client.ClientContextManager(
-                'cloudformation', region_name=self.region
+            "cloudformation", region_name=self.region
         ) as cloudformation:
-            portfolio_details = json.loads(self.input().open('r').read())
+            portfolio_details = json.loads(self.input().open("r").read())
             template = utils.ENV.get_template(constants.ASSOCIATIONS)
             rendered = template.render(
                 FACTORY_VERSION=self.factory_version,
                 portfolio={
-                    'DisplayName': portfolio_details.get('DisplayName'),
-                    'Associations': self.associations,
+                    "DisplayName": portfolio_details.get("DisplayName"),
+                    "Associations": self.associations,
                 },
-                portfolio_id=portfolio_details.get('Id'),
+                portfolio_id=portfolio_details.get("Id"),
             )
-            stack_name = "-".join([self.portfolio_group_name, self.display_name, 'associations'])
+            stack_name = "-".join(
+                [self.portfolio_group_name, self.display_name, "associations"]
+            )
             cloudformation.create_or_update(
-                StackName=stack_name,
-                TemplateBody=rendered,
+                StackName=stack_name, TemplateBody=rendered,
             )
 
 
@@ -216,9 +206,7 @@ class CreateProductTask(FactoryTask):
         }
 
     def requires(self):
-        return {
-            "s3_bucket_url": GetBucketTask()
-        }
+        return {"s3_bucket_url": GetBucketTask()}
 
     def output(self):
         return luigi.LocalTarget(
@@ -228,29 +216,28 @@ class CreateProductTask(FactoryTask):
     def run(self):
         logger_prefix = f"{self.region}-{self.name}"
         with betterboto_client.ClientContextManager(
-                'servicecatalog', region_name=self.region
+            "servicecatalog", region_name=self.region
         ) as service_catalog:
             tags = []
             for t in self.tags:
-                tags.append({
-                    "Key": t.get('Key'),
-                    "Value": t.get('Value'),
-                })
+                tags.append(
+                    {"Key": t.get("Key"), "Value": t.get("Value"),}
+                )
             tags.append({"Key": "ServiceCatalogFactory:Actor", "Value": "Product"})
 
-            s3_bucket_name = self.load_from_input('s3_bucket_url').get('s3_bucket_url')
+            s3_bucket_name = self.load_from_input("s3_bucket_url").get("s3_bucket_url")
 
             args = {
-                'ProductType': 'CLOUD_FORMATION_TEMPLATE',
-                'ProvisioningArtifactParameters': {
-                    'Name': "-",
-                    'Type': 'CLOUD_FORMATION_TEMPLATE',
-                    'Description': 'Placeholder version, do not provision',
+                "ProductType": "CLOUD_FORMATION_TEMPLATE",
+                "ProvisioningArtifactParameters": {
+                    "Name": "-",
+                    "Type": "CLOUD_FORMATION_TEMPLATE",
+                    "Description": "Placeholder version, do not provision",
                     "Info": {
                         "LoadTemplateFromURL": "https://s3.amazonaws.com/{}/{}".format(
                             s3_bucket_name, "empty.template.yaml"
                         )
-                    }
+                    },
                 },
                 "Name": self.name,
                 "Owner": self.owner,
@@ -259,24 +246,20 @@ class CreateProductTask(FactoryTask):
                 "SupportDescription": self.support_description,
                 "SupportEmail": self.support_email,
                 "SupportUrl": self.support_url,
-                "Tags": tags
+                "Tags": tags,
             }
 
-            product_view_summary = aws.get_or_create_product(self.name, args, service_catalog)
+            product_view_summary = aws.get_or_create_product(
+                self.name, args, service_catalog
+            )
 
             if product_view_summary is None:
                 raise Exception(f"{logger_prefix}: did not find or create a product")
 
-            product_view_summary['uid'] = self.uid
-            with self.output().open('w') as f:
+            product_view_summary["uid"] = self.uid
+            with self.output().open("w") as f:
                 logger.info(f"{logger_prefix}: about to write! {product_view_summary}")
-                f.write(
-                    json.dumps(
-                        product_view_summary,
-                        indent=4,
-                        default=str,
-                    )
-                )
+                f.write(json.dumps(product_view_summary, indent=4, default=str,))
 
 
 class DeleteProductTask(FactoryTask):
@@ -293,19 +276,21 @@ class DeleteProductTask(FactoryTask):
 
     def run(self):
         with betterboto_client.ClientContextManager(
-                'servicecatalog', region_name=self.region
+            "servicecatalog", region_name=self.region
         ) as service_catalog:
-            self.info(f'Looking for product to delete: {self.name}')
+            self.info(f"Looking for product to delete: {self.name}")
             search_products_as_admin_response = service_catalog.search_products_as_admin_single_page(
-                Filters={'FullTextSearch': [self.name]}
+                Filters={"FullTextSearch": [self.name]}
             )
             found_product = False
-            for product_view_details in search_products_as_admin_response.get('ProductViewDetails'):
-                product_view_summary = product_view_details.get('ProductViewSummary')
-                if product_view_summary.get('Name') == self.name:
+            for product_view_details in search_products_as_admin_response.get(
+                "ProductViewDetails"
+            ):
+                product_view_summary = product_view_details.get("ProductViewSummary")
+                if product_view_summary.get("Name") == self.name:
                     found_product = True
-                    product_id = product_view_summary.get('ProductId')
-                    logger.info(f'Found product: {self.name}: {product_view_summary}')
+                    product_id = product_view_summary.get("ProductId")
+                    logger.info(f"Found product: {self.name}: {product_view_summary}")
                     break
 
             if found_product:
@@ -313,34 +298,45 @@ class DeleteProductTask(FactoryTask):
                     ProductId=product_id
                 )
                 version_names = [
-                    version['Name'] for version in list_versions_response.get('ProvisioningArtifactDetails', [])
+                    version["Name"]
+                    for version in list_versions_response.get(
+                        "ProvisioningArtifactDetails", []
+                    )
                 ]
                 if len(version_names) > 0:
-                    self.info(f'Deleting Pipeline stacks for versions: {version_names} of {self.name}')
-                    with betterboto_client.ClientContextManager('cloudformation', region_name=self.region) as cloudformation:
+                    self.info(
+                        f"Deleting Pipeline stacks for versions: {version_names} of {self.name}"
+                    )
+                    with betterboto_client.ClientContextManager(
+                        "cloudformation", region_name=self.region
+                    ) as cloudformation:
                         for version_name in version_names:
                             self.info(f"Ensuring {self.uid}-{version_name} is deleted")
-                            cloudformation.ensure_deleted(StackName=f"{self.uid}-{version_name}")
+                            cloudformation.ensure_deleted(
+                                StackName=f"{self.uid}-{version_name}"
+                            )
 
                 list_portfolios_response = service_catalog.list_portfolios_for_product_single_page(
                     ProductId=product_id,
                 )
                 portfolio_ids = [
-                    portfolio_detail['Id'] for portfolio_detail in list_portfolios_response.get('PortfolioDetails', [])
+                    portfolio_detail["Id"]
+                    for portfolio_detail in list_portfolios_response.get(
+                        "PortfolioDetails", []
+                    )
                 ]
                 for portfolio_id in portfolio_ids:
-                    self.info(f'Disassociating {self.name} {product_id} from {portfolio_id}')
+                    self.info(
+                        f"Disassociating {self.name} {product_id} from {portfolio_id}"
+                    )
                     service_catalog.disassociate_product_from_portfolio(
-                        ProductId=product_id,
-                        PortfolioId=portfolio_id
+                        ProductId=product_id, PortfolioId=portfolio_id
                     )
 
-                self.info(f'Deleting {self.name} {product_id} from Service Catalog')
-                service_catalog.delete_product(
-                    Id=product_id,
-                )
+                self.info(f"Deleting {self.name} {product_id} from Service Catalog")
+                service_catalog.delete_product(Id=product_id,)
 
-                self.info(f'Finished Deleting {self.name}')
+                self.info(f"Finished Deleting {self.name}")
         self.write_output({})
 
 
@@ -353,7 +349,7 @@ class AssociateProductWithPortfolioTask(FactoryTask):
         return {
             "region": self.region,
             "portfolio": f"{self.portfolio_args.get('portfolio_group_name')}-{self.portfolio_args.get('display_name')}",
-            "product": self.product_args.get('name'),
+            "product": self.product_args.get("name"),
         }
 
     def output(self):
@@ -367,28 +363,28 @@ class AssociateProductWithPortfolioTask(FactoryTask):
 
     def requires(self):
         return {
-            'create_portfolio_task': CreatePortfolioTask(
-                **self.portfolio_args
-            ),
-            'create_product_task': CreateProductTask(
-                **self.product_args
-            )
+            "create_portfolio_task": CreatePortfolioTask(**self.portfolio_args),
+            "create_product_task": CreateProductTask(**self.product_args),
         }
 
     def run(self):
         logger_prefix = f"{self.region}-{self.portfolio_args.get('portfolio_group_name')}-{self.portfolio_args.get('display_name')}"
-        portfolio = json.loads(self.input().get('create_portfolio_task').open('r').read())
-        portfolio_id = portfolio.get('Id')
-        product = json.loads(self.input().get('create_product_task').open('r').read())
-        product_id = product.get('ProductId')
+        portfolio = json.loads(
+            self.input().get("create_portfolio_task").open("r").read()
+        )
+        portfolio_id = portfolio.get("Id")
+        product = json.loads(self.input().get("create_product_task").open("r").read())
+        product_id = product.get("ProductId")
         with betterboto_client.ClientContextManager(
-                'servicecatalog', region_name=self.region
+            "servicecatalog", region_name=self.region
         ) as service_catalog:
             logger.info(f"{logger_prefix}: Searching for existing association")
 
-            aws.ensure_portfolio_association_for_product(portfolio_id, product_id, service_catalog)
+            aws.ensure_portfolio_association_for_product(
+                portfolio_id, product_id, service_catalog
+            )
 
-            with self.output().open('w') as f:
+            with self.output().open("w") as f:
                 logger.info(f"{logger_prefix}: about to write!")
                 f.write("{}")
 
@@ -401,8 +397,8 @@ class EnsureProductVersionDetailsCorrect(FactoryTask):
     def params_for_results_display(self):
         return {
             "region": self.region,
-            "version": self.version.get('Name'),
-            "product": self.product_args.get('name'),
+            "version": self.version.get("Name"),
+            "product": self.product_args.get("name"),
         }
 
     def output(self):
@@ -412,33 +408,39 @@ class EnsureProductVersionDetailsCorrect(FactoryTask):
         )
 
     def requires(self):
-        return CreateProductTask(
-            **self.product_args
-        )
+        return CreateProductTask(**self.product_args)
 
     def run(self):
-        product = json.loads(self.input().open('r').read())
-        product_id = product.get('ProductId')
-        version_name = self.version.get('Name')
-        version_active = self.version.get('Active', True)
+        product = json.loads(self.input().open("r").read())
+        product_id = product.get("ProductId")
+        version_name = self.version.get("Name")
+        version_active = self.version.get("Active", True)
 
-        with betterboto_client.ClientContextManager('servicecatalog', region_name=self.region) as service_catalog:
-            response = service_catalog.list_provisioning_artifacts(
-                ProductId=product_id
-            )
+        with betterboto_client.ClientContextManager(
+            "servicecatalog", region_name=self.region
+        ) as service_catalog:
+            response = service_catalog.list_provisioning_artifacts(ProductId=product_id)
             logger.info("Checking through: {}".format(response))
-            for provisioning_artifact_detail in response.get('ProvisioningArtifactDetails', []):
-                if provisioning_artifact_detail.get('Name') == version_name:
-                    logger.info(f"Found matching: {version_name}: {provisioning_artifact_detail}")
-                    if provisioning_artifact_detail.get('Active') != version_active:
-                        logger.info(f"Active status needs to change for: {product.get('Name')} {version_name}")
+            for provisioning_artifact_detail in response.get(
+                "ProvisioningArtifactDetails", []
+            ):
+                if provisioning_artifact_detail.get("Name") == version_name:
+                    logger.info(
+                        f"Found matching: {version_name}: {provisioning_artifact_detail}"
+                    )
+                    if provisioning_artifact_detail.get("Active") != version_active:
+                        logger.info(
+                            f"Active status needs to change for: {product.get('Name')} {version_name}"
+                        )
                         service_catalog.update_provisioning_artifact(
                             ProductId=product_id,
-                            ProvisioningArtifactId=provisioning_artifact_detail.get('Id'),
+                            ProvisioningArtifactId=provisioning_artifact_detail.get(
+                                "Id"
+                            ),
                             Active=version_active,
                         )
 
-        with self.output().open('w') as f:
+        with self.output().open("w") as f:
             f.write("{}")
 
 
@@ -456,9 +458,9 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
 
     def params_for_results_display(self):
         return {
-            "version": self.version.get('Name'),
-            "product": self.product.get('Name'),
-            "type": self.provisioner.get('Type'),
+            "version": self.version.get("Name"),
+            "product": self.product.get("Name"),
+            "type": self.provisioner.get("Type"),
         }
 
     def output(self):
@@ -470,11 +472,9 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
     def requires(self):
         create_products_tasks = {}
         for region, product_args_by_region in self.products_args_by_region.items():
-            create_products_tasks[region] = CreateProductTask(
-                **product_args_by_region
-            )
+            create_products_tasks[region] = CreateProductTask(**product_args_by_region)
         return {
-            'create_products_tasks': create_products_tasks,
+            "create_products_tasks": create_products_tasks,
         }
 
     def run(self):
@@ -486,25 +486,30 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
 
         tags = []
         for tag in self.tags:
-            tags.append({
-                "Key": tag.get("Key"),
-                "Value": tag.get("Value"),
-            })
+            tags.append(
+                {"Key": tag.get("Key"), "Value": tag.get("Value"),}
+            )
 
-        for region, product_details_content in self.input().get('create_products_tasks').items():
-            product_details = json.loads(product_details_content.open('r').read())
-            product_ids_by_region[region] = product_details.get('ProductId')
-            friendly_uid = product_details.get('uid')
+        for region, product_details_content in (
+            self.input().get("create_products_tasks").items()
+        ):
+            product_details = json.loads(product_details_content.open("r").read())
+            product_ids_by_region[region] = product_details.get("ProductId")
+            friendly_uid = product_details.get("uid")
 
-        if self.provisioner.get('Type') == 'CloudFormation':
+        if self.provisioner.get("Type") == "CloudFormation":
             template = utils.ENV.get_template(constants.PRODUCT_CLOUDFORMATION)
             rendered = template.render(
                 friendly_uid=f"{friendly_uid}-{self.version.get('Name')}",
                 version=self.version,
                 product=self.product,
-                template_format=self.provisioner.get('Format', 'yaml'),
-                Options=utils.merge(self.product.get('Options', {}), self.version.get('Options', {})),
-                Source=utils.merge(self.product.get('Source', {}), self.version.get('Source', {})),
+                template_format=self.provisioner.get("Format", "yaml"),
+                Options=utils.merge(
+                    self.product.get("Options", {}), self.version.get("Options", {})
+                ),
+                Source=utils.merge(
+                    self.product.get("Source", {}), self.version.get("Source", {})
+                ),
                 ALL_REGIONS=self.all_regions,
                 product_ids_by_region=product_ids_by_region,
                 FACTORY_VERSION=self.factory_version,
@@ -514,23 +519,31 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
                 friendly_uid=f"{friendly_uid}-{self.version.get('Name')}",
                 version=self.version,
                 product=self.product,
-                Options=utils.merge(self.product.get('Options', {}), self.version.get('Options', {})),
-                Source=utils.merge(self.product.get('Source', {}), self.version.get('Source', {})),
+                Options=utils.merge(
+                    self.product.get("Options", {}), self.version.get("Options", {})
+                ),
+                Source=utils.merge(
+                    self.product.get("Source", {}), self.version.get("Source", {})
+                ),
                 ALL_REGIONS=self.all_regions,
                 product_ids_by_region=product_ids_by_region,
             )
 
-        elif self.provisioner.get('Type') == 'Terraform':
+        elif self.provisioner.get("Type") == "Terraform":
             template = utils.ENV.get_template(constants.PRODUCT_TERRAFORM)
             rendered = template.render(
                 friendly_uid=f"{friendly_uid}-{self.version.get('Name')}",
                 version=self.version,
                 product=self.product,
-                Options=utils.merge(self.product.get('Options', {}), self.version.get('Options', {})),
-                Source=utils.merge(self.product.get('Source', {}), self.version.get('Source', {})),
+                Options=utils.merge(
+                    self.product.get("Options", {}), self.version.get("Options", {})
+                ),
+                Source=utils.merge(
+                    self.product.get("Source", {}), self.version.get("Source", {})
+                ),
                 ALL_REGIONS=self.all_regions,
                 product_ids_by_region=product_ids_by_region,
-                TF_VARS=" ".join(self.provisioner.get('TFVars', [])),
+                TF_VARS=" ".join(self.provisioner.get("TFVars", [])),
                 FACTORY_VERSION=self.factory_version,
                 tags=tags,
             )
@@ -538,18 +551,22 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
                 friendly_uid=f"{friendly_uid}-{self.version.get('Name')}",
                 version=self.version,
                 product=self.product,
-                Options=utils.merge(self.product.get('Options', {}), self.version.get('Options', {})),
-                Source=utils.merge(self.product.get('Source', {}), self.version.get('Source', {})),
+                Options=utils.merge(
+                    self.product.get("Options", {}), self.version.get("Options", {})
+                ),
+                Source=utils.merge(
+                    self.product.get("Source", {}), self.version.get("Source", {})
+                ),
                 ALL_REGIONS=self.all_regions,
                 product_ids_by_region=product_ids_by_region,
-                TF_VARS=" ".join(self.provisioner.get('TFVars', [])),
+                TF_VARS=" ".join(self.provisioner.get("TFVars", [])),
                 FACTORY_VERSION=self.factory_version,
             )
 
         else:
             raise Exception(f"Unknown type: {self.type}")
 
-        with self.output().open('w') as output_file:
+        with self.output().open("w") as output_file:
             output_file.write(rendered)
 
 
@@ -566,6 +583,12 @@ class CreateVersionPipelineTask(FactoryTask):
     region = luigi.Parameter()
 
     tags = luigi.ListParameter()
+
+    def params_for_results_display(self):
+        return {
+            "version": self.version.get("Name"),
+            "product": self.product.get("Name"),
+        }
 
     def output(self):
         return luigi.LocalTarget(
@@ -585,46 +608,38 @@ class CreateVersionPipelineTask(FactoryTask):
         )
 
     def run(self):
-        logger_prefix = f"{self.product.get('Name')}-{self.version.get('Name')}"
-        template_contents = self.input().open('r').read()
+        template_contents = self.input().open("r").read()
         template = cfn_tools.load_yaml(template_contents)
-        friendly_uid = template.get('Description').split('\n')[0]
-        logger.info(f"{logger_prefix} creating the stack: {friendly_uid}")
+        friendly_uid = template.get("Description").split("\n")[0]
+        self.info(f"creating the stack: {friendly_uid}")
         tags = []
         for tag in self.tags:
-            tags.append({
-                "Key": tag.get("Key"),
-                "Value": tag.get("Value"),
-            })
-        with betterboto_client.ClientContextManager('cloudformation') as cloudformation:
-            if self.provisioner.get('Type') == 'CloudFormation':
+            tags.append(
+                {"Key": tag.get("Key"), "Value": tag.get("Value"),}
+            )
+        with betterboto_client.ClientContextManager("cloudformation") as cloudformation:
+            if self.provisioner.get("Type") == "CloudFormation":
                 response = cloudformation.create_or_update(
-                    StackName=friendly_uid,
-                    TemplateBody=template_contents,
-                    Tags=tags,
+                    StackName=friendly_uid, TemplateBody=template_contents, Tags=tags,
                 )
-            elif self.provisioner.get('Type') == 'Terraform':
+            elif self.provisioner.get("Type") == "Terraform":
                 response = cloudformation.create_or_update(
                     StackName=friendly_uid,
                     TemplateBody=template_contents,
                     Parameters=[
                         {
-                            'ParameterKey': 'Version',
-                            'ParameterValue': self.factory_version,
-                            'UsePreviousValue': False,
+                            "ParameterKey": "Version",
+                            "ParameterValue": self.factory_version,
+                            "UsePreviousValue": False,
                         },
                     ],
                     Tags=tags,
                 )
 
-        with self.output().open('w') as f:
-            f.write(json.dumps(
-                response,
-                indent=4,
-                default=str,
-            ))
+        with self.output().open("w") as f:
+            f.write(json.dumps(response, indent=4, default=str,))
 
-        logger.info(f"{logger_prefix} - Finished")
+        self.info(f"Finished")
 
 
 class DeleteAVersionTask(FactoryTask):
@@ -633,39 +648,37 @@ class DeleteAVersionTask(FactoryTask):
 
     @property
     def resources(self):
-        return {
-            self.product_args.get('region'): 1
-        }
+        return {self.product_args.get("region"): 1}
 
     def params_for_results_display(self):
         return {
-            "uid": self.product_args.get('uid'),
-            "region": self.product_args.get('region'),
-            "name": self.product_args.get('name'),
+            "uid": self.product_args.get("uid"),
+            "region": self.product_args.get("region"),
+            "name": self.product_args.get("name"),
             "version": self.version,
         }
 
     def requires(self):
-        return {
-            'create_product': CreateProductTask(
-                **self.product_args
-            )
-        }
+        return {"create_product": CreateProductTask(**self.product_args)}
 
     def run(self):
-        product = self.load_from_input('create_product')
-        product_id = product.get('ProductId')
+        product = self.load_from_input("create_product")
+        product_id = product.get("ProductId")
         self.info(f"Starting delete of {product_id} {self.version}")
-        region = self.product_args.get('region')
+        region = self.product_args.get("region")
         found = False
-        with betterboto_client.ClientContextManager('servicecatalog', region_name=region) as servicecatalog:
+        with betterboto_client.ClientContextManager(
+            "servicecatalog", region_name=region
+        ) as servicecatalog:
             provisioning_artifact_details = servicecatalog.list_provisioning_artifacts_single_page(
                 ProductId=product_id,
-            ).get('ProvisioningArtifactDetails', [])
+            ).get(
+                "ProvisioningArtifactDetails", []
+            )
 
             for provisioning_artifact_detail in provisioning_artifact_details:
-                if provisioning_artifact_detail.get('Name') == self.version:
-                    provisioning_artifact_id = provisioning_artifact_detail.get('Id')
+                if provisioning_artifact_detail.get("Name") == self.version:
+                    provisioning_artifact_id = provisioning_artifact_detail.get("Id")
                     self.info(f"Found version: {provisioning_artifact_id}, deleting it")
                     servicecatalog.delete_provisioning_artifact(
                         ProductId=product_id,
@@ -677,14 +690,183 @@ class DeleteAVersionTask(FactoryTask):
         if not found:
             self.info("Did not find product version to delete")
 
-        product['found'] = found
+        product["found"] = found
 
-        with betterboto_client.ClientContextManager('cloudformation', region_name=region) as cloudformation:
+        with betterboto_client.ClientContextManager(
+            "cloudformation", region_name=region
+        ) as cloudformation:
             cloudformation.ensure_deleted(
                 StackName=f"{product.get('uid')}-{self.version}"
             )
 
         self.write_output(product)
+
+
+class CreateCombinedProductPipelineTemplateTask(FactoryTask):
+    all_regions = luigi.ListParameter()
+    product = luigi.DictParameter()
+    products_args_by_region = luigi.DictParameter()
+    factory_version = luigi.Parameter()
+
+    def params_for_results_display(self):
+        return {
+            "product": self.product.get("Name"),
+        }
+
+    def output(self):
+        return luigi.LocalTarget(
+            f"output/CreateCombinedProductPipelineTemplateTask/"
+            f"{self.product.get('Name')}.template.yaml"
+        )
+
+    def requires(self):
+        create_products_tasks = {}
+        for region, product_args_by_region in self.products_args_by_region.items():
+            create_products_tasks[region] = CreateProductTask(**product_args_by_region)
+        return {
+            "create_products_tasks": create_products_tasks,
+        }
+
+    def run(self):
+        product_ids_by_region = {}
+        friendly_uid = None
+
+        for region, product_details_content in (
+            self.input().get("create_products_tasks").items()
+        ):
+            product_details = json.loads(product_details_content.open("r").read())
+            product_ids_by_region[region] = product_details.get("ProductId")
+            friendly_uid = product_details.get("uid")
+
+        provisioner_type = self.product.get("Provisioner", {}).get(
+            "Type", constants.PROVISIONERS_DEFAULT
+        )
+        template_format = self.product.get("Provisioner", {}).get(
+            "Format", constants.TEMPLATE_FORMATS_DEFAULT
+        )
+
+        if provisioner_type == constants.PROVISIONERS_CLOUDFORMATION:
+            template = utils.ENV.get_template(constants.PRODUCT_COMBINED_CLOUDFORMATION)
+            rendered = template.render(
+                friendly_uid=friendly_uid,
+                product=self.product,
+                template_format=template_format,
+                Options=self.product.get("Options", {}),
+                Versions=self.product.get("Versions"),
+                ALL_REGIONS=self.all_regions,
+                product_ids_by_region=product_ids_by_region,
+                FACTORY_VERSION=self.factory_version,
+                tags=self.product.get("Tags"),
+            )
+            rendered = jinja2.Template(rendered).render(
+                friendly_uid=friendly_uid,
+                product=self.product,
+                Options=self.product.get("Options", {}),
+                Versions=self.product.get("Versions"),
+                ALL_REGIONS=self.all_regions,
+                product_ids_by_region=product_ids_by_region,
+            )
+
+        else:
+            raise Exception(f"Unknown/unsupported provisioner type: {provisioner_type}")
+
+        self.write_output_raw(rendered)
+
+
+class CreateCombinedProductPipelineTask(FactoryTask):
+    all_regions = luigi.ListParameter()
+    product = luigi.DictParameter()
+    products_args_by_region = luigi.DictParameter()
+    factory_version = luigi.Parameter()
+
+    def params_for_results_display(self):
+        return {
+            "product": self.product.get("Name"),
+        }
+
+    def requires(self):
+        return CreateCombinedProductPipelineTemplateTask(
+            all_regions=self.all_regions,
+            product=self.product,
+            products_args_by_region=self.products_args_by_region,
+            factory_version=self.factory_version,
+        )
+
+    def run(self):
+        template_contents = self.input().open("r").read()
+        template = cfn_tools.load_yaml(template_contents)
+        friendly_uid = template.get("Description").split("\n")[0]
+        self.info(f"creating the stack: {friendly_uid}")
+        tags = []
+        # for tag in self.tags:
+        #     tags.append(
+        #         {"Key": tag.get("Key"), "Value": tag.get("Value"),}
+        #     )
+        provisioner = self.product.get("Provisioner", {}).get(
+            "Type", constants.PROVISIONERS_DEFAULT
+        )
+        with betterboto_client.ClientContextManager("cloudformation") as cloudformation:
+            if provisioner == constants.PROVISIONERS_CLOUDFORMATION:
+                response = cloudformation.create_or_update(
+                    StackName=friendly_uid, TemplateBody=template_contents, Tags=tags,
+                )
+            else:
+                raise Exception(f"Unknown/unsupported provisioner: {provisioner}")
+
+        self.info(f"Finished")
+        self.write_output(response)
+
+
+# for version_pipeline_to_build in versions:
+#     version_details = version_pipeline_to_build.get("version")
+#
+#     if version_details.get("Status", "active") == "terminated":
+#         product_name = version_pipeline_to_build.get("product").get("Name")
+#
+#         for region, product_args in products_by_region.get(product_name).items():
+#             task_id = f"pipeline_template_{product_name}-{version_details.get('Name')}-{region}"
+#             all_tasks[task_id] = luigi_tasks_and_targets.DeleteAVersionTask(
+#                 product_args=product_args, version=version_details.get("Name"),
+#             )
+#
+#     else:
+#         product_name = version_pipeline_to_build.get("product").get("Name")
+#         tags = {}
+#         for tag in version_pipeline_to_build.get("product").get("Tags", []):
+#             tags[tag.get("Key")] = tag.get("Value")
+#
+#         for tag in version_details.get("Tags", []):
+#             tags[tag.get("Key")] = tag.get("Value")
+#         tag_list = []
+#         for tag_name, value in tags.items():
+#             tag_list.append({"Key": tag_name, "Value": value})
+#
+#         create_args = {
+#             "all_regions": all_regions,
+#             "version": version_details,
+#             "product": version_pipeline_to_build.get("product"),
+#             "provisioner": version_details.get(
+#                 "Provisioner", {"Type": "CloudFormation"}
+#             ),
+#             "products_args_by_region": products_by_region.get(product_name),
+#             "factory_version": factory_version,
+#             "tags": tag_list,
+#         }
+#         t = luigi_tasks_and_targets.CreateVersionPipelineTemplateTask(**create_args)
+#         logger.info(
+#             f"created pipeline_template_{product_name}-{version_details.get('Name')}"
+#         )
+#         all_tasks[
+#             f"pipeline_template_{product_name}-{version_details.get('Name')}"
+#         ] = t
+#
+#         t = luigi_tasks_and_targets.CreateVersionPipelineTask(
+#             **create_args, region=constants.HOME_REGION,
+#         )
+#         logger.info(
+#             f"created pipeline_{product_name}-{version_details.get('Name')}"
+#         )
+#         all_tasks[f"pipeline_{product_name}-{version_details.get('Name')}"] = t
 
 
 def record_event(event_type, task, extra_event_data=None):
@@ -701,15 +883,12 @@ def record_event(event_type, task, extra_event_data=None):
         event.update(extra_event_data)
 
     with open(
-            Path(constants.RESULTS_DIRECTORY) / event_type / f"{task_type}-{task.task_id}.json", 'w'
+        Path(constants.RESULTS_DIRECTORY)
+        / event_type
+        / f"{task_type}-{task.task_id}.json",
+        "w",
     ) as f:
-        f.write(
-            json.dumps(
-                event,
-                default=str,
-                indent=4,
-            )
-        )
+        f.write(json.dumps(event, default=str, indent=4,))
 
 
 @luigi.Task.event_handler(luigi.Event.FAILURE)
@@ -717,34 +896,32 @@ def on_task_failure(task, exception):
     exception_details = {
         "exception_type": type(exception),
         "exception_stack_trace": traceback.format_exception(
-            etype=type(exception),
-            value=exception,
-            tb=exception.__traceback__,
-        )
+            etype=type(exception), value=exception, tb=exception.__traceback__,
+        ),
     }
-    record_event('failure', task, exception_details)
+    record_event("failure", task, exception_details)
 
 
 @luigi.Task.event_handler(luigi.Event.SUCCESS)
 def on_task_success(task):
-    record_event('success', task)
+    record_event("success", task)
 
 
 @luigi.Task.event_handler(luigi.Event.TIMEOUT)
 def on_task_timeout(task):
-    record_event('timeout', task)
+    record_event("timeout", task)
 
 
 @luigi.Task.event_handler(luigi.Event.PROCESS_FAILURE)
 def on_task_process_failure(task):
-    record_event('process_failure', task)
+    record_event("process_failure", task)
 
 
 @luigi.Task.event_handler(luigi.Event.PROCESSING_TIME)
 def on_task_processing_time(task, duration):
-    record_event('processing_time', task, {"duration": duration})
+    record_event("processing_time", task, {"duration": duration})
 
 
 @luigi.Task.event_handler(luigi.Event.BROKEN_TASK)
 def on_task_broken_task(task):
-    record_event('broken_task', task)
+    record_event("broken_task", task)

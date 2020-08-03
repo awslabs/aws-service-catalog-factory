@@ -1,0 +1,20 @@
+            - Name: {{ action }}
+              ActionTypeId:
+                Category: Test
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref {{ action }}Project
+                PrimarySource: Source{{Versions[0].Name}}
+              RunOrder: 1
+              InputArtifacts:
+              {% if ShouldParseAsJinja2Template %}
+                - Name: Parse
+              {% else %}
+               {% for version in Versions %}
+                - Name: Source{{version.Name}}
+               {% endfor %}
+              {% endif %}
+              OutputArtifacts:
+                - Name: Test{{ action }}

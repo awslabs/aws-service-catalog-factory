@@ -12,7 +12,7 @@ import yaml
 
 @fixture
 def mocked_open(mocker):
-    return mocker.patch('builtins.open')
+    return mocker.patch("builtins.open")
 
 
 @fixture
@@ -26,8 +26,8 @@ def fake_version():
             "Configuration": {
                 "RepositoryName": "account-vending-account-bootstrap-shared",
                 "BranchName": "master",
-            }
-        }
+            },
+        },
     }
 
 
@@ -41,15 +41,8 @@ def fake_component(fake_version):
         "SupportDescription": "Contact us on Chime for help #central-it-team",
         "SupportEmail": "central-it-team@customer.com",
         "SupportUrl": "https://wiki.customer.com/central-it-team/self-service/account-iam",
-        "Tags": [
-            {
-                "Key": "product-type",
-                "Value": "iam",
-            }
-        ],
-        "Versions": [
-            fake_version
-        ]
+        "Tags": [{"Key": "product-type", "Value": "iam",}],
+        "Versions": [fake_version],
     }
 
 
@@ -59,22 +52,16 @@ def fake_portfolio(fake_component):
         "DisplayName": "central-it-team-portfolio",
         "Description": "A place for self service products ready for your account",
         "ProviderName": "central-it-team",
-        "Associations": [
-            "arn:aws:iam::${AWS::AccountId}:role/Admin",
-        ],
-        "Tags": [
-            {"Key": "provider"},
-            {"Value": "central-it-team"},
-        ],
-        "Components": [
-            fake_component
-        ],
+        "Associations": ["arn:aws:iam::${AWS::AccountId}:role/Admin",],
+        "Tags": [{"Key": "provider"}, {"Value": "central-it-team"},],
+        "Components": [fake_component],
     }
 
 
 @fixture
 def sut():
     from servicecatalog_factory import core
+
     return core
 
 
@@ -89,11 +76,11 @@ def test_version(sut):
 
 def test_resolve_from_site_packages(mocker, sut):
     # setup
-    what = 'asset.py'
-    site_path = os.path.sep.join(['some', 'path'])
-    abspath = os.path.sep.join([site_path, 'cli.py'])
+    what = "asset.py"
+    site_path = os.path.sep.join(["some", "path"])
+    abspath = os.path.sep.join([site_path, "cli.py"])
     expected_result = os.path.sep.join([site_path, what])
-    mocker.patch.object(os.path, 'abspath', return_value=abspath)
+    mocker.patch.object(os.path, "abspath", return_value=abspath)
 
     # execute
     actual_result = sut.resolve_from_site_packages(what)
@@ -104,10 +91,10 @@ def test_resolve_from_site_packages(mocker, sut):
 
 def test_read_from_site_packages(mocker, sut, mocked_open):
     # setup
-    what = 'asset.py'
-    expected_result = 'foobar'
+    what = "asset.py"
+    expected_result = "foobar"
     mocked_open().read.return_value = expected_result
-    mocker.patch.object(sut, 'resolve_from_site_packages', return_value='ignored')
+    mocker.patch.object(sut, "resolve_from_site_packages", return_value="ignored")
 
     # execute
     actual_result = sut.read_from_site_packages(what)
@@ -119,14 +106,14 @@ def test_read_from_site_packages(mocker, sut, mocked_open):
 def test_get_regions(mocker, sut):
     # setup
     expected_result = [
-        'us-east-1',
-        'us-east-2',
+        "us-east-1",
+        "us-east-2",
     ]
-    mocked_betterboto_client = mocker.patch.object(sut.betterboto_client, 'ClientContextManager')
+    mocked_betterboto_client = mocker.patch.object(
+        sut.betterboto_client, "ClientContextManager"
+    )
     mocked_response = {
-        'Parameter': {
-            "Value": yaml.safe_dump({'regions': expected_result})
-        }
+        "Parameter": {"Value": yaml.safe_dump({"regions": expected_result})}
     }
     mocked_betterboto_client().__enter__().get_parameter.return_value = mocked_response
 
@@ -137,13 +124,15 @@ def test_get_regions(mocker, sut):
     assert actual_result == expected_result
 
 
-@pytest.mark.parametrize("input_one, input_two, expected_results",
-                         [
-                             ({"hello": "world"}, {"foo": "bar"}, {"hello": "world", "foo": "bar"}),
-                             ({}, {"foo": "bar"}, {"foo": "bar"}),
-                             ({"hello": "world"}, {}, {"hello": "world"}),
-                             ({}, {}, {}),
-                         ])
+@pytest.mark.parametrize(
+    "input_one, input_two, expected_results",
+    [
+        ({"hello": "world"}, {"foo": "bar"}, {"hello": "world", "foo": "bar"}),
+        ({}, {"foo": "bar"}, {"foo": "bar"}),
+        ({"hello": "world"}, {}, {"hello": "world"}),
+        ({}, {}, {}),
+    ],
+)
 def test_merge_case(input_one, input_two, expected_results, sut):
     # setup
     # exercise
@@ -157,33 +146,30 @@ def test_get_stacks(mocker, sut):
     # setup
     args = {
         "StackStatusFilter": [
-            'CREATE_IN_PROGRESS',
-            'CREATE_FAILED',
-            'CREATE_COMPLETE',
-            'ROLLBACK_IN_PROGRESS',
-            'ROLLBACK_FAILED',
-            'ROLLBACK_COMPLETE',
-            'DELETE_IN_PROGRESS',
-            'DELETE_FAILED',
-            'UPDATE_IN_PROGRESS',
-            'UPDATE_COMPLETE_CLEANUP_IN_PROGRESS',
-            'UPDATE_COMPLETE',
-            'UPDATE_ROLLBACK_IN_PROGRESS',
-            'UPDATE_ROLLBACK_FAILED',
-            'UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS',
-            'UPDATE_ROLLBACK_COMPLETE',
-            'REVIEW_IN_PROGRESS',
+            "CREATE_IN_PROGRESS",
+            "CREATE_FAILED",
+            "CREATE_COMPLETE",
+            "ROLLBACK_IN_PROGRESS",
+            "ROLLBACK_FAILED",
+            "ROLLBACK_COMPLETE",
+            "DELETE_IN_PROGRESS",
+            "DELETE_FAILED",
+            "UPDATE_IN_PROGRESS",
+            "UPDATE_COMPLETE_CLEANUP_IN_PROGRESS",
+            "UPDATE_COMPLETE",
+            "UPDATE_ROLLBACK_IN_PROGRESS",
+            "UPDATE_ROLLBACK_FAILED",
+            "UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS",
+            "UPDATE_ROLLBACK_COMPLETE",
+            "REVIEW_IN_PROGRESS",
         ]
     }
-    expected_result = {'foo': 'CREATE_IN_PROGRESS'}
-    mocked_betterboto_client = mocker.patch.object(sut.betterboto_client, 'ClientContextManager')
+    expected_result = {"foo": "CREATE_IN_PROGRESS"}
+    mocked_betterboto_client = mocker.patch.object(
+        sut.betterboto_client, "ClientContextManager"
+    )
     mocked_betterboto_client().__enter__().list_stacks.return_value = {
-        'StackSummaries': [
-            {
-                'StackName': 'foo',
-                'StackStatus': 'CREATE_IN_PROGRESS'
-            }
-        ]
+        "StackSummaries": [{"StackName": "foo", "StackStatus": "CREATE_IN_PROGRESS"}]
     }
 
     # execute
@@ -198,28 +184,30 @@ def test_get_stacks_if_empty(mocker, sut):
     # setup
     args = {
         "StackStatusFilter": [
-            'CREATE_IN_PROGRESS',
-            'CREATE_FAILED',
-            'CREATE_COMPLETE',
-            'ROLLBACK_IN_PROGRESS',
-            'ROLLBACK_FAILED',
-            'ROLLBACK_COMPLETE',
-            'DELETE_IN_PROGRESS',
-            'DELETE_FAILED',
-            'UPDATE_IN_PROGRESS',
-            'UPDATE_COMPLETE_CLEANUP_IN_PROGRESS',
-            'UPDATE_COMPLETE',
-            'UPDATE_ROLLBACK_IN_PROGRESS',
-            'UPDATE_ROLLBACK_FAILED',
-            'UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS',
-            'UPDATE_ROLLBACK_COMPLETE',
-            'REVIEW_IN_PROGRESS',
+            "CREATE_IN_PROGRESS",
+            "CREATE_FAILED",
+            "CREATE_COMPLETE",
+            "ROLLBACK_IN_PROGRESS",
+            "ROLLBACK_FAILED",
+            "ROLLBACK_COMPLETE",
+            "DELETE_IN_PROGRESS",
+            "DELETE_FAILED",
+            "UPDATE_IN_PROGRESS",
+            "UPDATE_COMPLETE_CLEANUP_IN_PROGRESS",
+            "UPDATE_COMPLETE",
+            "UPDATE_ROLLBACK_IN_PROGRESS",
+            "UPDATE_ROLLBACK_FAILED",
+            "UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS",
+            "UPDATE_ROLLBACK_COMPLETE",
+            "REVIEW_IN_PROGRESS",
         ]
     }
     expected_result = {}
-    mocked_betterboto_client = mocker.patch.object(sut.betterboto_client, 'ClientContextManager')
+    mocked_betterboto_client = mocker.patch.object(
+        sut.betterboto_client, "ClientContextManager"
+    )
     mocked_betterboto_client().__enter__().list_stacks.return_value = {
-        'StackSummaries': []
+        "StackSummaries": []
     }
 
     # execute
@@ -238,19 +226,19 @@ def test_deploy(mocker, sut, fake_portfolio, fake_component, fake_version):
         "file2.yaml",
     ]
 
-    mocked_portfolios = {
-        'Portfolios': [fake_portfolio]
-    }
+    mocked_portfolios = {"Portfolios": [fake_portfolio]}
     expected_portfolios_generated = [
         os.path.sep.join([path, mocked_files[0]]),
         os.path.sep.join([path, mocked_files[1]]),
     ]
-    mocked_get_stacks = mocker.patch.object(sut, 'get_stacks')
+    mocked_get_stacks = mocker.patch.object(sut, "get_stacks")
     # mock_stacks = "hello world"
     # mocked_get_stacks.return_value = mock_stacks
-    mocked_listdir = mocker.patch.object(os, 'listdir')
-    mocked_generate_portfolios = mocker.patch.object(sut, 'generate_portfolios')
-    mocked_run_deploy_for_component = mocker.patch.object(sut, 'run_deploy_for_component')
+    mocked_listdir = mocker.patch.object(os, "listdir")
+    mocked_generate_portfolios = mocker.patch.object(sut, "generate_portfolios")
+    mocked_run_deploy_for_component = mocker.patch.object(
+        sut, "run_deploy_for_component"
+    )
     # mocked_run_deploy_for_component_groups = mocker.patch.object(sut, 'run_deploy_for_component_groups')
     mocked_generate_portfolios.return_value = mocked_portfolios
     mocked_listdir.return_value = mocked_files
@@ -264,21 +252,21 @@ def test_deploy(mocker, sut, fake_portfolio, fake_component, fake_version):
     mocked_generate_portfolios.assert_any_call(expected_portfolios_generated[0])
     mocked_generate_portfolios.assert_any_call(expected_portfolios_generated[1])
     mocked_run_deploy_for_component.assert_any_call(
-        'output/file1',
-        'file1-central-it-team-portfolio-account-vending-account-creation-v1'
+        "output/file1",
+        "file1-central-it-team-portfolio-account-vending-account-creation-v1",
     )
     mocked_run_deploy_for_component.assert_any_call(
-        'output/file2',
-        'file2-central-it-team-portfolio-account-vending-account-creation-v1'
+        "output/file2",
+        "file2-central-it-team-portfolio-account-vending-account-creation-v1",
     )
 
 
 def test_get_hash_for_template(mocker, sut):
     # setup
-    mock_md5 = mocker.patch.object(hashlib, 'md5')
-    fake_hash = 'fubar'
+    mock_md5 = mocker.patch.object(hashlib, "md5")
+    fake_hash = "fubar"
     mock_md5().hexdigest.return_value = fake_hash
-    expected_result = f'{sut.constants.HASH_PREFIX}{fake_hash}'
+    expected_result = f"{sut.constants.HASH_PREFIX}{fake_hash}"
     template = "foo"
 
     # exercise
@@ -294,8 +282,10 @@ def test_run_deploy_for_component(mocker, sut, mocked_open):
     # setup
     path = "some/path"
     friendly_uid = "some/uid"
-    fake_template = 'foo'
-    mocked_client_context_manager = mocker.patch.object(sut.betterboto_client, 'ClientContextManager')
+    fake_template = "foo"
+    mocked_client_context_manager = mocker.patch.object(
+        sut.betterboto_client, "ClientContextManager"
+    )
     mocked_open().__enter__().read.return_value = fake_template
 
     # exercise
@@ -306,8 +296,7 @@ def test_run_deploy_for_component(mocker, sut, mocked_open):
         os.path.sep.join([path, "{}.template.yaml".format(friendly_uid)])
     )
     mocked_client_context_manager().__enter__().create_or_update.assert_called_once_with(
-        StackName=friendly_uid,
-        TemplateBody=fake_template,
+        StackName=friendly_uid, TemplateBody=fake_template,
     )
 
 
@@ -328,14 +317,18 @@ def test_bootstrap_branch():
 
 def test_bootstrap_branch(mocker, sut):
     # setup
-    branch_name = 'foo'
-    mocked_bootstrap = mocker.patch.object(sut, 'bootstrap')
+    branch_name = "foo"
+    mocked_bootstrap = mocker.patch.object(sut, "bootstrap")
     # exercise
     sut.bootstrap_branch(branch_name)
 
     # verify
-    assert sut.constants.VERSION == "https://github.com/awslabs/aws-service-catalog-factory/archive/{}.zip".format(
-        branch_name)
+    assert (
+        sut.constants.VERSION
+        == "https://github.com/awslabs/aws-service-catalog-factory/archive/{}.zip".format(
+            branch_name
+        )
+    )
     mocked_bootstrap.assert_called_once()
 
 
