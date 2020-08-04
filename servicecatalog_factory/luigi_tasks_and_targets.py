@@ -12,6 +12,7 @@ import cfn_tools
 from . import aws
 from . import constants
 from . import utils
+from . import config
 
 logger = logging.getLogger(__file__)
 
@@ -756,6 +757,7 @@ class CreateCombinedProductPipelineTemplateTask(FactoryTask):
                 ALL_REGIONS=self.all_regions,
                 product_ids_by_region=product_ids_by_region,
                 FACTORY_VERSION=self.factory_version,
+                VERSION=config.get_stack_version(),
                 tags=self.product.get("Tags"),
             )
             rendered = jinja2.Template(rendered).render(

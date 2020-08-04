@@ -201,6 +201,11 @@ Resources:
           phases:
             build:
               commands:
+                  {% if 'http' in VERSION %}
+                - pip install {{ VERSION }}
+                  {% else %}
+                - pip install aws-service-catalog-factory=={{ VERSION }}
+                  {% endif %}
                 - cd $(servicecatalog-factory print-source-directory {friendly_uid}}-pipeline $EXECUTION_ID Source)
                 - export FactoryTemplateValidateBucket=$(aws cloudformation list-stack-resources --stack-name servicecatalog-factory --query 'StackResourceSummaries[?LogicalResourceId==`FactoryTemplateValidateBucket`].PhysicalResourceId' --output text)
                 - aws s3 cp product.template.{{ template_format }} s3://$FactoryTemplateValidateBucket/$CODEBUILD_BUILD_ID.{{ template_format }}
@@ -215,10 +220,6 @@ Resources:
         - Key: {{ tag.get("Key") }}
           Value: {{ tag.get("Value") }}
       {% endfor %}
-
-
-
-
 
 
 

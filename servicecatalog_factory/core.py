@@ -32,6 +32,7 @@ from . import utils
 from . import constants
 from . import aws
 from . import luigi_tasks_and_targets
+from . import config
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -873,7 +874,7 @@ def version():
                 response.get("Parameter").get("ARN").split(":")[3],
             )
         )
-        response = ssm.get_parameter(Name="service-catalog-factory-version")
+        response = config.get_stack_version()
         click.echo("stack version: {}".format(response.get("Parameter").get("Value"),))
 
 
