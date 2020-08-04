@@ -317,15 +317,28 @@ def generate_for_products_versions(
                     products_by_region,
                 )
             elif pipeline_mode == constants.PIPELINE_MODE_COMBINED:
-                task_id = f"pipeline_template_{product_name}_combined"
-                all_tasks[
-                    task_id
-                ] = luigi_tasks_and_targets.CreateCombinedProductPipelineTask(
-                    all_regions=all_regions,
-                    product=product,
-                    products_args_by_region=products_by_region.get(product_name),
-                    factory_version=factory_version,
+                version_status = version.get("version").get(
+                    "Status", constants.STATUS_DEFAULT
                 )
+                if version_status == constants.STATUS_TERMINATED:
+                    for region, product_args in products_by_region.get(
+                        product_name
+                    ).items():
+                        task_id = f"pipeline_template_{product_name}-{version.get('version').get('Name')}-{region}"
+                        all_tasks[task_id] = luigi_tasks_and_targets.DeleteAVersionTask(
+                            product_args=product_args,
+                            version=version.get("version").get("Name"),
+                        )
+                else:
+                    task_id = f"pipeline_template_{product_name}_combined"
+                    all_tasks[
+                        task_id
+                    ] = luigi_tasks_and_targets.CreateCombinedProductPipelineTask(
+                        all_regions=all_regions,
+                        product=product,
+                        products_args_by_region=products_by_region.get(product_name),
+                        factory_version=factory_version,
+                    )
             else:
                 raise Exception(f"Invalid PipelineMode: {pipeline_mode}")
 
@@ -337,17 +350,16 @@ def generate_for_products(
         product_uid = f"{product.get('Name')}"
 
         if product.get("Status", None) == "terminated":
-            delete_product_task_args = {
-                "region": region,
-                "name": product.get("Name"),
-                "uid": product.get("Name"),
-            }
-            delete_product_task = luigi_tasks_and_targets.DeleteProductTask(
-                **delete_product_task_args
-            )
             all_tasks[
                 f"delete_product_{p_name}_{product.get('Name')}-{region}"
-            ] = delete_product_task
+            ] = luigi_tasks_and_targets.DeleteProductTask(
+                region=region,
+                name=product.get("Name"),
+                uid=product.get("Name"),
+                pipeline_mode=product.get(
+                    "PipelineMode", constants.PIPELINE_MODE_SPILT
+                ),
+            )
             continue
 
         if products_by_region.get(product_uid) is None:
@@ -442,19 +454,17 @@ def generate_for_portfolios(
             product_uid = f"{product.get('Name')}"
 
             if product.get("Status", None) == "terminated":
-                delete_product_task_args = {
-                    "region": region,
-                    "name": product.get("Name"),
-                    "uid": "-".join(
+                delete_product_task = luigi_tasks_and_targets.DeleteProductTask(
+                    region=region,
+                    name=product.get("Name"),
+                    uid="-".join(
                         [
                             create_portfolio_task_args.get("portfolio_group_name"),
                             create_portfolio_task_args.get("display_name"),
                             product.get("Name"),
                         ]
                     ),
-                }
-                delete_product_task = luigi_tasks_and_targets.DeleteProductTask(
-                    **delete_product_task_args
+                    pipeline_mode=constants.PIPELINE_MODE_SPILT,
                 )
                 all_tasks[
                     f"delete_product_{p_name}_{portfolio.get('DisplayName')}_{product.get('Name')}-{region}"

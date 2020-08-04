@@ -1,6 +1,7 @@
 # Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 import traceback
+from copy import deepcopy
 from pathlib import Path
 import jinja2
 import luigi
@@ -267,12 +268,14 @@ class DeleteProductTask(FactoryTask):
     uid = luigi.Parameter()
     region = luigi.Parameter()
     name = luigi.Parameter()
+    pipeline_mode = luigi.Parameter()
 
     def params_for_results_display(self):
         return {
             "region": self.region,
             "uid": self.uid,
             "name": self.name,
+            "pipeline_mode": self.pipeline_mode,
         }
 
     def run(self):
@@ -295,50 +298,53 @@ class DeleteProductTask(FactoryTask):
                     break
 
             if found_product:
-                list_versions_response = service_catalog.list_provisioning_artifacts_single_page(
-                    ProductId=product_id
-                )
-                version_names = [
-                    version["Name"]
-                    for version in list_versions_response.get(
-                        "ProvisioningArtifactDetails", []
-                    )
-                ]
-                if len(version_names) > 0:
-                    self.info(
-                        f"Deleting Pipeline stacks for versions: {version_names} of {self.name}"
-                    )
-                    with betterboto_client.ClientContextManager(
-                        "cloudformation", region_name=self.region
-                    ) as cloudformation:
-                        for version_name in version_names:
-                            self.info(f"Ensuring {self.uid}-{version_name} is deleted")
-                            cloudformation.ensure_deleted(
-                                StackName=f"{self.uid}-{version_name}"
-                            )
+                with betterboto_client.ClientContextManager(
+                    "cloudformation", region_name=self.region
+                ) as cloudformation:
+                    if self.pipeline_mode == constants.PIPELINE_MODE_SPILT:
+                        self.delete_pipelines(
+                            product_id, service_catalog, cloudformation
+                        )
+                    else:
+                        self.info(f"Ensuring {self.name} is deleted")
+                        cloudformation.ensure_deleted(StackName=self.name)
 
-                list_portfolios_response = service_catalog.list_portfolios_for_product_single_page(
-                    ProductId=product_id,
-                )
-                portfolio_ids = [
-                    portfolio_detail["Id"]
-                    for portfolio_detail in list_portfolios_response.get(
-                        "PortfolioDetails", []
-                    )
-                ]
-                for portfolio_id in portfolio_ids:
-                    self.info(
-                        f"Disassociating {self.name} {product_id} from {portfolio_id}"
-                    )
-                    service_catalog.disassociate_product_from_portfolio(
-                        ProductId=product_id, PortfolioId=portfolio_id
-                    )
-
-                self.info(f"Deleting {self.name} {product_id} from Service Catalog")
-                service_catalog.delete_product(Id=product_id,)
+                self.delete_from_service_catalog(product_id, service_catalog)
 
                 self.info(f"Finished Deleting {self.name}")
-        self.write_output({})
+        self.write_output({"found_product": found_product})
+
+    def delete_pipelines(self, product_id, service_catalog, cloudformation):
+        list_versions_response = service_catalog.list_provisioning_artifacts_single_page(
+            ProductId=product_id
+        )
+        version_names = [
+            version["Name"]
+            for version in list_versions_response.get("ProvisioningArtifactDetails", [])
+        ]
+        if len(version_names) > 0:
+            self.info(
+                f"Deleting Pipeline stacks for versions: {version_names} of {self.name}"
+            )
+            for version_name in version_names:
+                self.info(f"Ensuring {self.uid}-{version_name} is deleted")
+                cloudformation.ensure_deleted(StackName=f"{self.uid}-{version_name}")
+
+    def delete_from_service_catalog(self, product_id, service_catalog):
+        list_portfolios_response = service_catalog.list_portfolios_for_product_single_page(
+            ProductId=product_id,
+        )
+        portfolio_ids = [
+            portfolio_detail["Id"]
+            for portfolio_detail in list_portfolios_response.get("PortfolioDetails", [])
+        ]
+        for portfolio_id in portfolio_ids:
+            self.info(f"Disassociating {self.name} {product_id} from {portfolio_id}")
+            service_catalog.disassociate_product_from_portfolio(
+                ProductId=product_id, PortfolioId=portfolio_id
+            )
+        self.info(f"Deleting {self.name} {product_id} from Service Catalog")
+        service_catalog.delete_product(Id=product_id,)
 
 
 class AssociateProductWithPortfolioTask(FactoryTask):
@@ -746,6 +752,14 @@ class CreateCombinedProductPipelineTemplateTask(FactoryTask):
             "Format", constants.TEMPLATE_FORMATS_DEFAULT
         )
 
+        versions = list()
+        for version in self.product.get("Versions"):
+            if (
+                version.get("Status", constants.STATUS_DEFAULT)
+                == constants.STATUS_ACTIVE
+            ):
+                versions.append(version)
+
         if provisioner_type == constants.PROVISIONERS_CLOUDFORMATION:
             template = utils.ENV.get_template(constants.PRODUCT_COMBINED_CLOUDFORMATION)
             rendered = template.render(
@@ -753,7 +767,7 @@ class CreateCombinedProductPipelineTemplateTask(FactoryTask):
                 product=self.product,
                 template_format=template_format,
                 Options=self.product.get("Options", {}),
-                Versions=self.product.get("Versions"),
+                Versions=versions,
                 ALL_REGIONS=self.all_regions,
                 product_ids_by_region=product_ids_by_region,
                 FACTORY_VERSION=self.factory_version,
@@ -764,7 +778,7 @@ class CreateCombinedProductPipelineTemplateTask(FactoryTask):
                 friendly_uid=friendly_uid,
                 product=self.product,
                 Options=self.product.get("Options", {}),
-                Versions=self.product.get("Versions"),
+                Versions=versions,
                 ALL_REGIONS=self.all_regions,
                 product_ids_by_region=product_ids_by_region,
             )
@@ -800,10 +814,11 @@ class CreateCombinedProductPipelineTask(FactoryTask):
         friendly_uid = template.get("Description").split("\n")[0]
         self.info(f"creating the stack: {friendly_uid}")
         tags = []
-        # for tag in self.tags:
-        #     tags.append(
-        #         {"Key": tag.get("Key"), "Value": tag.get("Value"),}
-        #     )
+
+        for tag in self.product.get("Tags"):
+            tags.append(
+                {"Key": tag.get("Key"), "Value": tag.get("Value"),}
+            )
         provisioner = self.product.get("Provisioner", {}).get(
             "Type", constants.PROVISIONERS_DEFAULT
         )
@@ -817,58 +832,6 @@ class CreateCombinedProductPipelineTask(FactoryTask):
 
         self.info(f"Finished")
         self.write_output(response)
-
-
-# for version_pipeline_to_build in versions:
-#     version_details = version_pipeline_to_build.get("version")
-#
-#     if version_details.get("Status", "active") == "terminated":
-#         product_name = version_pipeline_to_build.get("product").get("Name")
-#
-#         for region, product_args in products_by_region.get(product_name).items():
-#             task_id = f"pipeline_template_{product_name}-{version_details.get('Name')}-{region}"
-#             all_tasks[task_id] = luigi_tasks_and_targets.DeleteAVersionTask(
-#                 product_args=product_args, version=version_details.get("Name"),
-#             )
-#
-#     else:
-#         product_name = version_pipeline_to_build.get("product").get("Name")
-#         tags = {}
-#         for tag in version_pipeline_to_build.get("product").get("Tags", []):
-#             tags[tag.get("Key")] = tag.get("Value")
-#
-#         for tag in version_details.get("Tags", []):
-#             tags[tag.get("Key")] = tag.get("Value")
-#         tag_list = []
-#         for tag_name, value in tags.items():
-#             tag_list.append({"Key": tag_name, "Value": value})
-#
-#         create_args = {
-#             "all_regions": all_regions,
-#             "version": version_details,
-#             "product": version_pipeline_to_build.get("product"),
-#             "provisioner": version_details.get(
-#                 "Provisioner", {"Type": "CloudFormation"}
-#             ),
-#             "products_args_by_region": products_by_region.get(product_name),
-#             "factory_version": factory_version,
-#             "tags": tag_list,
-#         }
-#         t = luigi_tasks_and_targets.CreateVersionPipelineTemplateTask(**create_args)
-#         logger.info(
-#             f"created pipeline_template_{product_name}-{version_details.get('Name')}"
-#         )
-#         all_tasks[
-#             f"pipeline_template_{product_name}-{version_details.get('Name')}"
-#         ] = t
-#
-#         t = luigi_tasks_and_targets.CreateVersionPipelineTask(
-#             **create_args, region=constants.HOME_REGION,
-#         )
-#         logger.info(
-#             f"created pipeline_{product_name}-{version_details.get('Name')}"
-#         )
-#         all_tasks[f"pipeline_{product_name}-{version_details.get('Name')}"] = t
 
 
 def record_event(event_type, task, extra_event_data=None):

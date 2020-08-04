@@ -9,7 +9,7 @@ Resources:
 {% if Options.ShouldCloudformationRSpec %}{% include 'tests/CloudformationRSpecProject.j2' %}{% endif %}
 
 {% for version in Versions %}
-{% if version.Source.Provider.lower() == 'codecommit' and version.Source.Configuration.get('PollForSourceChanges', 'FALSE').upper() == 'FALSE' %}
+{% if version.Source.Provider.lower() == 'codecommit' and version.Source.Configuration.get('PollForSourceChanges', 'FALSE').upper() == 'FALSE' and version.get('Status', 'active') == 'active' %}
   PipeLineEventTrigger{{ version.Name }}:
     Type: AWS::Events::Rule
     Properties:
@@ -62,7 +62,8 @@ Resources:
 
         - Name: Source
           Actions:
-  {% for version in Versions %}
+  {% for version in Versions %}{% if version.get('Status', 'active') == 'active' %}
+
             - Name: Source{{version.Name}}
               ActionTypeId:
                 Category: Source
@@ -83,7 +84,7 @@ Resources:
                 - Name: Source{{version.Name}}
               RunOrder: 1
               {% if version.Source.Provider.lower() == 'aws' %}RoleArn: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliverySourceRole"{% endif %}
-  {% endfor %}
+  {% endif %}{% endfor %}
 {% if Options.ShouldParseAsJinja2Template %}
         - Name: Parse
           Actions:
@@ -97,9 +98,9 @@ Resources:
                 ProjectName: !Ref ParseProject
               RunOrder: 1
               InputArtifacts:
-               {% for version in Versions %}
+               {% for version in Versions %}{% if version.get('Status', 'active') == 'active' %}
                 - Name: Source{{version.Name}}
-               {% endfor %}
+               {% endif %}{% endfor %}
               OutputArtifacts:
                 - Name: Parse
 {% endif %}
@@ -121,14 +122,14 @@ Resources:
               {% if ShouldParseAsJinja2Template %}
               - Name: Parse
               {% else %}
-              {% for version in Versions %}
+              {% for version in Versions %}{% if version.get('Status', 'active') == 'active' %}
               - Name: Source{{version.Name}}
-              {% endfor %}
+              {% endif %}{% endfor %}
               {% endif %}
               OutputArtifacts:
-              {% for version in Versions %}
+              {% for version in Versions %}{% if version.get('Status', 'active') == 'active' %}
                 - Name: Validate{{version.Name}}
-              {% endfor %}
+              {% endif %}{% endfor %}
 
 
 {% if Options.ShouldCFNNag %}{% with Versions=Versions, action="CFNNag", ShouldParseAsJinja2Template=Options.ShouldParseAsJinja2Template %}{% include 'combined-test-action.j2' %}{% endwith %}{% endif %}
@@ -152,14 +153,14 @@ Resources:
               {% if Options.ShouldParseAsJinja2Template %}
                 - Name: Parse
               {% else %}
-              {% for version in Versions %}
+              {% for version in Versions %}{% if version.get('Status', 'active') == 'active' %}
                 - Name: Source{{version.Name}}
-              {% endfor %}
+              {% endif %}{% endfor %}
               {% endif %}
               OutputArtifacts:
-              {% for version in Versions %}
+              {% for version in Versions %}{% if version.get('Status', 'active') == 'active' %}
                 - Name: Package{{version.Name}}
-              {% endfor %}
+              {% endif %}{% endfor %}
 
         - Name: Deploy
           Actions:
@@ -178,14 +179,14 @@ Resources:
               {% if Options.ShouldParseAsJinja2Template %}
                 - Name: Parse
               {% else %}
-              {% for version in Versions %}
+              {% for version in Versions %}{% if version.get('Status', 'active') == 'active' %}
                 - Name: Package{{version.Name}}
-              {% endfor %}
+              {% endif %}{% endfor %}
               {% endif %}
               OutputArtifacts:
-              {% for version in Versions %}
+              {% for version in Versions %}{% if version.get('Status', 'active') == 'active' %}
                 - Name: Deploy{{version.Name}}
-              {% endfor %}
+              {% endif %}{% endfor %}
 
 
   {% if product.get("Source", {}).get("Provider", "").lower() == 'github' %}Webhook:
@@ -194,10 +195,10 @@ Resources:
       AuthenticationConfiguration:
         SecretToken: !Sub '{{ '{% raw %}{{{% endraw %}' }}resolve:secretsmanager:{{ product.Source['Configuration']['SecretsManagerSecret'] }}:SecretString:SecretToken{{ '{% raw %}}}{% endraw %}' }}'
       Filters:
-  {% for version in Versions %}
+  {% for version in Versions %}{% if version.get('Status', 'active') == 'active' %}
       - JsonPath: "$.ref"
         MatchEquals: "refs/heads/{{ version.Source.Configuration.Branch }}"
-  {% endfor %}
+  {% endif %}{% endfor %}
       Authentication: GITHUB_HMAC
       TargetPipeline: !Ref Pipeline
       TargetAction: Source
@@ -247,12 +248,12 @@ Resources:
           artifacts:
             files: '**/*'
             secondary-artifacts:
-  {% for version in Versions %}
+  {% for version in Versions %}{% if version.get('Status', 'active') == 'active' %}
               Validate{{ version.Name }}:
                 base-directory: {% if loop.first %}$CODEBUILD_SRC_DIR{% else %}$CODEBUILD_SRC_DIR_Source{{ version.Name }}{% endif %}
                 files:
                   - '**/*'
-  {% endfor %}
+  {% endif %}{% endfor %}
 
       TimeoutInMinutes: 20
       Tags:
@@ -329,11 +330,11 @@ Resources:
             artifacts:
               files: '**/*'
               secondary-artifacts:
-    {% for version in Versions %}
+  {% for version in Versions %}{% if version.get('Status', 'active') == 'active' %}
                 Package{{ version.Name }}:
                   base-directory: {% if loop.first %}$CODEBUILD_SRC_DIR{% else %}$CODEBUILD_SRC_DIR_Source{{ version.Name }}{% endif %}
                   files: '**/*'
-    {% endfor %}
+    {% endif %}{% endfor %}
         {% endif %}
       TimeoutInMinutes: 20
 
@@ -441,12 +442,12 @@ Resources:
                 - pip install aws-service-catalog-factory=={{ VERSION }}
                   {% endif %}
 
-              {% for version in Versions %}
+              {% for version in Versions %}{% if version.get('Status', 'active') == 'active' %}
                 - echo "Starting {{ version.Name }}"
                 - echo $CODEBUILD_SRC_DIR_Package{{ version.Name }}
                 - echo "{{version.Name}}" > {% if loop.first %}$CODEBUILD_SRC_DIR{% else %}$CODEBUILD_SRC_DIR_Package{{ version.Name }}{% endif %}/name.txt
                 - echo "{{version.Description}}" > {% if loop.first %}$CODEBUILD_SRC_DIR{% else %}$CODEBUILD_SRC_DIR_Package{{ version.Name }}{% endif %}/description.txt
-              {% endfor %}
+              {% endif %}{% endfor %}
 
                 - cd $(servicecatalog-factory print-source-directory {{friendly_uid}}-pipeline $EXECUTION_ID Package)
               {% for region in ALL_REGIONS %}
@@ -462,10 +463,10 @@ Resources:
           artifacts:
             files: '**/*'
             secondary-artifacts:
-          {% for version in Versions %}
+          {% for version in Versions %}{% if version.get('Status', 'active') == 'active' %}
               Deploy{{ version.Name }}:
                 base-directory: {% if loop.first %}$CODEBUILD_SRC_DIR{% else %}$CODEBUILD_SRC_DIR_Package{{ version.Name }}{% endif %}
                 files: '**/*'
-                {% endfor %}
+          {% endif %}{% endfor %}
                 {% endif %}
       TimeoutInMinutes: 20
