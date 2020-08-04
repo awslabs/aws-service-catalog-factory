@@ -207,5 +207,15 @@ def print_source_directory(pipeline_name, execution_id, artifact):
     core.print_source_directory(pipeline_name, execution_id, artifact)
 
 
+@cli.command()
+@click.argument("region")
+@click.argument("name")
+@click.argument("product-id")
+@click.argument("description")
+@click.argument("template-url")
+def update_provisioned_product(region, name, product_id, description, template_url):
+    core.update_provisioned_product(region, name, product_id, description, template_url)
+
+
 if __name__ == "__main__":
     cli()

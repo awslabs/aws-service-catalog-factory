@@ -5,6 +5,8 @@ import hashlib
 import json
 import logging
 import os
+import time
+
 import sys
 from glob import glob
 
@@ -1506,10 +1508,9 @@ def generate_launch_constraints(p):
     logger.info("finished writing the template")
 
 
-def print_source_directory(pipeline_name, execution_id, artifact):
+def get_source_for_pipeline(pipeline_name, execution_id):
     with betterboto_client.ClientContextManager("codepipeline",) as codepipeline:
         paginator = codepipeline.get_paginator("list_pipeline_executions")
-
         pages = paginator.paginate(
             pipelineName=pipeline_name, PaginationConfig={"PageSize": 100,}
         )
@@ -1530,7 +1531,49 @@ def print_source_directory(pipeline_name, execution_id, artifact):
                                 Name=triggerDetail.split("/")[-1]
                             )
                             source = rule.get("Description")
-                            click.echo(
-                                os.getenv(f"CODEBUILD_SRC_DIR_{artifact}{source}", ".")
-                            )
-                            return
+                            return source
+
+
+def print_source_directory(pipeline_name, execution_id, artifact):
+    source = get_source_for_pipeline(pipeline_name, execution_id)
+    click.echo(os.getenv(f"CODEBUILD_SRC_DIR_{artifact}{source}", "."))
+    return
+
+
+def update_provisioned_product(region, name, product_id, description, template_url):
+    with betterboto_client.ClientContextManager(
+        "servicecatalog", region_name=region
+    ) as servicecatalog:
+        response = servicecatalog.create_provisioning_artifact(
+            ProductId=product_id,
+            Parameters={
+                "Name": name,
+                "Description": description,
+                "Info": {"LoadTemplateFromURL": template_url},
+                "Type": "CLOUD_FORMATION_TEMPLATE",
+                "DisableTemplateValidation": False,
+            },
+        )
+        id = response.get("ProvisioningArtifactDetail").get("Id")
+        status = "CREATING"
+        while status == "CREATING":
+            time.sleep(3)
+            status = servicecatalog.describe_provisioning_artifact(
+                ProductId=product_id, ProvisioningArtifactId=id,
+            ).get("Status")
+
+        if status == "FAILED":
+            raise Exception("Creating the provisioning artifact failed")
+
+        response = servicecatalog.list_provisioning_artifacts_single_page(
+            ProductId=product_id
+        )
+        provisioning_artifact_details = response.get("ProvisioningArtifactDetails", [])
+        for provisioning_artifact_detail in provisioning_artifact_details:
+            if (
+                provisioning_artifact_detail.get("Name") == name
+                and provisioning_artifact_detail.get("Id") != id
+            ):
+                servicecatalog.delete_provisioning_artifact(
+                    ProductId=product_id, ProvisioningArtifactId=id
+                )
