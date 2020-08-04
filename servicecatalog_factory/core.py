@@ -1554,12 +1554,15 @@ def update_provisioned_product(region, name, product_id, description, template_u
                 "DisableTemplateValidation": False,
             },
         )
-        id = response.get("ProvisioningArtifactDetail").get("Id")
+        new_provisioning_artifact_id = response.get("ProvisioningArtifactDetail").get(
+            "Id"
+        )
         status = "CREATING"
         while status == "CREATING":
             time.sleep(3)
             status = servicecatalog.describe_provisioning_artifact(
-                ProductId=product_id, ProvisioningArtifactId=id,
+                ProductId=product_id,
+                ProvisioningArtifactId=new_provisioning_artifact_id,
             ).get("Status")
 
         if status == "FAILED":
@@ -1572,8 +1575,10 @@ def update_provisioned_product(region, name, product_id, description, template_u
         for provisioning_artifact_detail in provisioning_artifact_details:
             if (
                 provisioning_artifact_detail.get("Name") == name
-                and provisioning_artifact_detail.get("Id") != id
+                and provisioning_artifact_detail.get("Id")
+                != new_provisioning_artifact_id
             ):
                 servicecatalog.delete_provisioning_artifact(
-                    ProductId=product_id, ProvisioningArtifactId=id
+                    ProductId=product_id,
+                    ProvisioningArtifactId=provisioning_artifact_detail.get("Id"),
                 )
