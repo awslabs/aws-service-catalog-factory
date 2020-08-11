@@ -414,3 +414,28 @@ Folder Structure for above examples should look like this under ``ServiceCatalog
 
 
 When your service-catalog-factory pipeline runs it will treat these versions as if they were defined within the portfolio file.
+
+Reducing the number of pipelines
+--------------------------------
+By default factory will create an AWS CodePipeline for each product version you specify.  By specifying a different
+PipelineMode you can alter this behaviour:
+
+.. code-block: yaml
+
+    Products:
+      - Description: iam-assume-roles-spoke product
+        Distributor: central-it-team
+        Name: aws-iam-assume-roles-spoke
+        Owner: central-it@customer.com
+        SupportDescription: Contact us on Chime for help
+        SupportEmail: central-it-team@customer.com
+        SupportUrl: https://wiki.customer.com/central-it-team/self-service/account-iam
+        PipelineMode: combined
+        Portfolios:
+          - combined
+
+
+When you specify a combined pipeline mode only a single pipeline will be created.  There will be a source for each
+version of your product.  When the pipeline runs only the changed product version will be updated in AWS Service
+Catalog.  You can only set PipelineMode for products that you define outside of portfolios and you can only specify a
+buildspec for the product and not the versions.
