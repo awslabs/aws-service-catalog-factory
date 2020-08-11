@@ -420,7 +420,7 @@ Reducing the number of pipelines
 By default factory will create an AWS CodePipeline for each product version you specify.  By specifying a different
 PipelineMode you can alter this behaviour:
 
-.. code-block: yaml
+.. code-block:: yaml
 
     Products:
       - Description: iam-assume-roles-spoke product
