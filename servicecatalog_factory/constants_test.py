@@ -7,12 +7,13 @@ from pytest import fixture
 @fixture
 def sut():
     from servicecatalog_factory import constants
+
     return constants
 
 
 def test_bootstrap_stack_name(sut):
     # setup
-    expected_result = 'servicecatalog-factory'
+    expected_result = "servicecatalog-factory"
 
     # execute
     # verify
@@ -21,7 +22,7 @@ def test_bootstrap_stack_name(sut):
 
 def test_service_catalog_factory_repo_name(sut):
     # setup
-    expected_result = 'ServiceCatalogFactory'
+    expected_result = "ServiceCatalogFactory"
 
     # execute
     # verify
@@ -32,14 +33,14 @@ def test_non_recoverable_states(sut):
     # setup
     expected_result = [
         "ROLLBACK_COMPLETE",
-        'CREATE_IN_PROGRESS',
-        'ROLLBACK_IN_PROGRESS',
-        'DELETE_IN_PROGRESS',
-        'UPDATE_IN_PROGRESS',
-        'UPDATE_COMPLETE_CLEANUP_IN_PROGRESS',
-        'UPDATE_ROLLBACK_IN_PROGRESS',
-        'UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS',
-        'REVIEW_IN_PROGRESS',
+        "CREATE_IN_PROGRESS",
+        "ROLLBACK_IN_PROGRESS",
+        "DELETE_IN_PROGRESS",
+        "UPDATE_IN_PROGRESS",
+        "UPDATE_COMPLETE_CLEANUP_IN_PROGRESS",
+        "UPDATE_ROLLBACK_IN_PROGRESS",
+        "UPDATE_ROLLBACK_COMPLETE_CLEANUP_IN_PROGRESS",
+        "REVIEW_IN_PROGRESS",
     ]
 
     # execute

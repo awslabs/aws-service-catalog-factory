@@ -1,0 +1,22 @@
+.PHONY: version bootstrap bootstrap-branch
+
+## @Puppet_commands Runs servicecatalog-factory version
+version:
+	poetry run servicecatalog-factory version
+
+## @factory_commands Runs servicecatalog-factory bootstrap
+bootstrap:
+	poetry run servicecatalog-factory --info bootstrap
+
+## @factory_commands Runs servicecatalog-factory --info bootstrap-branch for the local checkout branch
+bootstrap-branch:
+	poetry run servicecatalog-factory --info bootstrap-branch \
+		$$(git rev-parse --abbrev-ref HEAD)
+
+## @factory_commands Runs servicecatalog-factory --info bootstrap-branch for the local checkout branch
+upload-config:
+	poetry run servicecatalog-factory upload-config servicecatalog_factory/example-config-small.yaml
+
+## @factory_commands Runs servicecatalog-factory --info generate-via-luigi for the local checkout branch
+generate-via-luigi:
+	poetry run servicecatalog-factory --info generate-via-luigi ignored/src/ServiceCatalogFactory/portfolios/

@@ -1,0 +1,9 @@
+.PHONY: black pycodestyle
+
+## @Code_quality Runs black on the checked out code
+black:
+	poetry run black servicecatalog_factory
+
+## @Code_quality Runs pycodestyle on the the checked out code
+pycodestyle:
+	poetry run pycodestyle --statistics -qq servicecatalog_factory

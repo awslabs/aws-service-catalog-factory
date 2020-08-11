@@ -20,7 +20,9 @@ def add_product_to_portfolio(portfolio_file_name, portfolio_display_name, produc
     core.add_product_to_portfolio(portfolio_file_name, portfolio_display_name, product)
 
 
-def remove_product_from_portfolio(portfolio_file_name, portfolio_display_name, product_name):
+def remove_product_from_portfolio(
+    portfolio_file_name, portfolio_display_name, product_name
+):
     """
     This function allows to you to remove a product from a portfolio that exists already.
 
@@ -28,10 +30,14 @@ def remove_product_from_portfolio(portfolio_file_name, portfolio_display_name, p
     :param portfolio_display_name: The value of the portfolio DisplayName where the product exists.
     :param product_name: The name of the product you want to remove
     """
-    core.remove_product_from_portfolio(portfolio_file_name, portfolio_display_name, product_name)
+    core.remove_product_from_portfolio(
+        portfolio_file_name, portfolio_display_name, product_name
+    )
 
 
-def add_version_to_product(portfolio_file_name, portfolio_display_name, product_name, version):
+def add_version_to_product(
+    portfolio_file_name, portfolio_display_name, product_name, version
+):
     """
     This function allows to you to add a version to product within a portfolio that exists already.
     If the version contains a Source and it is defined as an AWS CodeCommit type then the function will ensure the
@@ -42,10 +48,14 @@ def add_version_to_product(portfolio_file_name, portfolio_display_name, product_
     :param product_name: The value of the product Name the version should be added to.
     :param version: a dict of the version that you want to add to the portfolio
     """
-    core.add_version_to_product(portfolio_file_name, portfolio_display_name, product_name, version)
+    core.add_version_to_product(
+        portfolio_file_name, portfolio_display_name, product_name, version
+    )
 
 
-def remove_version_from_product(portfolio_file_name, portfolio_display_name, product_name, version_name):
+def remove_version_from_product(
+    portfolio_file_name, portfolio_display_name, product_name, version_name
+):
     """
     This function allows to you to remove a version of a product within a portfolio that exists already.
 
@@ -54,7 +64,9 @@ def remove_version_from_product(portfolio_file_name, portfolio_display_name, pro
     :param product_name: The value of the product Name the version should be removed from.
     :param version_name: The name of the version you want to remove
     """
-    core.remove_version_from_product(portfolio_file_name, portfolio_display_name, product_name, version_name)
+    core.remove_version_from_product(
+        portfolio_file_name, portfolio_display_name, product_name, version_name
+    )
 
 
 def upload_config(config):

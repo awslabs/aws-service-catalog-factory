@@ -1,0 +1,472 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: |
+  {{friendly_uid}}
+  {"version": "{{ FACTORY_VERSION }}", "framework": "servicecatalog-factory", "role": "product-pipeline", "type": "cloudformation"}
+Resources:
+
+
+{% if Options.ShouldCFNNag %}{% include 'tests/CFNNagBuildProject.j2' %}{% endif %}
+{% if Options.ShouldCloudformationRSpec %}{% include 'tests/CloudformationRSpecProject.j2' %}{% endif %}
+
+{% for version in Versions %}
+{% if version.Source.Provider.lower() == 'codecommit' and version.Source.Configuration.get('PollForSourceChanges', 'FALSE').upper() == 'FALSE' and version.get('Status', 'active') == 'active' %}
+  PipeLineEventTrigger{{ version.Name }}:
+    Type: AWS::Events::Rule
+    Properties:
+      Description: {{version.Name}}
+      EventPattern:
+        source:
+          - "aws.codecommit"
+        detail-type:
+          - "CodeCommit Repository State Change"
+        resources:
+          - !Sub "arn:${AWS::Partition}:codecommit:${AWS::Region}:${AWS::AccountId}:{{ version.Source.Configuration.RepositoryName }}"
+        detail:
+          event:
+            - "referenceCreated"
+            - "referenceUpdated"
+          referenceType:
+            - branch
+          referenceName:
+            - "{{ version.Source.Configuration.BranchName }}"
+      State: ENABLED
+      Targets:
+        - Arn: !Sub "arn:${AWS::Partition}:codepipeline:${AWS::Region}:${AWS::AccountId}:${AWS::StackName}-pipeline"
+          Id: "sc-pipeline"
+          RoleArn: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/CodePipelineTriggerRole"
+{% endif %}
+{% endfor %}
+
+  Pipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodePipelineRole"
+      Name: !Sub "${AWS::StackName}-pipeline"
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Generated"
+{% for tag in tags %}
+        - Key: {{ tag.get("Key") }}
+          Value: {{ tag.get("Value") }}
+{% endfor %}
+      ArtifactStores:
+      {% for region in ALL_REGIONS %}
+        - Region: {{ region }}
+          ArtifactStore:
+            Type: S3
+            Location: !Sub "sc-factory-artifacts-${AWS::AccountId}-{{ region }}"
+      {% endfor %}
+
+      RestartExecutionOnUpdate: false
+      Stages:
+
+        - Name: Source
+          Actions:
+  {% for version in Versions %}{% if version.get('Status', 'active') == 'active' %}
+
+            - Name: Source{{version.Name}}
+              ActionTypeId:
+                Category: Source
+                Owner: {% if version.Source.Provider.lower() == 'codecommit' %}AWS{% else %}ThirdParty{% endif %}
+                Version: 1
+                Provider: {{ version.Source.Provider }}
+              {% if version.Source.Provider.lower() == 'codecommit' %}Configuration:
+                RepositoryName: {{ version.Source.Configuration.RepositoryName }}
+                BranchName: {{ version.Source.Configuration.BranchName }}
+                PollForSourceChanges: {{ version.Source.Configuration.PollForSourceChanges or 'false' }}{% endif %}
+              {% if version.Source.Provider.lower() == 'github' %}Configuration:
+                Owner: {{ version.Source['Configuration']['Owner'] }}
+                Repo: {{ version.Source['Configuration']['Repo'] }}
+                Branch: {{ version.Source['Configuration']['Branch'] }}
+                OAuthToken: !Sub '{{ '{% raw %}{{{% endraw %}' }}resolve:secretsmanager:{{ version.Source['Configuration']['SecretsManagerSecret'] }}:SecretString:OAuthToken{{ '{% raw %}}}{% endraw %}' }}'
+                PollForSourceChanges: {{ version.Source['Configuration']['PollForSourceChanges'] }}{% endif %}
+              OutputArtifacts:
+                - Name: Source{{version.Name}}
+              RunOrder: 1
+              {% if version.Source.Provider.lower() == 'aws' %}RoleArn: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliverySourceRole"{% endif %}
+  {% endif %}{% endfor %}
+{% if Options.ShouldParseAsJinja2Template %}
+        - Name: Parse
+          Actions:
+            - Name: Parse
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref ParseProject
+              RunOrder: 1
+              InputArtifacts:
+               {% for version in Versions %}{% if version.get('Status', 'active') == 'active' %}
+                - Name: Source{{version.Name}}
+               {% endif %}{% endfor %}
+              OutputArtifacts:
+                - Name: Parse
+{% endif %}
+
+        - Name: Tests
+          Actions:
+            - Name: Validate
+              ActionTypeId:
+                Category: Test
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref ValidateProject
+                PrimarySource: Source{{Versions[0].Name}}
+                EnvironmentVariables: '[{"name":"EXECUTION_ID","value":"#{codepipeline.PipelineExecutionId}","type":"PLAINTEXT"}]'
+              RunOrder: 1
+              InputArtifacts:
+              {% if ShouldParseAsJinja2Template %}
+              - Name: Parse
+              {% else %}
+              {% for version in Versions %}{% if version.get('Status', 'active') == 'active' %}
+              - Name: Source{{version.Name}}
+              {% endif %}{% endfor %}
+              {% endif %}
+              OutputArtifacts:
+              {% for version in Versions %}{% if version.get('Status', 'active') == 'active' %}
+                - Name: Validate{{version.Name}}
+              {% endif %}{% endfor %}
+
+
+{% if Options.ShouldCFNNag %}{% with Versions=Versions, action="CFNNag", ShouldParseAsJinja2Template=Options.ShouldParseAsJinja2Template %}{% include 'combined-test-action.j2' %}{% endwith %}{% endif %}
+{% if Options.ShouldCloudformationRSpec %}{% with Versions=Versions, action="CloudformationRSpec", ShouldParseAsJinja2Template=Options.ShouldParseAsJinja2Template %}{% include 'combined-test-action.j2' %}{% endwith %}{% endif %}
+
+
+        - Name: Package
+          Actions:
+            - Name: Package
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref PackageProject
+                PrimarySource: Source{{Versions[0].Name}}
+                EnvironmentVariables: '[{"name":"EXECUTION_ID","value":"#{codepipeline.PipelineExecutionId}","type":"PLAINTEXT"}]'
+              RunOrder: 1
+              InputArtifacts:
+              {% if Options.ShouldParseAsJinja2Template %}
+                - Name: Parse
+              {% else %}
+              {% for version in Versions %}{% if version.get('Status', 'active') == 'active' %}
+                - Name: Source{{version.Name}}
+              {% endif %}{% endfor %}
+              {% endif %}
+              OutputArtifacts:
+              {% for version in Versions %}{% if version.get('Status', 'active') == 'active' %}
+                - Name: Package{{version.Name}}
+              {% endif %}{% endfor %}
+
+        - Name: Deploy
+          Actions:
+            - Name: Deploy
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref DeployProject
+                PrimarySource: Package{{Versions[0].Name}}
+                EnvironmentVariables: '[{"name":"EXECUTION_ID","value":"#{codepipeline.PipelineExecutionId}","type":"PLAINTEXT"}]'
+              RunOrder: 1
+              InputArtifacts:
+              {% if Options.ShouldParseAsJinja2Template %}
+                - Name: Parse
+              {% else %}
+              {% for version in Versions %}{% if version.get('Status', 'active') == 'active' %}
+                - Name: Package{{version.Name}}
+              {% endif %}{% endfor %}
+              {% endif %}
+              OutputArtifacts:
+              {% for version in Versions %}{% if version.get('Status', 'active') == 'active' %}
+                - Name: Deploy{{version.Name}}
+              {% endif %}{% endfor %}
+
+
+  {% if product.get("Source", {}).get("Provider", "").lower() == 'github' %}Webhook:
+    Type: 'AWS::CodePipeline::Webhook'
+    Properties:
+      AuthenticationConfiguration:
+        SecretToken: !Sub '{{ '{% raw %}{{{% endraw %}' }}resolve:secretsmanager:{{ product.Source['Configuration']['SecretsManagerSecret'] }}:SecretString:SecretToken{{ '{% raw %}}}{% endraw %}' }}'
+      Filters:
+  {% for version in Versions %}{% if version.get('Status', 'active') == 'active' %}
+      - JsonPath: "$.ref"
+        MatchEquals: "refs/heads/{{ version.Source.Configuration.Branch }}"
+  {% endif %}{% endfor %}
+      Authentication: GITHUB_HMAC
+      TargetPipeline: !Ref Pipeline
+      TargetAction: Source
+      Name: !Sub "${AWS::StackName}-webhook"
+      TargetPipelineVersion: !GetAtt Pipeline.Version
+      RegisterWithThirdParty: 'true'
+{% endif %}
+
+
+
+
+  ValidateProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub "${AWS::StackName}-ValidateProject"
+      ServiceRole: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodeRole"
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: linuxContainer
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:4.0
+        EnvironmentVariables:
+          - Name: EXECUTION_ID
+            Type: PLAINTEXT
+            Value: CHANGE_ME
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            install:
+              runtime-versions:
+                python: 3.8
+
+            build:
+              commands:
+                  {% if 'http' in VERSION %}
+                - pip install {{ VERSION }}
+                  {% else %}
+                - pip install aws-service-catalog-factory=={{ VERSION }}
+                  {% endif %}
+                - cd $(servicecatalog-factory print-source-directory {{friendly_uid}}-pipeline $EXECUTION_ID Source)
+                - export FactoryTemplateValidateBucket=$(aws cloudformation list-stack-resources --stack-name servicecatalog-factory --query 'StackResourceSummaries[?LogicalResourceId==`FactoryTemplateValidateBucket`].PhysicalResourceId' --output text)
+                - aws s3 cp product.template.{{ template_format }} s3://$FactoryTemplateValidateBucket/$CODEBUILD_BUILD_ID.{{ template_format }}
+                - aws cloudformation validate-template --template-url https://$FactoryTemplateValidateBucket.s3.$AWS_REGION.amazonaws.com/$CODEBUILD_BUILD_ID.{{ template_format }}
+          artifacts:
+            files: '**/*'
+            secondary-artifacts:
+  {% for version in Versions %}{% if version.get('Status', 'active') == 'active' %}
+              Validate{{ version.Name }}:
+                base-directory: {% if loop.first %}$CODEBUILD_SRC_DIR{% else %}$CODEBUILD_SRC_DIR_Source{{ version.Name }}{% endif %}
+                files:
+                  - '**/*'
+  {% endif %}{% endfor %}
+
+      TimeoutInMinutes: 20
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Generated"
+      {% for tag in tags %}
+        - Key: {{ tag.get("Key") }}
+          Value: {{ tag.get("Value") }}
+      {% endfor %}
+
+
+
+
+  PackageProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub "${AWS::StackName}-PackageProject"
+      ServiceRole: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodeRole"
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Generated"
+{% for tag in tags %}
+        - Key: {{ tag.get("Key") }}
+          Value: {{ tag.get("Value") }}
+{% endfor %}
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: linuxContainer
+        ComputeType: BUILD_GENERAL1_SMALL
+          {% if product.BuildSpecImage %}
+        Image: {{ product.BuildSpecImage }}
+          {% else %}
+        Image: aws/codebuild/standard:4.0
+          {% endif %}
+        EnvironmentVariables:
+          - Name: EXECUTION_ID
+            Type: PLAINTEXT
+            Value: CHANGE_ME
+          - Name: STACK_NAME
+            Type: PLAINTEXT
+            Value: !Sub "${AWS::StackName}"
+          - Name: ACCOUNT_ID
+            Type: PLAINTEXT
+            Value: !Sub "${AWS::AccountId}"
+      Source:
+        Type: CODEPIPELINE
+        {% if product.BuildSpec %}
+        BuildSpec: |
+{{ product.BuildSpec|indent(12,true) }}
+        {% else %}
+        BuildSpec: |
+            version: 0.2
+            phases:
+              install:
+                runtime-versions:
+                  python: 3.8
+              build:
+                commands:
+                    {% if 'http' in VERSION %}
+                  - pip install {{ VERSION }}
+                    {% else %}
+                  - pip install aws-service-catalog-factory=={{ VERSION }}
+                    {% endif %}
+                  - cd $(servicecatalog-factory print-source-directory {{friendly_uid}}-pipeline $EXECUTION_ID Source)
+                {% for region in ALL_REGIONS %}
+                  - aws cloudformation package --template $(pwd)/product.template.{{ template_format }} --s3-bucket sc-factory-artifacts-${ACCOUNT_ID}-{{ region }} --s3-prefix ${STACK_NAME} --output-template-file product.template-{{ region }}.{{ template_format }}
+                {% endfor %}
+            artifacts:
+              files:
+                - '*'
+                - '**/*'
+
+            artifacts:
+              files: '**/*'
+              secondary-artifacts:
+  {% for version in Versions %}{% if version.get('Status', 'active') == 'active' %}
+                Package{{ version.Name }}:
+                  base-directory: {% if loop.first %}$CODEBUILD_SRC_DIR{% else %}$CODEBUILD_SRC_DIR_Source{{ version.Name }}{% endif %}
+                  files: '**/*'
+    {% endif %}{% endfor %}
+        {% endif %}
+      TimeoutInMinutes: 20
+
+{% if Options.ShouldParseAsJinja2Template %}
+  ParseProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub "${AWS::StackName}-ParseProject"
+      ServiceRole: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodeRole"
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Generated"
+{% for tag in tags %}
+        - Key: {{ tag.get("Key") }}
+          Value: {{ tag.get("Value") }}
+{% endfor %}
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: linuxContainer
+        ComputeType: BUILD_GENERAL1_SMALL
+        {% if product.BuildSpecImage %}
+        Image: {{ product.BuildSpecImage }}
+        {% else %}
+        Image: aws/codebuild/standard:4.0
+        {% endif %}
+        EnvironmentVariables:
+          - Name: STACK_NAME
+            Type: PLAINTEXT
+            Value: !Sub "${AWS::StackName}"
+          - Name: ACCOUNT_ID
+            Type: PLAINTEXT
+            Value: !Sub "${AWS::AccountId}"
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: |
+            version: 0.2
+            phases:
+              install:
+                runtime-versions:
+                  python: 3.8
+                commands:
+                  - pip install Jinja2==2.10.1
+              build:
+                commands:
+                  - python -c "from jinja2 import Template;print(Template(open('product.template.{{ template_format }}.j2', 'r').read()).render())" > product.template.{{ template_format }}
+            artifacts:
+              files:
+                - '*'
+                - '**/*'
+
+      TimeoutInMinutes: 20
+{% endif %}
+
+
+  DeployProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub "${AWS::StackName}-DeployProject"
+      ServiceRole: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodeRole"
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Generated"
+          {% for tag in tags %}
+        - Key: {{ tag.get("Key") }}
+          Value: {{ tag.get("Value") }}
+          {% endfor %}
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: linuxContainer
+        ComputeType: BUILD_GENERAL1_SMALL
+          {% if product.BuildSpecImage %}
+        Image: {{ product.BuildSpecImage }}
+          {% else %}
+        Image: aws/codebuild/standard:4.0
+          {% endif %}
+        EnvironmentVariables:
+          - Name: EXECUTION_ID
+            Type: PLAINTEXT
+            Value: CHANGE_ME
+          - Name: STACK_NAME
+            Type: PLAINTEXT
+            Value: !Sub "${AWS::StackName}"
+          - Name: ACCOUNT_ID
+            Type: PLAINTEXT
+            Value: !Sub "${AWS::AccountId}"
+      Source:
+        Type: CODEPIPELINE
+          {% if product.BuildSpec %}
+        BuildSpec: |
+        {{ product.BuildSpec|indent(12,true) }}
+        {% else %}
+        BuildSpec: |
+          version: 0.2
+          phases:
+            install:
+              runtime-versions:
+                python: 3.8
+            build:
+              commands:
+                  {% if 'http' in VERSION %}
+                - pip install {{ VERSION }}
+                  {% else %}
+                - pip install aws-service-catalog-factory=={{ VERSION }}
+                  {% endif %}
+
+              {% for version in Versions %}{% if version.get('Status', 'active') == 'active' %}
+                - echo "Starting {{ version.Name }}"
+                - echo $CODEBUILD_SRC_DIR_Package{{ version.Name }}
+                - echo "{{version.Name}}" > {% if loop.first %}$CODEBUILD_SRC_DIR{% else %}$CODEBUILD_SRC_DIR_Package{{ version.Name }}{% endif %}/name.txt
+                - echo "{{version.Description}}" > {% if loop.first %}$CODEBUILD_SRC_DIR{% else %}$CODEBUILD_SRC_DIR_Package{{ version.Name }}{% endif %}/description.txt
+              {% endif %}{% endfor %}
+
+                - cd $(servicecatalog-factory print-source-directory {{friendly_uid}}-pipeline $EXECUTION_ID Package)
+              {% for region in ALL_REGIONS %}
+                - export FactoryTemplateValidateBucket=$(aws cloudformation list-stack-resources --stack-name servicecatalog-factory --query 'StackResourceSummaries[?LogicalResourceId==`FactoryTemplateValidateBucket`].PhysicalResourceId' --output text)
+                - aws s3 cp product.template-{{ region }}.{{ template_format }} s3://$FactoryTemplateValidateBucket/$CODEBUILD_BUILD_ID/product.template-{{ region }}.{{ template_format }}
+                - servicecatalog-factory update-provisioned-product {{region}} $(cat name.txt) {{ product_ids_by_region[region] }} $(cat description.txt) https://$FactoryTemplateValidateBucket.s3.$AWS_REGION.amazonaws.com/$CODEBUILD_BUILD_ID/product.template-{{ region }}.{{ template_format }}
+              {% endfor %}
+          artifacts:
+            files:
+              - '*'
+              - '**/*'
+
+          artifacts:
+            files: '**/*'
+            secondary-artifacts:
+          {% for version in Versions %}{% if version.get('Status', 'active') == 'active' %}
+              Deploy{{ version.Name }}:
+                base-directory: {% if loop.first %}$CODEBUILD_SRC_DIR{% else %}$CODEBUILD_SRC_DIR_Package{{ version.Name }}{% endif %}
+                files: '**/*'
+          {% endif %}{% endfor %}
+                {% endif %}
+      TimeoutInMinutes: 20

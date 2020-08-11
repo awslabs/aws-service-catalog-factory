@@ -9,24 +9,17 @@ from copy import deepcopy
 
 
 def resolve_from_site_packages(what):
-    return os.path.sep.join([
-        os.path.dirname(os.path.abspath(__file__)),
-        what
-    ])
+    return os.path.sep.join([os.path.dirname(os.path.abspath(__file__)), what])
 
 
 def read_from_site_packages(what):
-    return open(
-        resolve_from_site_packages(what),
-        'r'
-    ).read()
+    return open(resolve_from_site_packages(what), "r").read()
 
 
-TEMPLATE_DIR = resolve_from_site_packages('templates')
+TEMPLATE_DIR = resolve_from_site_packages("templates")
 
 ENV = jinja2.Environment(
-    loader=jinja2.FileSystemLoader(TEMPLATE_DIR),
-    extensions=['jinja2.ext.do'],
+    loader=jinja2.FileSystemLoader(TEMPLATE_DIR), extensions=["jinja2.ext.do"],
 )
 
 

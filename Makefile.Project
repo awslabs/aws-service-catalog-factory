@@ -1,0 +1,23 @@
+.PHONY: bump-patch bump-minor bump-major clean prepare-for-testing
+
+## @Project_setup Increment patch number
+bump-patch:
+	poetry version patch
+
+## @Project_setup Increment minor number
+bump-minor:
+	poetry version minor
+
+## @Project_setup Increment major number
+bump-major:
+	poetry version major
+
+## @Project_setup Cleans up after a build
+clean:
+	rm -rf results output
+	rm -rf dist aws-service-catalog-factory-* aws_service_catalog_factory.egg-info/ reports
+
+## @Project_setup Generates a setup.py so you can test bootstrapped branches in AWS Codecommit
+prepare-for-testing: build
+	tar -zxvf dist/aws-service-catalog-factory-*.tar.gz -C dist aws-service-catalog-factory-*/setup.py
+	mv dist/aws-service-catalog-factory-*/setup.py setup.py

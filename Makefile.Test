@@ -1,0 +1,21 @@
+.PHONY: unit-tests test-factory-install test-factory-configure
+
+WS=ignored/testing/$(ENV_NUMBER)
+FACTORY_VENV=${WS}/factory
+
+## @Testing runs unit tests
+unit-tests: ## runs unit tests for the project
+	poetry run pytest -vv --exitfirst -k unit --junit-xml=reports/junit/junit.xml --cov=./servicecatalog_factory --cov-branch
+
+## @Testing installs factory into given ENV_NUMBER
+test-factory-install:
+	poetry install
+
+## @Testing configures current profile by uploading config and bootstrapping a branch for the given ENV_NUMBER
+test-factory-configure:
+	poetry run servicecatalog-factory upload-config servicecatalog_factory/example-config-small.yaml
+	poetry run servicecatalog-factory bootstrap-branch "$$(git rev-parse --abbrev-ref HEAD)"
+
+## @Testing runs generate-via-luigi for current profile in the given ENV_NUMBER
+test-factory-generate-via-luigi:
+	poetry run servicecatalog-factory --info ignored/src/ServiceCatalogFactory/portfolios/
