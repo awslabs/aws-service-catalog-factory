@@ -28,6 +28,7 @@ pytest-cov = "*"
 codecov = "==2.0.22"
 pylint = "*"
 pytest-mock = "*"
+black = "^19.10b0"
 
 [tool.dephell.main]
 versioning = "semver"
