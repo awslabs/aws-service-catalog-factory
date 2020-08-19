@@ -6,7 +6,6 @@ import os
 
 import jinja2
 from copy import deepcopy
-import json
 
 
 def resolve_from_site_packages(what):
@@ -25,7 +24,10 @@ ENV = jinja2.Environment(
 
 
 def merge(dict1, dict2):
-    result = json.loads(json.dumps(dict1))
+    if hasattr(dict1, 'get_wrapped'):
+        result = deepcopy(dict1.get_wrapped())
+    else:
+        result = deepcopy(dict1)
     for key, value in dict2.items():
         if isinstance(value, collections.Mapping):
             result[key] = merge(result.get(key, {}), value)
