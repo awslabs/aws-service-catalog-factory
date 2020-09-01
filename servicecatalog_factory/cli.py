@@ -61,9 +61,22 @@ def nuke_product_version(portfolio_name, product, version):
 
 
 @cli.command()
-@click.argument("branch-name")
-def bootstrap_branch(branch_name):
-    core.bootstrap_branch(branch_name)
+@click.argument("branch-to-bootstrap")
+@click.option("--source-provider", default="CodeCommit")
+@click.option("--repository_name", default="ServiceCatalogFactory")
+@click.option("--branch-name", default="master")
+@click.option("--owner")
+@click.option("--repo")
+@click.option("--branch")
+@click.option("--poll-for-source-changes")
+@click.option("--webhook-secret")
+def bootstrap_branch(branch_to_bootstrap, source_provider, repository_name, branch_name, owner, repo, branch, poll_for_source_changes, webhook_secret):
+    if source_provider == "CodeCommit":
+        core.bootstrap_branch(branch_to_bootstrap, source_provider, None, repository_name, branch_name, poll_for_source_changes, webhook_secret)
+    elif source_provider == "GitHub":
+        core.bootstrap_branch(branch_to_bootstrap, source_provider, owner, repo, branch, poll_for_source_changes, webhook_secret)
+    else:
+        raise Exception(f"Unsupported source provider: {source_provider}")
 
 
 @cli.command()
@@ -75,8 +88,21 @@ def add_secret(secret_name, oauth_token, secret_token):
 
 
 @cli.command()
-def bootstrap():
-    core.bootstrap()
+@click.option("--source-provider", default="CodeCommit")
+@click.option("--repository_name", default="ServiceCatalogFactory")
+@click.option("--branch-name", default="master")
+@click.option("--owner")
+@click.option("--repo")
+@click.option("--branch")
+@click.option("--poll-for-source-changes")
+@click.option("--webhook-secret")
+def bootstrap(source_provider, repository_name, branch_name, owner, repo, branch, poll_for_source_changes, webhook_secret):
+    if source_provider == "CodeCommit":
+        core.bootstrap(source_provider, None, repository_name, branch_name, poll_for_source_changes, webhook_secret)
+    elif source_provider == "GitHub":
+        core.bootstrap(source_provider, owner, repo, branch, poll_for_source_changes, webhook_secret)
+    else:
+        raise Exception(f"Unsupported source provider: {source_provider}")
 
 
 @cli.command()

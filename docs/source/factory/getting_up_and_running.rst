@@ -54,10 +54,39 @@ When you have set the value for your parameters hit ``Next``, review the next sc
 Review the final ``Review`` screen, scroll to the bottom, check the box labeled ``I acknowledge that AWS CloudFormation
 might create IAM resources with custom names.`` and then finally hit ``Create Stack``.
 
+
 Configuring your factory
 ++++++++++++++++++++++++
 
-You now need to configure your factory.  You can clone the repo or edit it in the AWS Console.
+You now need to configure your factory.
+
+
+Using GitHub.com for your ServiceCatalogFactory repo
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+.. note::
+
+    This was added in version 0.47.0
+
+If you would like to use GitHub.com to host your ServiceCatalogFactory repo you will need to bootstrap the solution
+again using the cli and pass the following parameters:
+
+
+.. code-block::
+
+    servicecatalog-factory --info bootstrap \
+        --source-provider GitHub \
+        --owner eamonnfaherty \
+        --repo servicecatalogfactorytesting \
+        --branch master \
+        --poll-for-source-changes true \
+        --webhook-secret githubcomPAT
+
+
+If you decide to use Github you will need to clone the repo and edit is otherwise you can follow the AWS CodeCommit
+instructions below:
+
+You can clone the repo or edit it in the AWS Console.
 
 Cloning the repo
 ~~~~~~~~~~~~~~~~

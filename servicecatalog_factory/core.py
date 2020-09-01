@@ -750,14 +750,14 @@ def nuke_stack(portfolio_name, product, version):
                 raise e
 
 
-def bootstrap_branch(branch_name):
+def bootstrap_branch(branch_name, source_provider, owner, repo, branch, poll_for_source_changes, webhook_secret):
     constants.VERSION = "https://github.com/awslabs/aws-service-catalog-factory/archive/{}.zip".format(
         branch_name
     )
-    bootstrap()
+    bootstrap(source_provider, owner, repo, branch, poll_for_source_changes, webhook_secret)
 
 
-def bootstrap():
+def bootstrap(source_provider, owner, repo, branch, poll_for_source_changes, webhook_secret):
     click.echo("Starting bootstrap")
     click.echo("Starting regional deployments")
     all_regions = get_regions()
@@ -806,8 +806,31 @@ def bootstrap():
         template = read_from_site_packages(
             "{}.template.yaml".format(constants.BOOTSTRAP_STACK_NAME)
         )
+        source_args = { "Provider": source_provider}
+        if source_provider == "CodeCommit":
+            source_args.update({
+                "Configuration": {
+                    "RepositoryName": repo,
+                    "BranchName": branch,
+                },
+            })
+        elif source_provider == "GitHub":
+            source_args.update({
+                "Configuration": {
+                    "Owner": owner,
+                    "Repo": repo,
+                    "Branch": branch,
+                    "PollForSourceChanges": poll_for_source_changes,
+                    "SecretsManagerSecret": webhook_secret,
+                },
+            })
         template = Template(template).render(
-            VERSION=constants.VERSION, ALL_REGIONS=all_regions
+            VERSION=constants.VERSION, ALL_REGIONS=all_regions,
+            Source=source_args
+        )
+        template = Template(template).render(
+            VERSION=constants.VERSION, ALL_REGIONS=all_regions,
+            Source=source_args
         )
         args = {
             "StackName": constants.BOOTSTRAP_STACK_NAME,
@@ -847,7 +870,7 @@ def bootstrap():
 
     with betterboto_client.ClientContextManager("codecommit") as codecommit:
         response = codecommit.get_repository(
-            repositoryName=constants.SERVICE_CATALOG_FACTORY_REPO_NAME
+            repositoryName=repo
         )
         clone_url = response.get("repositoryMetadata").get("cloneUrlHttp")
         clone_command = (
