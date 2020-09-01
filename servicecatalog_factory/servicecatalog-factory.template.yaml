@@ -46,14 +46,17 @@ Resources:
         - Key: "ServiceCatalogFactory:Actor"
           Value: "Framework"
 
+
+  {% if Source.Provider.lower() == 'codecommit' %}
   CodeRepo:
     Type: AWS::CodeCommit::Repository
     Properties:
       RepositoryDescription: Repo to store the product factory config
-      RepositoryName: ServiceCatalogFactory
+      RepositoryName: {{ Source['Configuration']['RepositoryName'] }}
       Tags:
         - Key: "ServiceCatalogFactory:Actor"
           Value: "Framework"
+  {% endif %}
 
   BuildRole:
     Type: AWS::IAM::Role
@@ -274,19 +277,30 @@ Resources:
       Stages:
         - Name: Source
           Actions:
-            - Name: CodeCommit
+            - Name: Source
               ActionTypeId:
                 Category: Source
-                Owner: AWS
+                Owner: {% if Source.Provider.lower() == 'codecommit' %}AWS{% else %}ThirdParty{% endif %}
                 Version: 1
-                Provider: CodeCommit
+                Provider: {{ Source.Provider }}
+              {% if Source.Provider.lower() == 'codecommit' %}
               Configuration:
                 RepositoryName: !GetAtt CodeRepo.Name
-                BranchName: master
+                BranchName: {{ Source.Configuration.BranchName }}
+                PollForSourceChanges: {{ Source.Configuration.PollForSourceChanges or 'false' }}
+              {% endif %}
+              {% if Source.Provider.lower() == 'github' %}
+              Configuration:
+                Owner: {{ Source['Configuration']['Owner'] }}
+                Repo: {{ Source['Configuration']['Repo'] }}
+                Branch: {{ Source['Configuration']['Branch'] }}
+                OAuthToken: !Sub '{{ '{% raw %}{{{% endraw %}' }}resolve:secretsmanager:{{ Source['Configuration']['SecretsManagerSecret'] }}:SecretString:OAuthToken{{ '{% raw %}}}{% endraw %}' }}'
+                PollForSourceChanges: {{ Source['Configuration']['PollForSourceChanges'] }}
+              {% endif %}
               OutputArtifacts:
                 - Name: Source
               RunOrder: 1
-              RoleArn: !GetAtt SourceRole.Arn
+              {% if Source.Provider.lower() == 'aws' %}RoleArn: !GetAtt SourceRole.Arn{% endif %}
         - Name: Build
           Actions:
             - Name: Build
@@ -356,7 +370,22 @@ Resources:
           Value: "Framework"
 
 
-
+  {% if Source.Provider.lower() == 'github' %}
+  Webhook:
+    Type: 'AWS::CodePipeline::Webhook'
+    Properties:
+      AuthenticationConfiguration:
+        SecretToken: !Sub '{{ '{% raw %}{{{% endraw %}' }}resolve:secretsmanager:{{ Source['Configuration']['SecretsManagerSecret'] }}:SecretString:SecretToken{{ '{% raw %}}}{% endraw %}' }}'
+      Filters:
+          - JsonPath: "$.ref"
+            MatchEquals: "refs/heads/{{ Source.Configuration.Branch }}"
+      Authentication: GITHUB_HMAC
+      TargetPipeline: !Ref Pipeline
+      TargetAction: Source
+      Name: !Sub "${AWS::StackName}-webhook"
+      TargetPipelineVersion: !GetAtt Pipeline.Version
+      RegisterWithThirdParty: 'true'
+  {% endif %}
 
   DeliverySourceRole:
     Type: AWS::IAM::Role

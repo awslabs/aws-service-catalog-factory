@@ -6,7 +6,7 @@ version:
 
 ## @factory_commands Runs servicecatalog-factory bootstrap
 bootstrap:
-	poetry run servicecatalog-factory --info bootstrap
+	poetry run servicecatalog-factory --info bootstrap --source-provider GitHub --owner eamonnfaherty --repo servicecatalogfactorytesting --branch master --poll-for-source-changes true --webhook-secret ilovegithub
 
 ## @factory_commands Runs servicecatalog-factory --info bootstrap-branch for the local checkout branch
 bootstrap-branch:
