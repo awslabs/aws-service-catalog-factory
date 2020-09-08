@@ -806,7 +806,7 @@ def bootstrap(source_provider, owner, repo, branch, poll_for_source_changes, web
         template = read_from_site_packages(
             "{}.template.yaml".format(constants.BOOTSTRAP_STACK_NAME)
         )
-        source_args = { "Provider": source_provider}
+        source_args = {"Provider": source_provider}
         if source_provider == "CodeCommit":
             source_args.update({
                 "Configuration": {
@@ -910,7 +910,7 @@ def version():
             )
         )
         response = config.get_stack_version()
-        click.echo("stack version: {}".format(response.get("Parameter").get("Value"),))
+        click.echo("stack version: {}".format(response))
 
 
 def upload_config(config):
