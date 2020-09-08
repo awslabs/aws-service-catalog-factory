@@ -868,21 +868,22 @@ def bootstrap(source_provider, owner, repo, branch, poll_for_source_changes, web
     logger.info("Finished adding empty product template to s3")
     logger.info("Finished bootstrap")
 
-    with betterboto_client.ClientContextManager("codecommit") as codecommit:
-        response = codecommit.get_repository(
-            repositoryName=repo
-        )
-        clone_url = response.get("repositoryMetadata").get("cloneUrlHttp")
-        clone_command = (
-            "git clone --config 'credential.helper=!aws codecommit "
-            "credential-helper $@' --config 'credential.UseHttpPath=true' "
-            "{}".format(clone_url)
-        )
-        click.echo(
-            "You need to clone your newly created repo and then seed it: \n{}".format(
-                clone_command
+    if source_provider == "CodeCommit":
+        with betterboto_client.ClientContextManager("codecommit") as codecommit:
+            response = codecommit.get_repository(
+                repositoryName=repo
             )
-        )
+            clone_url = response.get("repositoryMetadata").get("cloneUrlHttp")
+            clone_command = (
+                "git clone --config 'credential.helper=!aws codecommit "
+                "credential-helper $@' --config 'credential.UseHttpPath=true' "
+                "{}".format(clone_url)
+            )
+            click.echo(
+                "You need to clone your newly created repo and then seed it: \n{}".format(
+                    clone_command
+                )
+            )
 
 
 def seed(complexity, p):
