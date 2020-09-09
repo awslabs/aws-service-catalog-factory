@@ -300,7 +300,7 @@ Resources:
               OutputArtifacts:
                 - Name: Source
               RunOrder: 1
-              {% if Source.Provider.lower() == 'aws' %}RoleArn: !GetAtt SourceRole.Arn{% endif %}
+              {% if Source.Provider.lower() == 'codecommit' %}RoleArn: !GetAtt SourceRole.Arn{% endif %}
         - Name: Build
           Actions:
             - Name: Build
