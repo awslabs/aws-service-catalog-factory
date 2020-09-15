@@ -19,5 +19,5 @@ clean:
 
 ## @Project_setup Generates a setup.py so you can test bootstrapped branches in AWS Codecommit
 prepare-for-testing: build
-	tar -zxvf dist/aws-service-catalog-factory-*.tar.gz -C dist aws-service-catalog-factory-*/setup.py
+	tar -zxvf dist/$$(poetry version  | sed 's/ /-/g').tar.gz -C dist $$(poetry version  | sed 's/ /-/g')/setup.py
 	mv dist/aws-service-catalog-factory-*/setup.py setup.py
