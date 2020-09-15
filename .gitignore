@@ -4,6 +4,7 @@ venv
 .venv
 ServiceCatalogFactory
 repos
+aws-service-catalog-factory-*
 aws_service_catalog_factory.egg-info/
 dist
 __pycache__
