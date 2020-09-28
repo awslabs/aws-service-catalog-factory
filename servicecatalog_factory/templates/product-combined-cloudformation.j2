@@ -453,7 +453,7 @@ Resources:
               {% for region in ALL_REGIONS %}
                 - export FactoryTemplateValidateBucket=$(aws cloudformation list-stack-resources --stack-name servicecatalog-factory --query 'StackResourceSummaries[?LogicalResourceId==`FactoryTemplateValidateBucket`].PhysicalResourceId' --output text)
                 - aws s3 cp product.template-{{ region }}.{{ template_format }} s3://$FactoryTemplateValidateBucket/$CODEBUILD_BUILD_ID/product.template-{{ region }}.{{ template_format }}
-                - servicecatalog-factory update-provisioned-product {{region}} $(cat name.txt) {{ product_ids_by_region[region] }} $(cat description.txt) https://$FactoryTemplateValidateBucket.s3.$AWS_REGION.amazonaws.com/$CODEBUILD_BUILD_ID/product.template-{{ region }}.{{ template_format }}
+                - servicecatalog-factory update-provisioned-product {{region}} $(cat name.txt) {{ product_ids_by_region[region] }} "$(cat description.txt)" https://$FactoryTemplateValidateBucket.s3.$AWS_REGION.amazonaws.com/$CODEBUILD_BUILD_ID/product.template-{{ region }}.{{ template_format }}
               {% endfor %}
           artifacts:
             files:
