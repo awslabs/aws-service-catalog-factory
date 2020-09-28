@@ -426,7 +426,7 @@ Resources:
         Type: CODEPIPELINE
           {% if product.BuildSpec %}
         BuildSpec: |
-        {{ product.BuildSpec|indent(12,true) }}
+{{ product.BuildSpec|indent(12,true) }}
         {% else %}
         BuildSpec: |
           version: 0.2
