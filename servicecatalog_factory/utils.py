@@ -24,7 +24,7 @@ ENV = jinja2.Environment(
 
 
 def merge(dict1, dict2):
-    if hasattr(dict1, 'get_wrapped'):
+    if hasattr(dict1, "get_wrapped"):
         result = deepcopy(dict1.get_wrapped())
     else:
         result = deepcopy(dict1)

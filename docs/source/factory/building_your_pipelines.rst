@@ -144,9 +144,104 @@ Please note the example above is not complete, it is just illustrating how to se
 
 
 
+Build
+-----
+
+.. note::
+
+    This was added in version 0.48.0
+
+Each product pipeline can have a build stage.  You can specify the BuildSpecImage and the BuildSpec to use by setting
+the Build properties in the Stages object:
+
+.. code:: yaml
+
+    Products:
+      - Description: account-bootstrap-shared
+        Distributor: CCOE
+        Name: account-bootstrap-shared
+        Owner: CCOE@Example.com
+        Source:
+          Configuration:
+            RepositoryName: account-bootstrap-shared
+          Provider: CodeCommit
+        Stages:
+          Build:
+            BuildSpecImage: aws/codebuild/standard:4.0
+            BuildSpec: |
+              version: 0.2
+              phases:
+                install:
+                  runtime-versions:
+                    python: 3.x
+                build:
+                  commands:
+                    - make build
+              artifacts:
+                files:
+                  - '*'
+                  - '**/*'
+
+        SupportDescription: Find us on Slack or Wiki
+        SupportEmail: ccoe-support@Example.com
+        SupportUrl: https://example.com/intranet/teams/ccoe/products/account-factory
+        Tags: []
+        Portfolios:
+          - account-vending
+        Versions:
+          - Description: Creates, codebuild project that can be run to bootstrap an account
+              and lambda function that can be used to back a custom resource so the codebuild
+              project can be started from CloudFormation
+            Name: v1
+
+In the example above we added a BuildSpecImage and a BuildSpec.  You cal also override the stages object in the versions
+list:
+
+.. code:: yaml
+
+    Products:
+      - Description: account-bootstrap-shared
+        Distributor: CCOE
+        Name: account-bootstrap-shared
+        Owner: CCOE@Example.com
+        Source:
+          Configuration:
+            RepositoryName: account-bootstrap-shared
+          Provider: CodeCommit
+
+        SupportDescription: Find us on Slack or Wiki
+        SupportEmail: ccoe-support@Example.com
+        SupportUrl: https://example.com/intranet/teams/ccoe/products/account-factory
+        Tags: []
+        Portfolios:
+          - account-vending
+        Versions:
+          - Description: Creates, codebuild project that can be run to bootstrap an account
+              and lambda function that can be used to back a custom resource so the codebuild
+              project can be started from CloudFormation
+            Name: v1
+            Stages:
+              Build:
+                BuildSpecImage: aws/codebuild/standard:4.0
+                BuildSpec: |
+                  version: 0.2
+                  phases:
+                    install:
+                      runtime-versions:
+                        python: 3.x
+                    build:
+                      commands:
+                        - make build
+                  artifacts:
+                    files:
+                      - '*'
+                      - '**/*'
+
+
 Tests
 -----
 Each product pipeline will run aws cloudformation validate-template on your product.template.yaml.
+
 You can optionally run CFNNag on your template.  You can enable it using the Options configuration for your product or
 for your product version.
 
@@ -225,25 +320,34 @@ You can override this behaviour be making a change to your product version, addi
               Configuration:
                 RepositoryName: guardduty-master-enabler
                 BranchName: v1
-            BuildSpec: |
-              version: 0.2
-              phases:
-                install:
-                  runtime-versions:
-                    python: 3.8
-                build:
-                  commands:
-                  {% for region in ALL_REGIONS %}
-                    - aws cloudformation package \
-                        --template $(pwd)/product.template.yaml \
-                        --s3-bucket sc-factory-artifacts-${ACCOUNT_ID}-{{ region }} \
-                        --s3-prefix ${STACK_NAME} \
-                        --output-template-file product.template-{{ region }}.yaml
-                  {% endfor %}
-              artifacts:
-                files:
-                  - '*'
-                  - '**/*'
+            Stages:
+              Package:
+                BuildSpec: |
+                  version: 0.2
+                  phases:
+                    install:
+                      runtime-versions:
+                        python: 3.8
+                    build:
+                      commands:
+                      {% for region in ALL_REGIONS %}
+                        - aws cloudformation package \
+                            --template $(pwd)/product.template.yaml \
+                            --s3-bucket sc-factory-artifacts-${ACCOUNT_ID}-{{ region }} \
+                            --s3-prefix ${STACK_NAME} \
+                            --output-template-file product.template-{{ region }}.yaml
+                      {% endfor %}
+                  artifacts:
+                    files:
+                      - '*'
+                      - '**/*'
+
+.. note::
+
+    Since version 0.48.0 you should be setting your Package BuildSpec in a Stages object.  Prior to this you set it in
+    the versions or product object.  The stages object can be set in the product object and then overridden in the
+    version object.
+
 
 Please note, you need to specify the runtime-versions you intend to use.
 

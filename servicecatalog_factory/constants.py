@@ -53,3 +53,24 @@ TEMPLATE_FORMATS_DEFAULT = TEMPLATE_FORMATS_YAML
 STATUS_ACTIVE = "active"
 STATUS_TERMINATED = "terminated"
 STATUS_DEFAULT = STATUS_ACTIVE
+
+
+PACKAGE_BUILD_SPEC_IMAGE_DEFAULT = "aws/codebuild/standard:4.0"
+
+PACKAGE_BUILD_SPEC_DEFAULT = """
+      version: 0.2
+      phases:
+        install:
+          runtime-versions:
+            python: 3.x
+        build:
+          commands:
+            - pip install -r requirements.txt -t src
+          {% for region in ALL_REGIONS %}
+            - aws cloudformation package --template $(pwd)/product.template.yaml --s3-bucket sc-factory-artifacts-${ACCOUNT_ID}-{{ region }} --s3-prefix ${STACK_NAME} --output-template-file product.template-{{ region }}.yaml
+          {% endfor %}
+      artifacts:
+        files:
+          - '*'
+          - '**/*'
+"""
