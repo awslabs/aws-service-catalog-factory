@@ -1,5 +1,7 @@
 # Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
+import time
+
 import traceback
 from copy import deepcopy
 from pathlib import Path
@@ -251,9 +253,67 @@ class CreateProductTask(FactoryTask):
                 "Tags": tags,
             }
 
-            product_view_summary = aws.get_or_create_product(
-                self.name, args, service_catalog
+            search_products_as_admin_response = service_catalog.search_products_as_admin_single_page(
+                Filters={"FullTextSearch": [self.name]}
             )
+            found = False
+            product_view_summary = None
+            for product_view_details in search_products_as_admin_response.get(
+                "ProductViewDetails"
+            ):
+                product_view_summary = product_view_details.get("ProductViewSummary")
+                if product_view_summary.get("Name") == self.name:
+                    found = True
+                    logger.info(f"Found product: {self.name}: {product_view_summary}")
+                    things_to_change = dict()
+                    if product_view_summary.get("Owner") != self.owner:
+                        things_to_change["Owner"] = self.owner
+                    if product_view_summary.get("ShortDescription") != self.description:
+                        things_to_change["Description"] = self.description
+                    if product_view_summary.get("Distributor") != self.distributor:
+                        things_to_change["Distributor"] = self.distributor
+                    if (
+                        product_view_summary.get("SupportDescription")
+                        != self.support_description
+                    ):
+                        things_to_change[
+                            "SupportDescription"
+                        ] = self.support_description
+                    if product_view_summary.get("SupportEmail") != self.support_email:
+                        things_to_change["SupportEmail"] = self.support_email
+                    if product_view_summary.get("SupportUrl") != self.support_url:
+                        things_to_change["SupportUrl"] = self.support_url
+                    if len(things_to_change.keys()) > 0:
+                        service_catalog.update_product(
+                            Id=product_view_summary.get("ProductId"), **things_to_change
+                        )
+                        break
+
+            if not found:
+                logger.info(f"Not found product: {self.name}, creating")
+
+                product_view_summary = (
+                    service_catalog.create_product(**args)
+                    .get("ProductViewDetail")
+                    .get("ProductViewSummary")
+                )
+                product_id = product_view_summary.get("ProductId")
+                logger.info(f"Created product {self.name}, waiting for completion")
+                while True:
+                    time.sleep(2)
+                    search_products_as_admin_response = (
+                        service_catalog.search_products_as_admin_single_page()
+                    )
+                    products_ids = [
+                        product_view_detail.get("ProductViewSummary").get("ProductId")
+                        for product_view_detail in search_products_as_admin_response.get(
+                            "ProductViewDetails"
+                        )
+                    ]
+                    logger.info(f"Looking for {product_id} in {products_ids}")
+                    if product_id in products_ids:
+                        logger.info(f"Found {product_id} ")
+                        break
 
             if product_view_summary is None:
                 raise Exception(f"{logger_prefix}: did not find or create a product")
@@ -506,6 +566,28 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
 
         if self.provisioner.get("Type") == "CloudFormation":
             template = utils.ENV.get_template(constants.PRODUCT_CLOUDFORMATION)
+
+            stages = utils.merge(
+                self.product.get("Stages", {}), self.version.get("Stages", {})
+            )
+
+            if stages.get("Package") is None:
+                stages["Package"] = dict(
+                    BuildSpecImage=self.version.get(
+                        "BuildSpecImage",
+                        self.product.get(
+                            "BuildSpecImage",
+                            constants.PACKAGE_BUILD_SPEC_IMAGE_DEFAULT,
+                        ),
+                    ),
+                    BuildSpec=self.version.get(
+                        "BuildSpec",
+                        self.product.get(
+                            "BuildSpec", constants.PACKAGE_BUILD_SPEC_DEFAULT
+                        ),
+                    ),
+                )
+
             rendered = template.render(
                 friendly_uid=f"{friendly_uid}-{self.version.get('Name')}",
                 version=self.version,
@@ -517,6 +599,7 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
                 Source=utils.merge(
                     self.product.get("Source", {}), self.version.get("Source", {})
                 ),
+                Stages=stages,
                 ALL_REGIONS=self.all_regions,
                 product_ids_by_region=product_ids_by_region,
                 FACTORY_VERSION=self.factory_version,
@@ -532,6 +615,7 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
                 Source=utils.merge(
                     self.product.get("Source", {}), self.version.get("Source", {})
                 ),
+                Stages=stages,
                 ALL_REGIONS=self.all_regions,
                 product_ids_by_region=product_ids_by_region,
             )

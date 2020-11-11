@@ -11,7 +11,11 @@
               {% if ShouldParseAsJinja2Template %}
                 - Name: Parse
               {% else %}
+                {% if Stages.get("Build", {}).get("BuildSpec") %}
+                - Name: Build
+                {% else %}
                 - Name: Source
+                {% endif %}
               {% endif %}
               OutputArtifacts:
                 - Name: Test{{ action }}

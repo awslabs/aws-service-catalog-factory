@@ -96,6 +96,24 @@ Resources:
                 - Name: Source
               OutputArtifacts:
                 - Name: Parse
+{% else %}
+  {% if Stages.get("Build", {}).get("BuildSpec") %}
+        - Name: Build
+          Actions:
+            - Name: Build
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref BuildProject
+              RunOrder: 1
+              InputArtifacts:
+                - Name: Source
+              OutputArtifacts:
+                - Name: Build
+  {% endif %}
 {% endif %}
 
         - Name: Tests
@@ -103,7 +121,6 @@ Resources:
 {% with action="Validate", ShouldParseAsJinja2Template=Options.ShouldParseAsJinja2Template %}{% include 'test-action.j2' %}{% endwith %}
 {% if Options.ShouldCFNNag %}{% with action="CFNNag", ShouldParseAsJinja2Template=Options.ShouldParseAsJinja2Template %}{% include 'test-action.j2' %}{% endwith %}{% endif %}
 {% if Options.ShouldCloudformationRSpec %}{% with action="CloudformationRSpec", ShouldParseAsJinja2Template=Options.ShouldParseAsJinja2Template %}{% include 'test-action.j2' %}{% endwith %}{% endif %}
-
 
         - Name: Package
           Actions:
@@ -120,7 +137,11 @@ Resources:
               {% if Options.ShouldParseAsJinja2Template %}
                 - Name: Parse
               {% else %}
+                {% if Stages.get("Build", {}).get("BuildSpec") %}
+                - Name: Build
+                {% else %}
                 - Name: Source
+                {% endif %}
               {% endif %}
               OutputArtifacts:
                 - Name: Package
@@ -179,15 +200,7 @@ Resources:
       Environment:
         Type: linuxContainer
         ComputeType: BUILD_GENERAL1_SMALL
-          {% if version.BuildSpecImage %}
-        Image: {{ version.BuildSpecImage }}
-          {% else %}
-          {% if product.BuildSpecImage %}
-        Image: {{ product.BuildSpecImage }}
-          {% else %}
-        Image: aws/codebuild/standard:4.0
-          {% endif %}
-          {% endif %}
+        Image: {{ Stages.get("Package", {}).get("BuildSpecImage", product.get("BuildSpecImage", "aws/codebuild/standard:4.0")) }}
         EnvironmentVariables:
           - Name: STACK_NAME
             Type: PLAINTEXT
@@ -197,13 +210,9 @@ Resources:
             Value: !Sub "${AWS::AccountId}"
       Source:
         Type: CODEPIPELINE
-        {% if version.BuildSpec %}
+        {% if Stages.get("Package", {}).get("BuildSpec") %}
         BuildSpec: |
-{{ version.BuildSpec|indent(12,true) }}
-        {% else %}
-        {% if product.BuildSpec %}
-        BuildSpec: |
-{{ product.BuildSpec|indent(12,true) }}
+{{ Stages.get("Package", {}).get("BuildSpec")|indent(12,true) }}
         {% else %}
         BuildSpec: |
             version: 0.2
@@ -220,10 +229,43 @@ Resources:
               files:
                 - '*'
                 - '**/*'
-
-        {% endif %}
         {% endif %}
       TimeoutInMinutes: 20
+
+
+  {% if Stages.get("Build", {}).get("BuildSpec") %}
+  BuildProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub "${AWS::StackName}-BuildProject"
+      ServiceRole: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodeRole"
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Generated"
+          {% for tag in tags %}
+        - Key: {{ tag.get("Key") }}
+          Value: {{ tag.get("Value") }}
+          {% endfor %}
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: linuxContainer
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: {{ Stages.get("Build", {}).get("BuildSpecImage", product.get("BuildSpecImage", "aws/codebuild/standard:4.0")) }}
+        EnvironmentVariables:
+          - Name: STACK_NAME
+            Type: PLAINTEXT
+            Value: !Sub "${AWS::StackName}"
+          - Name: ACCOUNT_ID
+            Type: PLAINTEXT
+            Value: !Sub "${AWS::AccountId}"
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: |
+{{ Stages.get("Build", {}).get("BuildSpec")|indent(12,true) }}
+      TimeoutInMinutes: 20
+  {% endif %}
+
 
 {% if Options.ShouldParseAsJinja2Template %}
   ParseProject:

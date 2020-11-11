@@ -32,49 +32,6 @@ def get_or_create_portfolio(
     return portfolio_detail
 
 
-def get_or_create_product(name, args, service_catalog):
-    logger.info(f"Looking for product: {name}")
-    search_products_as_admin_response = service_catalog.search_products_as_admin_single_page(
-        Filters={"FullTextSearch": [name]}
-    )
-    found = False
-    product_view_summary = None
-    for product_view_details in search_products_as_admin_response.get(
-        "ProductViewDetails"
-    ):
-        product_view_summary = product_view_details.get("ProductViewSummary")
-        if product_view_summary.get("Name") == name:
-            found = True
-            logger.info(f"Found product: {name}: {product_view_summary}")
-            break
-    if not found:
-        logger.info(f"Not found product: {name}, creating")
-
-        product_view_summary = (
-            service_catalog.create_product(**args)
-            .get("ProductViewDetail")
-            .get("ProductViewSummary")
-        )
-        product_id = product_view_summary.get("ProductId")
-        logger.info(f"Created product {name}, waiting for completion")
-        while True:
-            time.sleep(2)
-            search_products_as_admin_response = (
-                service_catalog.search_products_as_admin_single_page()
-            )
-            products_ids = [
-                product_view_detail.get("ProductViewSummary").get("ProductId")
-                for product_view_detail in search_products_as_admin_response.get(
-                    "ProductViewDetails"
-                )
-            ]
-            logger.info(f"Looking for {product_id} in {products_ids}")
-            if product_id in products_ids:
-                logger.info(f"Found {product_id} ")
-                break
-    return product_view_summary
-
-
 def ensure_portfolio_association_for_product(portfolio_id, product_id, service_catalog):
     portfolio_details = service_catalog.list_portfolios_for_product_single_page(
         ProductId=product_id
