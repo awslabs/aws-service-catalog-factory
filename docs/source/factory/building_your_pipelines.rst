@@ -237,6 +237,7 @@ list:
                       - '*'
                       - '**/*'
 
+Please note you cannot set a build stage for a combined pipeline.
 
 Tests
 -----
@@ -344,9 +345,9 @@ You can override this behaviour be making a change to your product version, addi
 
 .. note::
 
-    Since version 0.48.0 you should be setting your Package BuildSpec in a Stages object.  Prior to this you set it in
-    the versions or product object.  The stages object can be set in the product object and then overridden in the
-    version object.
+    Since version 0.48.0 you should be setting your Package BuildSpec in a Stages object unless using a combined
+    pipeline.  Prior to this you set it in the versions or product object.  The stages object can be set in the product
+    object and then overridden in the version object.
 
 
 Please note, you need to specify the runtime-versions you intend to use.
