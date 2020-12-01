@@ -65,7 +65,6 @@ PACKAGE_BUILD_SPEC_DEFAULT = """
             python: 3.x
         build:
           commands:
-            - pip install -r requirements.txt -t src
           {% for region in ALL_REGIONS %}
             - aws cloudformation package --template $(pwd)/product.template.yaml --s3-bucket sc-factory-artifacts-${ACCOUNT_ID}-{{ region }} --s3-prefix ${STACK_NAME} --output-template-file product.template-{{ region }}.yaml
           {% endfor %}
