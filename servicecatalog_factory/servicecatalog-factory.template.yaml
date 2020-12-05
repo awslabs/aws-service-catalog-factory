@@ -116,7 +116,7 @@ Resources:
       Tags:
         - Key: "ServiceCatalogFactory:Actor"
           Value: "Framework"
-      TimeoutInMinutes: 60
+      TimeoutInMinutes: 480
 
   GenerateLaunchConstraintsProject:
     Type: AWS::CodeBuild::Project
