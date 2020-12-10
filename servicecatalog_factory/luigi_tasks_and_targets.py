@@ -238,8 +238,8 @@ class CreateProductTask(FactoryTask):
                     "Type": "CLOUD_FORMATION_TEMPLATE",
                     "Description": "Placeholder version, do not provision",
                     "Info": {
-                        "LoadTemplateFromURL": "https://s3.amazonaws.com/{}/{}".format(
-                            s3_bucket_name, "empty.template.yaml"
+                        "LoadTemplateFromURL": "https://{}.s3.{}.amazonaws.com/{}".format(
+                            s3_bucket_name, self.region, "empty.template.yaml"
                         )
                     },
                 },

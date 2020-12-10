@@ -62,7 +62,7 @@ PACKAGE_BUILD_SPEC_DEFAULT = """
       phases:
         install:
           runtime-versions:
-            python: 3.x
+            python: 3.7
         build:
           commands:
           {% for region in ALL_REGIONS %}

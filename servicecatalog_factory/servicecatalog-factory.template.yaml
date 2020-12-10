@@ -97,7 +97,7 @@ Resources:
           phases:
             install:
               runtime-versions:
-                python: 3.x
+                python: 3.7
               commands:
   {% if 'http' in VERSION %}
                 - pip install {{ VERSION }}
@@ -137,7 +137,7 @@ Resources:
           phases:
             install:
               runtime-versions:
-                python: 3.x
+                python: 3.7
               commands:
   {% if 'http' in VERSION %}
                 - pip install {{ VERSION }}
