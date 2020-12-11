@@ -239,7 +239,7 @@ class CreateProductTask(FactoryTask):
                     "Description": "Placeholder version, do not provision",
                     "Info": {
                         "LoadTemplateFromURL": "https://{}.s3.{}.amazonaws.com/{}".format(
-                            s3_bucket_name, self.region, "empty.template.yaml"
+                            s3_bucket_name, constants.HOME_REGION, "empty.template.yaml"
                         )
                     },
                 },
