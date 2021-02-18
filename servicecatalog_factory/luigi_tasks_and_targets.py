@@ -222,37 +222,6 @@ class CreateProductTask(FactoryTask):
         with betterboto_client.ClientContextManager(
             "servicecatalog", region_name=self.region
         ) as service_catalog:
-            tags = []
-            for t in self.tags:
-                tags.append(
-                    {"Key": t.get("Key"), "Value": t.get("Value"),}
-                )
-            tags.append({"Key": "ServiceCatalogFactory:Actor", "Value": "Product"})
-
-            s3_bucket_name = self.load_from_input("s3_bucket_url").get("s3_bucket_url")
-
-            args = {
-                "ProductType": "CLOUD_FORMATION_TEMPLATE",
-                "ProvisioningArtifactParameters": {
-                    "Name": "-",
-                    "Type": "CLOUD_FORMATION_TEMPLATE",
-                    "Description": "Placeholder version, do not provision",
-                    "Info": {
-                        "LoadTemplateFromURL": "https://{}.s3.{}.amazonaws.com/{}".format(
-                            s3_bucket_name, constants.HOME_REGION, "empty.template.yaml"
-                        )
-                    },
-                },
-                "Name": self.name,
-                "Owner": self.owner,
-                "Description": self.description,
-                "Distributor": self.distributor,
-                "SupportDescription": self.support_description,
-                "SupportEmail": self.support_email,
-                "SupportUrl": self.support_url,
-                "Tags": tags,
-            }
-
             search_products_as_admin_response = service_catalog.search_products_as_admin_single_page(
                 Filters={"FullTextSearch": [self.name]}
             )
@@ -283,17 +252,48 @@ class CreateProductTask(FactoryTask):
                         things_to_change["SupportEmail"] = self.support_email
                     if product_view_summary.get("SupportUrl") != self.support_url:
                         things_to_change["SupportUrl"] = self.support_url
+
                     if len(things_to_change.keys()) > 0:
                         service_catalog.update_product(
                             Id=product_view_summary.get("ProductId"), **things_to_change
                         )
-                        break
+                    break
 
             if not found:
                 logger.info(f"Not found product: {self.name}, creating")
 
+                tags = [{"Key": "ServiceCatalogFactory:Actor", "Value": "Product"}] + [
+                    {"Key": t.get("Key"), "Value": t.get("Value"),} for t in self.tags
+                ]
+
+                create_product_args = {
+                    "ProductType": "CLOUD_FORMATION_TEMPLATE",
+                    "ProvisioningArtifactParameters": {
+                        "Name": "-",
+                        "Type": "CLOUD_FORMATION_TEMPLATE",
+                        "Description": "Placeholder version, do not provision",
+                        "Info": {
+                            "LoadTemplateFromURL": "https://{}.s3.{}.amazonaws.com/{}".format(
+                                self.load_from_input("s3_bucket_url").get(
+                                    "s3_bucket_url"
+                                ),
+                                constants.HOME_REGION,
+                                "empty.template.yaml",
+                            )
+                        },
+                    },
+                    "Name": self.name,
+                    "Owner": self.owner,
+                    "Description": self.description,
+                    "Distributor": self.distributor,
+                    "SupportDescription": self.support_description,
+                    "SupportEmail": self.support_email,
+                    "SupportUrl": self.support_url,
+                    "Tags": tags,
+                }
+
                 product_view_summary = (
-                    service_catalog.create_product(**args)
+                    service_catalog.create_product(**create_product_args)
                     .get("ProductViewDetail")
                     .get("ProductViewSummary")
                 )
@@ -551,11 +551,9 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
         product_ids_by_region = {}
         friendly_uid = None
 
-        tags = []
-        for tag in self.tags:
-            tags.append(
-                {"Key": tag.get("Key"), "Value": tag.get("Value"),}
-            )
+        tags = [
+            {"Key": tag.get("Key"), "Value": tag.get("Value"),} for tag in self.tags
+        ]
 
         for region, product_details_content in (
             self.input().get("create_products_tasks").items()
