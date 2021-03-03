@@ -779,7 +779,12 @@ def bootstrap_branch(
 
 
 def bootstrap(
-    source_provider, owner, repo, branch, poll_for_source_changes, webhook_secret,
+    source_provider,
+    owner,
+    repo,
+    branch,
+    poll_for_source_changes,
+    webhook_secret,
     scm_connection_arn,
     scm_full_repository_id,
     scm_branch_name,
