@@ -319,7 +319,20 @@ def test_bootstrap_branch(mocker, sut):
     # setup
     branch_name = "foo"
     mocked_bootstrap = mocker.patch.object(sut, "bootstrap")
-    source_provider, owner, repo, branch, poll_for_source_changes, webhook_secret = (
+    (
+        source_provider,
+        owner,
+        repo,
+        branch,
+        poll_for_source_changes,
+        webhook_secret,
+        scm_connection_arn,
+        scm_full_repository_id,
+        scm_branch_name,
+    ) = (
+        None,
+        None,
+        None,
         None,
         None,
         None,
@@ -336,6 +349,9 @@ def test_bootstrap_branch(mocker, sut):
         branch,
         poll_for_source_changes,
         webhook_secret,
+        scm_connection_arn,
+        scm_full_repository_id,
+        scm_branch_name,
     )
 
     # verify
