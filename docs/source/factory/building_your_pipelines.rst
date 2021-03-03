@@ -43,7 +43,6 @@ configuration:
             PollForSourceChanges: True
             SecretsManagerSecret: my-github-secret
 
-
 Your pipeline will expect a JSON secret in AWS Secrets Manager of the name:
 ```<portfolio_file_name>-<portfolio_display_name>-<product_name>_<product_version_name>```
 
@@ -77,6 +76,23 @@ For example if you have the following in a file named example-simple.yaml:
     secret up yourself.  The secret must have secret keys for ```SecretToken``` and ```OAuthToken``` and it must be in
     the same region as the AWS CodePipeline.
 
+
+Using CodeStarSourceConnection (Bitbucket / Github.com / Github Enterprise)
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+To use CodeStarSourceConnection you can use the following configuration:
+
+.. code-block:: yaml
+
+    Source:
+      Provider: "CodeStarSourceConnection"
+      Configuration:
+        BranchName: "main2"
+        ConnectionArn: "arn:aws:codestar-connections:eu-west-1:0123456789010:connection/abcdergh-abcd-4c19-9fe2-5dc0522dc6a6"
+        FullRepositoryId: "exampleorg/my-wonderful-product"
+
+
+For more details check the reference guide: https://docs.aws.amazon.com/codepipeline/latest/userguide/action-reference-CodestarConnectionSource.html
 
 Preprocessing templates (using Jinja2)
 --------------------------------------
