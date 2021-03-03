@@ -758,17 +758,31 @@ def bootstrap_branch(
     branch,
     poll_for_source_changes,
     webhook_secret,
+    scm_connection_arn,
+    scm_full_repository_id,
+    scm_branch_name,
 ):
     constants.VERSION = "https://github.com/awslabs/aws-service-catalog-factory/archive/{}.zip".format(
         branch_name
     )
     bootstrap(
-        source_provider, owner, repo, branch, poll_for_source_changes, webhook_secret
+        source_provider,
+        owner,
+        repo,
+        branch,
+        poll_for_source_changes,
+        webhook_secret,
+        scm_connection_arn,
+        scm_full_repository_id,
+        scm_branch_name,
     )
 
 
 def bootstrap(
-    source_provider, owner, repo, branch, poll_for_source_changes, webhook_secret
+    source_provider, owner, repo, branch, poll_for_source_changes, webhook_secret,
+    scm_connection_arn,
+    scm_full_repository_id,
+    scm_branch_name,
 ):
     click.echo("Starting bootstrap")
     click.echo("Starting regional deployments")
@@ -819,7 +833,19 @@ def bootstrap(
             "{}.template.yaml".format(constants.BOOTSTRAP_STACK_NAME)
         )
         source_args = {"Provider": source_provider}
-        if source_provider == "CodeCommit":
+        if source_provider.lower() == "codestarsourceconnection":
+            source_args.update(
+                {
+                    "Configuration": {
+                        "ConnectionArn": scm_connection_arn,
+                        "FullRepositoryId": scm_full_repository_id,
+                        "BranchName": scm_branch_name,
+                        "OutputArtifactFormat": "CODE_ZIP",
+                    },
+                }
+            )
+
+        elif source_provider == "CodeCommit":
             source_args.update(
                 {"Configuration": {"RepositoryName": repo, "BranchName": branch,},}
             )
