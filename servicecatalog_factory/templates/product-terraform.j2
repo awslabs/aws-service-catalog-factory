@@ -67,6 +67,26 @@ Resources:
       Stages:
         - Name: Source
           Actions:
+
+            {% if Source.Provider.lower() == 'codestarsourceconnection' %}
+
+            - Name: Source
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Provider: CodeStarSourceConnection
+                Version: '1'
+              Configuration:
+                BranchName: {{ Source.Configuration.BranchName }}
+                ConnectionArn: {{ Source.Configuration.ConnectionArn }}
+                FullRepositoryId: {{ Source.Configuration.FullRepositoryId }}
+                OutputArtifactFormat: CODE_ZIP
+              OutputArtifacts:
+                - Name: Source
+              RunOrder: '1'
+
+            {% else %}
+
             - Name: Source
               ActionTypeId:
                 Category: Source
@@ -87,6 +107,8 @@ Resources:
                 - Name: Source
               RunOrder: 1
               {% if Source.Provider.lower() == 'aws' %}RoleArn: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliverySourceRole"{% endif %}
+
+            {% endif %}
         - Name: Package
           Actions:
             - Name: Package

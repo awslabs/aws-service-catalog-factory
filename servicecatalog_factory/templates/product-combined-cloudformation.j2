@@ -64,6 +64,25 @@ Resources:
           Actions:
   {% for version in Versions %}{% if version.get('Status', 'active') == 'active' %}
 
+  {% if Source.Provider.lower() == 'codestarsourceconnection' %}
+
+            - Name: Source{{version.Name}}
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Provider: CodeStarSourceConnection
+                Version: '1'
+              Configuration:
+                BranchName: {{ version.Source.Configuration.BranchName }}
+                ConnectionArn: {{ version.Source.Configuration.ConnectionArn }}
+                FullRepositoryId: {{ version.Source.Configuration.FullRepositoryId }}
+                OutputArtifactFormat: CODE_ZIP
+              OutputArtifacts:
+                - Name: Source
+              RunOrder: '1'
+
+  {% else %}
+
             - Name: Source{{version.Name}}
               ActionTypeId:
                 Category: Source
@@ -84,7 +103,10 @@ Resources:
                 - Name: Source{{version.Name}}
               RunOrder: 1
               {% if version.Source.Provider.lower() == 'aws' %}RoleArn: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliverySourceRole"{% endif %}
+  {% endif %}
   {% endif %}{% endfor %}
+
+
 {% if Options.ShouldParseAsJinja2Template %}
         - Name: Parse
           Actions:

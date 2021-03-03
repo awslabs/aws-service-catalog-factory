@@ -70,6 +70,9 @@ def nuke_product_version(portfolio_name, product, version):
 @click.option("--branch")
 @click.option("--poll-for-source-changes")
 @click.option("--webhook-secret")
+@click.option("--scm-connection-arn")
+@click.option("--scm-full-repository-id", default="ServiceCatalogFactory")
+@click.option("--scm-branch-name", default="main")
 def bootstrap_branch(
     branch_to_bootstrap,
     source_provider,
@@ -80,6 +83,9 @@ def bootstrap_branch(
     branch,
     poll_for_source_changes,
     webhook_secret,
+    scm_connection_arn,
+    scm_full_repository_id,
+    scm_branch_name,
 ):
     if source_provider == "CodeCommit":
         core.bootstrap_branch(
@@ -90,6 +96,9 @@ def bootstrap_branch(
             branch_name,
             poll_for_source_changes,
             webhook_secret,
+            scm_connection_arn,
+            scm_full_repository_id,
+            scm_branch_name,
         )
     elif source_provider == "GitHub":
         core.bootstrap_branch(
@@ -100,6 +109,9 @@ def bootstrap_branch(
             branch,
             poll_for_source_changes,
             webhook_secret,
+            scm_connection_arn,
+            scm_full_repository_id,
+            scm_branch_name,
         )
     else:
         raise Exception(f"Unsupported source provider: {source_provider}")
@@ -122,6 +134,9 @@ def add_secret(secret_name, oauth_token, secret_token):
 @click.option("--branch")
 @click.option("--poll-for-source-changes")
 @click.option("--webhook-secret")
+@click.option("--scm-connection-arn")
+@click.option("--scm-full-repository-id", default="ServiceCatalogFactory")
+@click.option("--scm-branch-name", default="main")
 def bootstrap(
     source_provider,
     repository_name,
@@ -131,6 +146,9 @@ def bootstrap(
     branch,
     poll_for_source_changes,
     webhook_secret,
+    scm_connection_arn,
+    scm_full_repository_id,
+    scm_branch_name,
 ):
     if source_provider == "CodeCommit":
         core.bootstrap(
@@ -140,6 +158,9 @@ def bootstrap(
             branch_name,
             poll_for_source_changes,
             webhook_secret,
+            scm_connection_arn,
+            scm_full_repository_id,
+            scm_branch_name,
         )
     elif source_provider == "GitHub":
         core.bootstrap(
@@ -149,6 +170,21 @@ def bootstrap(
             branch,
             poll_for_source_changes,
             webhook_secret,
+            scm_connection_arn,
+            scm_full_repository_id,
+            scm_branch_name,
+        )
+    elif source_provider == "CodeStarSourceConnection":
+        core.bootstrap(
+            source_provider,
+            None,
+            None,
+            None,
+            None,
+            None,
+            scm_connection_arn,
+            scm_full_repository_id,
+            scm_branch_name,
         )
     else:
         raise Exception(f"Unsupported source provider: {source_provider}")
