@@ -113,6 +113,19 @@ def bootstrap_branch(
             scm_full_repository_id,
             scm_branch_name,
         )
+    elif source_provider == "CodeStarSourceConnection":
+        core.bootstrap_branch(
+            branch_to_bootstrap,
+            source_provider,
+            None,
+            None,
+            None,
+            None,
+            None,
+            scm_connection_arn,
+            scm_full_repository_id,
+            scm_branch_name,
+        )
     else:
         raise Exception(f"Unsupported source provider: {source_provider}")
 
