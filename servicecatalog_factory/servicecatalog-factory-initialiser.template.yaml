@@ -4,13 +4,82 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: |
   Initialiser template used to bring up the install ServiceCatalog-Factory
-  {"version": "latest", "framework": "servicecatalog-factory", "role": "initialiser"}
+  {"version": "0.51.0", "framework": "servicecatalog-factory", "role": "initialiser"}
+
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "General"
+        Parameters:
+          - EnabledRegions
+      - Label:
+          default: "Source Code Management"
+        Parameters:
+          - SCMSourceProvider
+      - Label:
+          default: "CodeCommit Only"
+        Parameters:
+          - SCMRepositoryName
+          - SCMBranchName
+          - SCMShouldCreateRepo
+      - Label:
+          default: "CodeStarSourceConnection Only"
+        Parameters:
+          - SCMConnectionArn
+          - SCMFullRepositoryId
+          - SCMBranchName
+      - Label:
+          default: "S3 Only"
+        Parameters:
+          - SCMBucketName
+          - SCMObjectKey
+          - SCMShouldCreateRepo
+      - Label:
+          default: "Advanced"
+        Parameters:
+          - Version
 
 Parameters:
   EnabledRegions:
     Type: String
     Description: |
       Space or comma seperated list of AWS Regions for which your Factory should operate in
+  SCMSourceProvider:
+    Type: String
+    AllowedValues:
+      - CodeCommit
+      - S3
+      - CodeStarSourceConnection
+    Description: For Github.com, GitHub Enterprise and BitBucket Cloud support use CodeStarSourceConnection
+    Default: CodeCommit
+  SCMRepositoryName:
+    Type: String
+    Default: ServiceCatalogPuppet
+  SCMBranchName:
+    Type: String
+    Default: master
+  SCMConnectionArn:
+    Type: String
+    Description: The Arn of the CodeStar Connection already created in the account
+  SCMFullRepositoryId:
+    Type: String
+    Description: The full repository id for the git repo to use.  This varies based on which git provider you use
+  SCMBucketName:
+    Type: String
+  SCMObjectKey:
+    Type: String
+  SCMShouldCreateRepo:
+    Type: String
+    AllowedValues:
+      - "true"
+      - "false"
+    Default: "true"
+  Version:
+    Type: String
+    Default: aws-service-catalog-puppet
+
 
 Resources:
   InitialiserRole:
@@ -49,6 +118,34 @@ Resources:
           - Name: ENABLED_REGIONS
             Type: PLAINTEXT
             Value: !Join [ ',', !Split [ ', ', !Ref EnabledRegions]]
+          - Name: PARTITION
+            Type: PLAINTEXT
+            Value: !Ref AWS::Partition
+          - Name: SCM_SOURCE_PROVIDER
+            Type: PLAINTEXT
+            Value: !Ref SCMSourceProvider
+          - Name: SCM_REPOSITORY_NAME
+            Type: PLAINTEXT
+            Value: !Ref SCMRepositoryName
+          - Name: SCM_BRANCH_NAME
+            Type: PLAINTEXT
+            Value: !Ref SCMBranchName
+          - Name: SCM_CONNECTION_ARN
+            Type: PLAINTEXT
+            Value: !Ref SCMConnectionArn
+          - Name: SCM_FULL_REPOSITORY_ID
+            Type: PLAINTEXT
+            Value: !Ref SCMFullRepositoryId
+          - Name: SCM_BUCKET_NAME
+            Type: PLAINTEXT
+            Value: !Ref SCMBucketName
+          - Name: SCM_OBJECT_KEY
+            Type: PLAINTEXT
+            Value: !Ref SCMObjectKey
+          - Name: SCM_SHOULD_CREATE_REPO
+            Type: PLAINTEXT
+            Value: !Ref SCMShouldCreateRepo
+
       Source:
         Type: NO_SOURCE
         BuildSpec: |

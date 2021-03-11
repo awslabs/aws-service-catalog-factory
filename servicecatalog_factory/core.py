@@ -751,7 +751,7 @@ def nuke_stack(portfolio_name, product, version):
 
 
 def bootstrap_branch(
-    branch_name,
+    branch_to_bootstrap,
     source_provider,
     owner,
     repo,
@@ -761,9 +761,12 @@ def bootstrap_branch(
     scm_connection_arn,
     scm_full_repository_id,
     scm_branch_name,
+    scm_bucket_name,
+    scm_object_key,
+    create_repo,
 ):
     constants.VERSION = "https://github.com/awslabs/aws-service-catalog-factory/archive/{}.zip".format(
-        branch_name
+        branch_to_bootstrap
     )
     bootstrap(
         source_provider,
@@ -775,6 +778,9 @@ def bootstrap_branch(
         scm_connection_arn,
         scm_full_repository_id,
         scm_branch_name,
+        scm_bucket_name,
+        scm_object_key,
+        create_repo,
     )
 
 
@@ -788,6 +794,9 @@ def bootstrap(
     scm_connection_arn,
     scm_full_repository_id,
     scm_branch_name,
+    scm_bucket_name,
+    scm_object_key,
+    create_repo,
 ):
     click.echo("Starting bootstrap")
     click.echo("Starting regional deployments")
@@ -832,58 +841,75 @@ def bootstrap(
 
     click.echo("Starting main deployment")
     s3_bucket_name = None
-    with betterboto_client.ClientContextManager("cloudformation") as cloudformation:
-        logger.info("Creating {}".format(constants.BOOTSTRAP_STACK_NAME))
-        template = read_from_site_packages(
-            "{}.template.yaml".format(constants.BOOTSTRAP_STACK_NAME)
-        )
-        source_args = {"Provider": source_provider}
-        if source_provider.lower() == "codestarsourceconnection":
-            source_args.update(
-                {
-                    "Configuration": {
-                        "ConnectionArn": scm_connection_arn,
-                        "FullRepositoryId": scm_full_repository_id,
-                        "BranchName": scm_branch_name,
-                        "OutputArtifactFormat": "CODE_ZIP",
-                    },
-                }
-            )
-
-        elif source_provider == "CodeCommit":
-            source_args.update(
-                {"Configuration": {"RepositoryName": repo, "BranchName": branch,},}
-            )
-        elif source_provider == "GitHub":
-            source_args.update(
-                {
-                    "Configuration": {
-                        "Owner": owner,
-                        "Repo": repo,
-                        "Branch": branch,
-                        "PollForSourceChanges": poll_for_source_changes,
-                        "SecretsManagerSecret": webhook_secret,
-                    },
-                }
-            )
-        template = Template(template).render(
-            VERSION=constants.VERSION, ALL_REGIONS=all_regions, Source=source_args
-        )
-        template = Template(template).render(
-            VERSION=constants.VERSION, ALL_REGIONS=all_regions, Source=source_args
-        )
-        args = {
-            "StackName": constants.BOOTSTRAP_STACK_NAME,
-            "TemplateBody": template,
-            "Capabilities": ["CAPABILITY_NAMED_IAM"],
-            "Parameters": [
-                {
-                    "ParameterKey": "Version",
-                    "ParameterValue": constants.VERSION,
-                    "UsePreviousValue": False,
+    logger.info("Creating {}".format(constants.BOOTSTRAP_STACK_NAME))
+    template = read_from_site_packages(
+        "{}.template.yaml".format(constants.BOOTSTRAP_STACK_NAME)
+    )
+    source_args = {"Provider": source_provider}
+    if source_provider.lower() == "codestarsourceconnection":
+        source_args.update(
+            {
+                "Configuration": {
+                    "ConnectionArn": scm_connection_arn,
+                    "FullRepositoryId": scm_full_repository_id,
+                    "BranchName": scm_branch_name,
+                    "OutputArtifactFormat": "CODE_ZIP",
                 },
-            ],
-        }
+            }
+        )
+
+    elif source_provider == "S3":
+        source_args.update(
+            {
+                "Configuration": {
+                    "S3Bucket": scm_bucket_name,
+                    "S3ObjectKey": scm_object_key,
+                    "PollForSourceChanges": poll_for_source_changes,
+                },
+            }
+        )
+
+    elif source_provider == "CodeCommit":
+        source_args.update(
+            {
+                "Configuration": {
+                    "RepositoryName": repo,
+                    "BranchName": branch,
+                    "PollForSourceChanges": poll_for_source_changes,
+                },
+            }
+        )
+    elif source_provider == "GitHub":
+        source_args.update(
+            {
+                "Configuration": {
+                    "Owner": owner,
+                    "Repo": repo,
+                    "Branch": branch,
+                    "PollForSourceChanges": poll_for_source_changes,
+                    "SecretsManagerSecret": webhook_secret,
+                },
+            }
+        )
+    template = Template(template).render(
+        VERSION=constants.VERSION, ALL_REGIONS=all_regions, Source=source_args, create_repo=create_repo
+    )
+    template = Template(template).render(
+        VERSION=constants.VERSION, ALL_REGIONS=all_regions, Source=source_args, create_repo=create_repo
+    )
+    args = {
+        "StackName": constants.BOOTSTRAP_STACK_NAME,
+        "TemplateBody": template,
+        "Capabilities": ["CAPABILITY_NAMED_IAM"],
+        "Parameters": [
+            {
+                "ParameterKey": "Version",
+                "ParameterValue": constants.VERSION,
+                "UsePreviousValue": False,
+            },
+        ],
+    }
+    with betterboto_client.ClientContextManager("cloudformation") as cloudformation:
         cloudformation.create_or_update(**args)
         response = cloudformation.describe_stacks(
             StackName=constants.BOOTSTRAP_STACK_NAME

@@ -62,17 +62,30 @@ def nuke_product_version(portfolio_name, product, version):
 
 @cli.command()
 @click.argument("branch-to-bootstrap")
-@click.option("--source-provider", default="CodeCommit")
-@click.option("--repository_name", default="ServiceCatalogFactory")
-@click.option("--branch-name", default="master")
+@click.option("--source-provider", default="CodeCommit", envvar="SCM_SOURCE_PROVIDER")
+@click.option(
+    "--repository_name", default="ServiceCatalogFactory", envvar="SCM_REPOSITORY_NAME"
+)
+@click.option("--branch-name", default="master", envvar="SCM_BRANCH_NAME")
 @click.option("--owner")
 @click.option("--repo")
 @click.option("--branch")
-@click.option("--poll-for-source-changes")
+@click.option("--poll-for-source-changes", default=True)
 @click.option("--webhook-secret")
-@click.option("--scm-connection-arn")
-@click.option("--scm-full-repository-id", default="ServiceCatalogFactory")
-@click.option("--scm-branch-name", default="main")
+@click.option("--scm-connection-arn", envvar="SCM_CONNECTION_ARN")
+@click.option(
+    "--scm-full-repository-id",
+    default="ServiceCatalogFactory",
+    envvar="SCM_FULL_REPOSITORY_ID",
+)
+@click.option("--scm-branch-name", default="main", envvar="SCM_BRANCH_NAME")
+@click.option("--scm-bucket-name", envvar="SCM_BUCKET_NAME")
+@click.option(
+    "--scm-object-key", default="ServiceCatalogFactory.zip", envvar="SCM_OBJECT_KEY"
+)
+@click.option(
+    "--create-repo/--no-create-repo", default=False, envvar="SCM_SHOULD_CREATE_REPO"
+)
 def bootstrap_branch(
     branch_to_bootstrap,
     source_provider,
@@ -86,48 +99,62 @@ def bootstrap_branch(
     scm_connection_arn,
     scm_full_repository_id,
     scm_branch_name,
+    scm_bucket_name,
+    scm_object_key,
+    create_repo,
 ):
+    args = dict(
+        branch_to_bootstrap=branch_to_bootstrap,
+        source_provider=source_provider,
+        owner=None,
+        repo=None,
+        branch=None,
+        poll_for_source_changes=poll_for_source_changes,
+        webhook_secret=None,
+        scm_connection_arn=None,
+        scm_full_repository_id=None,
+        scm_branch_name=None,
+        scm_bucket_name=None,
+        scm_object_key=None,
+        create_repo=create_repo,
+    )
+
     if source_provider == "CodeCommit":
-        core.bootstrap_branch(
-            branch_to_bootstrap,
-            source_provider,
-            None,
-            repository_name,
-            branch_name,
-            poll_for_source_changes,
-            webhook_secret,
-            scm_connection_arn,
-            scm_full_repository_id,
-            scm_branch_name,
+        args.update(
+            dict(
+                repo=repository_name,
+                branch=branch_name,
+                poll_for_source_changes=poll_for_source_changes,
+            )
         )
+
     elif source_provider == "GitHub":
-        core.bootstrap_branch(
-            branch_to_bootstrap,
-            source_provider,
-            owner,
-            repo,
-            branch,
-            poll_for_source_changes,
-            webhook_secret,
-            scm_connection_arn,
-            scm_full_repository_id,
-            scm_branch_name,
+        args.update(
+            dict(
+                owner=owner,
+                repo=repo,
+                branch=branch,
+                poll_for_source_changes=poll_for_source_changes,
+                webhook_secret=webhook_secret,
+            )
         )
+
     elif source_provider == "CodeStarSourceConnection":
-        core.bootstrap_branch(
-            branch_to_bootstrap,
-            source_provider,
-            None,
-            None,
-            None,
-            None,
-            None,
-            scm_connection_arn,
-            scm_full_repository_id,
-            scm_branch_name,
+        args.update(
+            dict(
+                scm_connection_arn=scm_connection_arn,
+                scm_full_repository_id=scm_full_repository_id,
+                scm_branch_name=scm_branch_name,
+            )
+        )
+    elif source_provider == "S3":
+        args.update(
+            dict(scm_bucket_name=scm_bucket_name, scm_object_key=scm_object_key,)
         )
     else:
         raise Exception(f"Unsupported source provider: {source_provider}")
+
+    core.bootstrap_branch(**args)
 
 
 @cli.command()
@@ -139,17 +166,30 @@ def add_secret(secret_name, oauth_token, secret_token):
 
 
 @cli.command()
-@click.option("--source-provider", default="CodeCommit")
-@click.option("--repository_name", default="ServiceCatalogFactory")
-@click.option("--branch-name", default="master")
+@click.option("--source-provider", default="CodeCommit", envvar="SCM_SOURCE_PROVIDER")
+@click.option(
+    "--repository_name", default="ServiceCatalogFactory", envvar="SCM_REPOSITORY_NAME"
+)
+@click.option("--branch-name", default="master", envvar="SCM_BRANCH_NAME")
 @click.option("--owner")
 @click.option("--repo")
 @click.option("--branch")
-@click.option("--poll-for-source-changes")
+@click.option("--poll-for-source-changes", default=True)
 @click.option("--webhook-secret")
-@click.option("--scm-connection-arn")
-@click.option("--scm-full-repository-id", default="ServiceCatalogFactory")
-@click.option("--scm-branch-name", default="main")
+@click.option("--scm-connection-arn", envvar="SCM_CONNECTION_ARN")
+@click.option(
+    "--scm-full-repository-id",
+    default="ServiceCatalogFactory",
+    envvar="SCM_FULL_REPOSITORY_ID",
+)
+@click.option("--scm-branch-name", default="main", envvar="SCM_BRANCH_NAME")
+@click.option("--scm-bucket-name", envvar="SCM_BUCKET_NAME")
+@click.option(
+    "--scm-object-key", default="ServiceCatalogFactory.zip", envvar="SCM_OBJECT_KEY"
+)
+@click.option(
+    "--create-repo/--no-create-repo", default=False, envvar="SCM_SHOULD_CREATE_REPO"
+)
 def bootstrap(
     source_provider,
     repository_name,
@@ -162,45 +202,61 @@ def bootstrap(
     scm_connection_arn,
     scm_full_repository_id,
     scm_branch_name,
+    scm_bucket_name,
+    scm_object_key,
+    create_repo,
 ):
+    args = dict(
+        source_provider=source_provider,
+        owner=None,
+        repo=None,
+        branch=None,
+        poll_for_source_changes=poll_for_source_changes,
+        webhook_secret=None,
+        scm_connection_arn=None,
+        scm_full_repository_id=None,
+        scm_branch_name=None,
+        scm_bucket_name=None,
+        scm_object_key=None,
+        create_repo=create_repo,
+    )
+
     if source_provider == "CodeCommit":
-        core.bootstrap(
-            source_provider,
-            None,
-            repository_name,
-            branch_name,
-            poll_for_source_changes,
-            webhook_secret,
-            scm_connection_arn,
-            scm_full_repository_id,
-            scm_branch_name,
+        args.update(
+            dict(
+                repo=repository_name,
+                branch=branch_name,
+                poll_for_source_changes=poll_for_source_changes,
+            )
         )
+
     elif source_provider == "GitHub":
-        core.bootstrap(
-            source_provider,
-            owner,
-            repo,
-            branch,
-            poll_for_source_changes,
-            webhook_secret,
-            scm_connection_arn,
-            scm_full_repository_id,
-            scm_branch_name,
+        args.update(
+            dict(
+                owner=owner,
+                repo=repo,
+                branch=branch,
+                poll_for_source_changes=poll_for_source_changes,
+                webhook_secret=webhook_secret,
+            )
         )
+
     elif source_provider == "CodeStarSourceConnection":
-        core.bootstrap(
-            source_provider,
-            None,
-            None,
-            None,
-            None,
-            None,
-            scm_connection_arn,
-            scm_full_repository_id,
-            scm_branch_name,
+        args.update(
+            dict(
+                scm_connection_arn=scm_connection_arn,
+                scm_full_repository_id=scm_full_repository_id,
+                scm_branch_name=scm_branch_name,
+            )
+        )
+    elif source_provider == "S3":
+        args.update(
+            dict(scm_bucket_name=scm_bucket_name, scm_object_key=scm_object_key,)
         )
     else:
         raise Exception(f"Unsupported source provider: {source_provider}")
+
+    core.bootstrap(**args)
 
 
 @cli.command()

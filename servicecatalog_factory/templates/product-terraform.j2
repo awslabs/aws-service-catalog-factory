@@ -85,7 +85,22 @@ Resources:
                 - Name: Source
               RunOrder: '1'
 
-            {% else %}
+            {% elif Source.Provider.lower() == 's3' %}
+
+            - Name: Source
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Provider: S3
+                Version: '1'
+              Configuration:
+                BucketName: {{ Source.Configuration.BucketName }}
+                ObjectKey: {{ Source.Configuration.ObjectKey }}
+              OutputArtifacts:
+                - Name: Source
+              RunOrder: '1'
+
+              {% else %}
 
             - Name: Source
               ActionTypeId:
