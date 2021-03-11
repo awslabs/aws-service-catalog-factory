@@ -79,7 +79,7 @@ Parameters:
   Version:
     Type: String
 #    Default: aws-service-catalog-factory
-    Default: https://github.com/awslabs/aws-service-catalog-puppet/archive/feature/more-sources.zip
+    Default: https://github.com/awslabs/aws-service-catalog-factory/archive/feature/more-sources.zip
 
 
 Resources:
@@ -146,6 +146,9 @@ Resources:
           - Name: SCM_SHOULD_CREATE_REPO
             Type: PLAINTEXT
             Value: !Ref SCMShouldCreateRepo
+          - Name: VERSION
+            Type: PLAINTEXT
+            Value: !Ref Version
 
       Source:
         Type: NO_SOURCE
@@ -154,7 +157,7 @@ Resources:
           phases:
             install:
               commands:
-                - pip install aws-service-catalog-factory --upgrade
+                - pip install ${VERSION}
                 - servicecatalog-factory --info set-regions ${ENABLED_REGIONS}
             build:
               commands:
