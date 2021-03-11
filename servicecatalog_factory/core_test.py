@@ -320,6 +320,7 @@ def test_bootstrap_branch(mocker, sut):
     branch_name = "foo"
     mocked_bootstrap = mocker.patch.object(sut, "bootstrap")
     (
+        branch_to_bootstrap,
         source_provider,
         owner,
         repo,
@@ -329,7 +330,14 @@ def test_bootstrap_branch(mocker, sut):
         scm_connection_arn,
         scm_full_repository_id,
         scm_branch_name,
+        scm_bucket_name,
+        scm_object_key,
+        create_repo,
     ) = (
+        branch_name,
+        None,
+        None,
+        None,
         None,
         None,
         None,
@@ -342,7 +350,7 @@ def test_bootstrap_branch(mocker, sut):
     )
     # exercise
     sut.bootstrap_branch(
-        branch_name,
+        branch_to_bootstrap,
         source_provider,
         owner,
         repo,
@@ -352,6 +360,9 @@ def test_bootstrap_branch(mocker, sut):
         scm_connection_arn,
         scm_full_repository_id,
         scm_branch_name,
+        scm_bucket_name,
+        scm_object_key,
+        create_repo,
     )
 
     # verify
