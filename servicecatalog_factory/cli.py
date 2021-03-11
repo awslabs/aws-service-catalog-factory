@@ -379,8 +379,9 @@ def generate_launch_constraints(p):
     core.generate_launch_constraints(p)
 
 @cli.command()
-def deploy_launch_constraints():
-    core.deploy_launch_constraints()
+@click.option("--partition", envvar="PARTITION")
+def deploy_launch_constraints(partition):
+    core.deploy_launch_constraints(partition)
 
 
 @cli.command()

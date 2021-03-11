@@ -151,6 +151,10 @@ Resources:
         Type: linuxContainer
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/standard:4.0
+        EnvironmentVariables:
+          - Name: PARTITION
+            Type: PLAINTEXT
+            Value: !Ref AWS::Partition
       Source:
         Type: CODEPIPELINE
         BuildSpec: |
@@ -221,6 +225,26 @@ Resources:
             Principal:
               Service:
                 - "codepipeline.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Framework"
+
+  FactoryCloudFormationDeployRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: FactoryCloudFormationDeployRole
+      Path: /servicecatalog-factory/
+      ManagedPolicyArns:
+        - !Sub "arn:${AWS::Partition}:iam::aws:policy/AdministratorAccess"
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service:
+                - "cloudformation.amazonaws.com"
             Action:
               - "sts:AssumeRole"
       Tags:
