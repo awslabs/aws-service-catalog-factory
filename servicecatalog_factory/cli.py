@@ -206,7 +206,6 @@ def bootstrap(
     scm_object_key,
     create_repo,
 ):
-    print(f"source_provider is {source_provider}")
     args = dict(
         source_provider=source_provider,
         owner=None,
