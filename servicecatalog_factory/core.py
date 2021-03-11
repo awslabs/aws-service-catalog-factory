@@ -1602,7 +1602,7 @@ def deploy_launch_constraints(partition):
             cfn.create_or_update(
                 StackName=f"servicecatalog-factory-constraints-launch-role-v2-{region}",
                 TemplateBody=template_body,
-                RoleArn=f"arn:{partition}:iam::{account_id}:role/servicecatalog-factory/FactoryCloudFormationDeployRole"
+                RoleARN=f"arn:{partition}:iam::{account_id}:role/servicecatalog-factory/FactoryCloudFormationDeployRole"
             )
 
 
