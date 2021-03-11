@@ -78,8 +78,7 @@ Parameters:
     Default: "true"
   Version:
     Type: String
-#    Default: aws-service-catalog-factory
-    Default: https://github.com/awslabs/aws-service-catalog-factory/archive/feature/more-sources.zip
+    Default: aws-service-catalog-factory
 
 
 Resources:
