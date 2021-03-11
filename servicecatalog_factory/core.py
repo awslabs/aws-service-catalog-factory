@@ -1596,11 +1596,11 @@ def deploy_launch_constraints():
     for region in all_regions:
         with betterboto_client.ClientContextManager("cloudformation", region_name=region) as cfn:
             cfn.ensure_deleted(StackName=f"servicecatalog-factory-constraints-launch-role-{region}")
-            cfn.ensure_deleted(StackName=f"servicecatalog-factory-constraints-launch-role-v2-{region}")
             template_body = open(f"output/constraints/launch-role/{region}.template.yaml", "r").read()
             cfn.create_or_update(
-                StackName=f"servicecatalog-factory-constraints-launch-role-v3-{region}",
+                StackName=f"servicecatalog-factory-constraints-launch-role-v2-{region}",
                 TemplateBody=template_body,
+                ShouldUseChangeSets=False,
             )
 
 
