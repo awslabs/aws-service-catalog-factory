@@ -1591,10 +1591,8 @@ def generate_launch_constraints(p):
     logger.info("finished writing the template")
 
 
-def deploy_launch_constraints(partition):
-    account_id = os.getenv("CODEBUILD_BUILD_ARN").split(":")[4]
+def deploy_launch_constraints():
     all_regions = get_regions()
-
     for region in all_regions:
         with betterboto_client.ClientContextManager("cloudformation", region_name=region) as cfn:
             cfn.ensure_deleted(StackName=f"servicecatalog-factory-constraints-launch-role-{region}")

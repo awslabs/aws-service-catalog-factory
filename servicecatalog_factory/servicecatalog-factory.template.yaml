@@ -151,10 +151,6 @@ Resources:
         Type: linuxContainer
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/standard:4.0
-        EnvironmentVariables:
-          - Name: PARTITION
-            Type: PLAINTEXT
-            Value: !Ref AWS::Partition
       Source:
         Type: CODEPIPELINE
         BuildSpec: |
