@@ -56,10 +56,11 @@ Parameters:
     Default: CodeCommit
   SCMRepositoryName:
     Type: String
-    Default: ServiceCatalogPuppet
+    Default: ServiceCatalogFactory
   SCMBranchName:
     Type: String
-    Default: master
+    Default: main
+    Description: The branch name to use for the service-catalog-factory-pipeline
   SCMConnectionArn:
     Type: String
     Description: The Arn of the CodeStar Connection already created in the account

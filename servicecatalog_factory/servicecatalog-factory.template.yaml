@@ -153,7 +153,7 @@ Resources:
         Image: aws/codebuild/standard:4.0
         EnvironmentVariables:
           - Name: PARTITION
-            Type: PARAMETER_STORE
+            Type: PLAINTEXT
             Value: !Ref AWS::Partition
       Source:
         Type: CODEPIPELINE
@@ -225,25 +225,6 @@ Resources:
             Principal:
               Service:
                 - "codepipeline.amazonaws.com"
-            Action:
-              - "sts:AssumeRole"
-      Tags:
-        - Key: "ServiceCatalogFactory:Actor"
-          Value: "Framework"
-
-  FactoryCloudFormationDeployRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: FactoryCloudFormationDeployRole
-      Path: /servicecatalog-factory/
-      ManagedPolicyArns:
-        - !Sub "arn:${AWS::Partition}:iam::aws:policy/AdministratorAccess"
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: "Allow"
-            Principal:
-              AWS: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:root"
             Action:
               - "sts:AssumeRole"
       Tags:
