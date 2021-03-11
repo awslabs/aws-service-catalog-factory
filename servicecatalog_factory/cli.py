@@ -378,6 +378,11 @@ def set_regions(regions):
 def generate_launch_constraints(p):
     core.generate_launch_constraints(p)
 
+@cli.command()
+@click.option("--partition", envvar="PARTITION")
+def deploy_launch_constraints(partition):
+    core.deploy_launch_constraints(partition)
+
 
 @cli.command()
 @click.argument("pipeline-name")

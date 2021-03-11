@@ -1591,6 +1591,20 @@ def generate_launch_constraints(p):
     logger.info("finished writing the template")
 
 
+def deploy_launch_constraints(partition):
+    account_id = os.getenv("CODEBUILD_BUILD_ARN").split(":")[4]
+    all_regions = get_regions()
+
+    for region in all_regions:
+        with betterboto_client.CrossAccountClientContextManager("cloudformation", f"arn:{partition}:iam::{account_id}:role/servicecatalog-factory/FactoryCloudFormationDeployRole", f"cfn-{region}", region_name=region) as cfn:
+            cfn.ensure_deleted(StackName=f"servicecatalog-factory-constraints-launch-role-{region}")
+            template_body = open(f"output/constraints/launch-role/{region}.template.yaml", "r").read()
+            cfn.create_or_update(
+                StackName=f"servicecatalog-factory-constraints-launch-role-v2-{region}",
+                TemplateBody=template_body,
+            )
+
+
 def get_source_for_pipeline(pipeline_name, execution_id):
     with betterboto_client.ClientContextManager("codepipeline",) as codepipeline:
         paginator = codepipeline.get_paginator("list_pipeline_executions")

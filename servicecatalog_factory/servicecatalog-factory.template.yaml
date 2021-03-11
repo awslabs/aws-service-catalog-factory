@@ -151,6 +151,10 @@ Resources:
         Type: linuxContainer
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/standard:4.0
+        EnvironmentVariables:
+          - Name: PARTITION
+            Type: PARAMETER_STORE
+            Value: !Ref AWS::Partition
       Source:
         Type: CODEPIPELINE
         BuildSpec: |
@@ -168,6 +172,7 @@ Resources:
             build:
               commands:
                 - servicecatalog-factory --info generate-launch-constraints portfolios/
+                - servicecatalog-factory --info deploy-launch-constraints
           artifacts:
             files:
               - results/*/*
@@ -238,8 +243,7 @@ Resources:
         Statement:
           - Effect: "Allow"
             Principal:
-              Service:
-                - "cloudformation.amazonaws.com"
+              AWS: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:root"
             Action:
               - "sts:AssumeRole"
       Tags:
@@ -391,40 +395,6 @@ Resources:
                 - Name: BuildOutput
               OutputArtifacts:
                 - Name: GeneratePortfolioConstraintsOutput
-        - Name: DeployLaunchConstraints
-          Actions:
-          {% for region in ALL_REGIONS %}
-          - Name: {{region}}-delete-old-constraints
-            Region: {{ region }}
-            InputArtifacts:
-              - Name: GeneratePortfolioConstraintsOutput
-            ActionTypeId:
-              Category: Deploy
-              Owner: AWS
-              Provider: CloudFormation
-              Version: '1'
-            RunOrder: 1
-            Configuration:
-              ActionMode: DELETE_ONLY
-              StackName: 'servicecatalog-factory-constraints-launch-role-{{ region }}'
-              TemplatePath: "GeneratePortfolioConstraintsOutput::output/constraints/launch-role/{{ region }}.template.yaml"
-              RoleArn: !GetAtt FactoryCloudFormationDeployRole.Arn
-          - Name: {{region}}-create
-            Region: {{ region }}
-            InputArtifacts:
-              - Name: GeneratePortfolioConstraintsOutput
-            ActionTypeId:
-              Category: Deploy
-              Owner: AWS
-              Provider: CloudFormation
-              Version: '1'
-            RunOrder: 2
-            Configuration:
-              ActionMode: CREATE_UPDATE
-              StackName: 'servicecatalog-factory-constraints-launch-role-v2-{{ region }}'
-              TemplatePath: "GeneratePortfolioConstraintsOutput::output/constraints/launch-role/{{ region }}.template.yaml"
-              RoleArn: !GetAtt FactoryCloudFormationDeployRole.Arn
-          {% endfor %}
       Tags:
         - Key: "ServiceCatalogFactory:Actor"
           Value: "Framework"
