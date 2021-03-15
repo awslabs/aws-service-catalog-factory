@@ -2,11 +2,14 @@ import json
 import troposphere as t
 import yaml
 from troposphere import codebuild
-from troposphere import codepipeline
+from troposphere import awslambda
 from troposphere import cloudformation
+from troposphere import iam
 from servicecatalog_factory import config
 
 PREFIX = "sct-synth-output"
+
+START_PROJECT_CODE = open("/Users/eamonnf/Development/aws-service-catalog-factory/servicecatalog_factory/code.py", 'r').read()
 
 
 def create_cdk_pipeline(p, uid):
@@ -24,9 +27,8 @@ def create_cdk_pipeline(p, uid):
         )
     )
     template.add_parameter(t.Parameter("PuppetAccountId", Type="String"))
+    template.add_parameter(t.Parameter("CDKDeployProjectName", Type="String"))
     template.add_parameter(t.Parameter("CDKDeployToolkitStackName", Type="String"))
-    template.add_parameter(t.Parameter("CDKPipelineRoleArn", Type="String"))
-    template.add_parameter(t.Parameter("CDKDeployRoleArn", Type="String"))
     template.add_parameter(
         t.Parameter(
             "CDKDeployExtraArgs",
@@ -38,11 +40,7 @@ def create_cdk_pipeline(p, uid):
 
     manifest = json.loads(open(f"{p}/{PREFIX}/manifest.json", "r").read())
 
-
-    cdk_deploy_parameter_env_vars = list()
     cdk_deploy_parameter_args = list()
-    deploy_details_properties = dict()
-    deploy_details_args = list()
 
     for artifact_name, artifact in manifest.get("artifacts", {}).items():
         if artifact.get("type") == "aws:cloudformation:stack":
@@ -59,23 +57,14 @@ def create_cdk_pipeline(p, uid):
                 "Parameters", {}
             ).items():
                 template.add_parameter(t.Parameter(parameter_name, **parameter_details))
-                cdk_deploy_parameter_env_vars.append(
-                    {
-                        "Type": "PLAINTEXT",
-                        "Name": parameter_name,
-                        "Value": t.Ref(parameter_name),
-                    }
-                )
                 cdk_deploy_parameter_args.append(
                     f"--parameters {artifact_name}:{parameter_name}=${{{parameter_name}}}"
                 )
-                deploy_details_args.append(t.Ref(parameter_name))
 
             for output_name, output_details in artifact_template.get(
                 "Outputs", {}
             ).items():
                 template.add_output(t.Output(output_name, **output_details))
-                # deploy_details_properties[output_name] = (str, True)
     cdk_deploy_parameter_args = " ".join(cdk_deploy_parameter_args)
 
     build_spec = dict(
@@ -83,35 +72,56 @@ def create_cdk_pipeline(p, uid):
         phases=dict(
             install={
                 "commands": [
-                    'echo "installing"',
-                    "npm install"
+                    "env",
+                    "aws s3 cp sc-factory-artifacts-${PuppetAccountId}-${AWS::Region}/$UId.zip .",
+                    "ls -l",
+                    "unzip *.zip",
+                    "ls -l",
                 ]
             },
             build={
                 "commands": [
                     'echo "building"',
-                    'npm run cdk deploy -- --toolkit-stack-name ${CDK_DEPLOY_TOOLKIT_STACK_NAME} ${CDK_DEPLOY_EXTRA_ARGS} ${CDK_DEPLOY_PARAMETER_ARGS}'
+                    # "npm run cdk deploy -- --toolkit-stack-name $CDK_DEPLOY_TOOLKIT_STACK_NAME $CDK_DEPLOY_EXTRA_ARGS $CDK_DEPLOY_PARAMETER_ARGS",
+                    'echo "{" > result.json'
+                    'echo ""Status" : "SUCCESS"," >> result.json',
+                    'echo ""Reason" : "Configuration Complete"," >> result.json',
+                    'echo ""UniqueId" : "$CODEBUILD_BUILD_ID"," >> result.json',
+                    'echo ""Data" : "hello world"," >> result.json',
+                    'echo "}" >> result.json' "curl -T result.json $ON_COMPLETE_URL",
                 ]
             },
         ),
-        artifacts=dict(
-            name="CDKDeploy",
-            files=[
-                f"{PREFIX}/*",
-                f"{PREFIX}/**/*",
-            ],
-        ),
+        artifacts=dict(name="CDKDeploy", files=[f"{PREFIX}/*", f"{PREFIX}/**/*",],),
     )
 
-    template.add_resource(
+    CDKDeployRoleArn = template.add_resource(
+        iam.Role(
+            "CDKDeployRoleArn",
+            Path="/",
+            ManagedPolicyArns=[
+                t.Sub("arn:${AWS::Partition}:iam::aws:policy/AdministratorAccess")
+            ],
+            AssumeRolePolicyDocument={
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Action": ["sts:AssumeRole"],
+                        "Effect": "Allow",
+                        "Principal": {"Service": ["codebuild.amazonaws.com"]},
+                    }
+                ],
+            },
+        )
+    )
+
+    project = template.add_resource(
         codebuild.Project(
             "CDKDeploy",
-            Name=t.Sub("${AWS::StackName}-cdk-deploy"),
-            ServiceRole=t.Ref("CDKDeployRoleArn"),
-            Tags=t.Tags.from_dict(
-                **{"ServiceCatalogPuppet:Actor": "Framework"}
-            ),
-            Artifacts=codebuild.Artifacts(Type="CODEPIPELINE"),
+            Name=t.Ref("CDKDeployProjectName"),
+            ServiceRole=t.Ref(CDKDeployRoleArn),
+            Tags=t.Tags.from_dict(**{"ServiceCatalogPuppet:Actor": "Framework"}),
+            Artifacts=codebuild.Artifacts(Type="NO_ARTIFACTS"),
             TimeoutInMinutes=60,
             Environment=codebuild.Environment(
                 ComputeType=t.Ref("CDKDeployComputeType"),
@@ -120,100 +130,92 @@ def create_cdk_pipeline(p, uid):
                 EnvironmentVariables=[
                     {
                         "Type": "PLAINTEXT",
-                        "Name": "CDK_DEPLOY_TOOLKIT_STACK_NAME",
-                        "Value": t.Ref("CDKDeployToolkitStackName"),
+                        "Name": "CDK_DEPLOY_EXTRA_ARGS",
+                        "Value": "CHANGE_ME",
                     },
                     {
                         "Type": "PLAINTEXT",
-                        "Name": "CDK_DEPLOY_EXTRA_ARGS",
-                        "Value": t.Ref("CDKDeployExtraArgs"),
+                        "Name": "CDK_DEPLOY_TOOLKIT_STACK_NAME",
+                        "Value": "CHANGE_ME",
                     },
+                    {"Type": "PLAINTEXT", "Name": "UId", "Value": "CHANGE_ME",},
                     {
                         "Type": "PLAINTEXT",
                         "Name": "PUPPET_ACCOUNT_ID",
-                        "Value": t.Ref("PuppetAccountId"),
+                        "Value": "CHANGE_ME",
                     },
                     {
                         "Type": "PLAINTEXT",
                         "Name": "CDK_DEPLOY_PARAMETER_ARGS",
-                        "Value": cdk_deploy_parameter_args,
+                        "Value": "CHANGE_ME",
                     },
-                ] + cdk_deploy_parameter_env_vars,
+                    {
+                        "Type": "PLAINTEXT",
+                        "Name": "ON_COMPLETE_URL",
+                        "Value": "CHANGE_ME",
+                    },
+                ],
             ),
             Source=codebuild.Source(
-                BuildSpec=yaml.safe_dump(build_spec),
-                Type="CODEPIPELINE",
+                BuildSpec=t.Sub(yaml.safe_dump(build_spec)), Type="NO_SOURCE",
             ),
-            Description=t.Sub("Run CDK deploy for ${AWS::StackName}"),
+            Description=t.Sub("Run CDK deploy for given source code"),
         )
     )
 
-    source_stage = codepipeline.Stages(
-        Name="Source",
-        Actions=[
-            codepipeline.Actions(
-                RunOrder=1,
-                ActionTypeId=codepipeline.ActionTypeId(
-                    Category="Source", Owner="AWS", Version="1", Provider="S3",
-                ),
-                OutputArtifacts=[
-                    codepipeline.OutputArtifacts(Name="Source")
-                ],
-                Configuration={
-                    "S3Bucket": t.Sub("sc-factory-artifacts-${PuppetAccountId}-${AWS::Region}"),
-                    "S3ObjectKey": f"{uid}/cdk-project.zip",
-                    "PollForSourceChanges": False,
-                },
-                Name="Source",
-            )
-        ],
-    )
-
-    deploy_stage = codepipeline.Stages(
-        Name="CDKDeploy",
-        Actions=[
-            codepipeline.Actions(
-                InputArtifacts= [
-                    codepipeline.InputArtifacts(Name="Source"),
-                ],
-                Name= "CDKDeploy",
-                ActionTypeId= codepipeline.ActionTypeId(
-                    Category="Build",
-                    Owner="AWS",
-                    Version="1",
-                    Provider="CodeBuild",
-                ),
-                OutputArtifacts=[
-                    codepipeline.OutputArtifacts(Name="CDKDeploy")
-                ],
-                Configuration= {
-                    "ProjectName": t.Sub("${AWS::StackName}-cdk-deploy"),
-                    "PrimarySource": "Source",
-                },
-                RunOrder= 1,
-            )
-        ]
-    )
-
-    template.add_resource(
-        codepipeline.Pipeline(
-            "CodePipeline",
-            RoleArn=t.Ref("CDKPipelineRoleArn"),
-            Stages=[source_stage, deploy_stage,],
-            Name=t.Sub("${AWS::StackName}-pipeline"),
-            ArtifactStores=[
-                codepipeline.ArtifactStoreMap(
-                    Region=region,
-                    ArtifactStore=codepipeline.ArtifactStore(
-                        Type="S3",
-                        Location=t.Sub(
-                            "sc-puppet-pipeline-artifacts-${AWS::AccountId}-" + region
-                        ),
-                    ),
+    LambdaExecutionRole = template.add_resource(
+        iam.Role(
+            "LambdaExecutionRole",
+            Path="/",
+            ManagedPolicyArns=[
+                t.Sub(
+                    "arn:${AWS::Partition}:iam::aws:policy/service-role/AWSLambdaBasicExecutionRole"
                 )
-                for region in all_regions
             ],
-            RestartExecutionOnUpdate=False,
+            AssumeRolePolicyDocument={
+                "Version": "2012-10-17",
+                "Statement": [
+                    {
+                        "Action": ["sts:AssumeRole"],
+                        "Effect": "Allow",
+                        "Principal": {"Service": ["lambda.amazonaws.com"]},
+                    }
+                ],
+            },
+            Policies=[
+                iam.Policy(
+                    PolicyName="allowtrigger",
+                    PolicyDocument={
+                        "Version": "2012-10-17",
+                        "Statement": [
+                            {
+                                "Effect": "Allow",
+                                "Action": ["codebuild:*"],
+                                "Resource": "*",
+                            }
+                        ],
+                    },
+                )
+            ],
+        )
+    )
+
+    fun = template.add_resource(
+        awslambda.Function(
+            "StartCDKDeploy",
+            FunctionName="servicecatalog-tools--StartCDKDeploy",
+            Code=awslambda.Code(ZipFile=START_PROJECT_CODE),
+            Handler="index.handler",
+            Role=t.GetAtt(LambdaExecutionRole, "Arn"),
+            Runtime="python3.7",
+            MemorySize=awslambda.MEMORY_VALUES[0],
+            Timeout=30,
+        )
+    )
+
+    wait_condition_handle = template.add_resource(
+        cloudformation.WaitConditionHandle(
+            "WaitConditionHandle",
         )
     )
 
@@ -221,11 +223,29 @@ def create_cdk_pipeline(p, uid):
         resource_type = "Custom::DeployDetails"
         props = dict()
 
-    template.add_resource(
+    deploy = template.add_resource(
         DeployDetailsCustomResource(
             "DeployDetails",
-            NOnce=t.Join(",", deploy_details_args)
+            ServiceToken=t.GetAtt(fun, 'Arn'),
+            Handle=t.Ref(wait_condition_handle),
+            Project=t.Ref("CDKDeployProjectName"),
+            UId=uid,
+
+            CDK_DEPLOY_EXTRA_ARGS=t.Ref("CDKDeployExtraArgs"),
+            CDK_DEPLOY_TOOLKIT_STACK_NAME=t.Ref("CDKDeployToolkitStackName"),
+
+            PUPPET_ACCOUNT_ID=t.Ref("PuppetAccountId"),
+            CDK_DEPLOY_PARAMETER_ARGS=t.Sub(cdk_deploy_parameter_args),
         )
     )
 
-    print(template.to_yaml())
+    template.add_resource(
+        cloudformation.WaitCondition(
+            "WaiterCondition",
+            DependsOn="DeployDetails",
+            Handle=t.Ref(wait_condition_handle),
+            Timeout=28800,
+        )
+    )
+
+    print(template.to_yaml(clean_up=True))

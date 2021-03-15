@@ -16,7 +16,7 @@ def get_stack_version():
 
 def get_regions():
     with betterboto_client.ClientContextManager(
-            "ssm", region_name=constants.HOME_REGION
+        "ssm", region_name=constants.HOME_REGION
     ) as ssm:
         response = ssm.get_parameter(Name=constants.CONFIG_PARAM_NAME)
         config = yaml.safe_load(response.get("Parameter").get("Value"))

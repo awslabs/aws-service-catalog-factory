@@ -411,7 +411,12 @@ def update_provisioned_product(region, name, product_id, description, template_u
 @click.option("--uid", envvar="CODEBUILD_BUILD_ID")
 def create_cdk_pipeline(p, product_name, product_version, uid):
     # need to run npm run cdk synth -- --output sct-synth-output first
-    cdk_support.create_cdk_pipeline(p, f"{product_name}-{product_version}-{uid}")
+    cdk_support.create_cdk_pipeline(
+        p,
+        f"{product_name}-{product_version}-{uid}"
+        if uid
+        else f"{product_name}-{product_version}",
+    )
 
 
 if __name__ == "__main__":
