@@ -2,6 +2,7 @@
 # SPDX-License-Identifier: Apache-2.0
 import yaml
 from servicecatalog_factory import core
+from servicecatalog_factory import cdk_support
 import logging
 import click
 
@@ -378,6 +379,7 @@ def set_regions(regions):
 def generate_launch_constraints(p):
     core.generate_launch_constraints(p)
 
+
 @cli.command()
 @click.option("--partition", envvar="PARTITION")
 def deploy_launch_constraints(partition):
@@ -400,6 +402,16 @@ def print_source_directory(pipeline_name, execution_id, artifact):
 @click.argument("template-url")
 def update_provisioned_product(region, name, product_id, description, template_url):
     core.update_provisioned_product(region, name, product_id, description, template_url)
+
+
+@cli.command()
+@click.argument("p", type=click.Path(exists=True))
+@click.argument("product-name")
+@click.argument("product-version")
+@click.option("--uid", envvar="CODEBUILD_BUILD_ID")
+def create_cdk_pipeline(p, product_name, product_version, uid):
+    # need to run npm run cdk synth -- --output sct-synth-output first
+    cdk_support.create_cdk_pipeline(p, f"{product_name}-{product_version}-{uid}")
 
 
 if __name__ == "__main__":

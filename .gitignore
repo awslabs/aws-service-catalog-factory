@@ -20,3 +20,4 @@ Would skip repository aws-iam-assume-roles-spoke/
 Would skip repository aws-iam-groups-security-account/
 e2e.sh
 reports
+product.template.yaml

@@ -53,12 +53,7 @@ ENV = Environment(loader=FileSystemLoader(TEMPLATE_DIR), extensions=["jinja2.ext
 
 
 def get_regions():
-    with betterboto_client.ClientContextManager(
-        "ssm", region_name=constants.HOME_REGION
-    ) as ssm:
-        response = ssm.get_parameter(Name=constants.CONFIG_PARAM_NAME)
-        config = yaml.safe_load(response.get("Parameter").get("Value"))
-        return config.get("regions")
+    return config.get_regions()
 
 
 def merge(dict1, dict2):
@@ -892,10 +887,16 @@ def bootstrap(
             }
         )
     template = Template(template).render(
-        VERSION=constants.VERSION, ALL_REGIONS=all_regions, Source=source_args, create_repo=create_repo
+        VERSION=constants.VERSION,
+        ALL_REGIONS=all_regions,
+        Source=source_args,
+        create_repo=create_repo,
     )
     template = Template(template).render(
-        VERSION=constants.VERSION, ALL_REGIONS=all_regions, Source=source_args, create_repo=create_repo
+        VERSION=constants.VERSION,
+        ALL_REGIONS=all_regions,
+        Source=source_args,
+        create_repo=create_repo,
     )
     args = {
         "StackName": constants.BOOTSTRAP_STACK_NAME,
@@ -1596,13 +1597,19 @@ def deploy_launch_constraints(partition):
     all_regions = get_regions()
 
     for region in all_regions:
-        with betterboto_client.ClientContextManager("cloudformation", region_name=region) as cfn:
-            cfn.ensure_deleted(StackName=f"servicecatalog-factory-constraints-launch-role-{region}")
-            template_body = open(f"output/constraints/launch-role/{region}.template.yaml", "r").read()
+        with betterboto_client.ClientContextManager(
+            "cloudformation", region_name=region
+        ) as cfn:
+            cfn.ensure_deleted(
+                StackName=f"servicecatalog-factory-constraints-launch-role-{region}"
+            )
+            template_body = open(
+                f"output/constraints/launch-role/{region}.template.yaml", "r"
+            ).read()
             cfn.create_or_update(
                 StackName=f"servicecatalog-factory-constraints-launch-role-v2-{region}",
                 TemplateBody=template_body,
-                RoleARN=f"arn:{partition}:iam::{account_id}:role/servicecatalog-factory/FactoryCloudFormationDeployRole"
+                RoleARN=f"arn:{partition}:iam::{account_id}:role/servicecatalog-factory/FactoryCloudFormationDeployRole",
             )
 
 
