@@ -52,7 +52,7 @@ resources = [
                             },
                             build={
                                 "commands": [
-                                    f"servicecatalog-factory generate-template $NAME $VERSION . > product.template.yaml",
+                                    f"servicecatalog-factory generate-template CDK 1.0.0 $NAME $VERSION . > product.template.yaml",
                                 ]
                             },
                         ),

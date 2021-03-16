@@ -77,7 +77,7 @@ def create_cdk_pipeline(name, version, product_name, product_version, p) -> t.Te
             install={
                 "commands": [
                     "env",
-                    "aws s3 cp s3://sc-factory-artifacts-$ACCOUNT_ID-$REGION/cdk/1.0.0/$PRODUCT_NAME-$PRODUCT_VERSION.zip .",
+                    "aws s3 cp s3://sc-factory-artifacts-$ACCOUNT_ID-$REGION/cdk/1.0.0/$NAME-$VERSION.zip .",
                     "ls -l",
                     "unzip *.zip",
                     "ls -l",
@@ -162,12 +162,12 @@ def create_cdk_pipeline(name, version, product_name, product_version, p) -> t.Te
                     },
                     {
                         "Type": "PLAINTEXT",
-                        "Name": "PRODUCT_NAME",
+                        "Name": "NAME",
                         "Value": product_name,
                     },
                     {
                         "Type": "PLAINTEXT",
-                        "Name": "PRODUCT_VERSION",
+                        "Name": "VERSION",
                         "Value": product_version,
                     },
                 ],
