@@ -16,8 +16,7 @@ START_PROJECT_CODE = open(
 ).read()
 
 
-def create_cdk_pipeline(name, version, p):
-    all_regions = config.get_regions()
+def create_cdk_pipeline(name, version, product_name, product_version, p) -> t.Template:
     description = "todo"
     template = t.Template(Description=description)
     template.add_parameter(
@@ -31,7 +30,6 @@ def create_cdk_pipeline(name, version, p):
         )
     )
     template.add_parameter(t.Parameter("PuppetAccountId", Type="String"))
-    template.add_parameter(t.Parameter("CDKDeployProjectName", Type="String"))
     template.add_parameter(t.Parameter("CDKDeployToolkitStackName", Type="String"))
     template.add_parameter(
         t.Parameter(
@@ -60,7 +58,8 @@ def create_cdk_pipeline(name, version, p):
             for parameter_name, parameter_details in artifact_template.get(
                 "Parameters", {}
             ).items():
-                template.add_parameter(t.Parameter(parameter_name, **parameter_details))
+                if template.parameters.get(parameter_name) is None:
+                    template.add_parameter(t.Parameter(parameter_name, **parameter_details))
                 cdk_deploy_parameter_args.append(
                     f"--parameters {artifact_name}:{parameter_name}=${{{parameter_name}}}"
                 )
@@ -68,7 +67,8 @@ def create_cdk_pipeline(name, version, p):
             for output_name, output_details in artifact_template.get(
                 "Outputs", {}
             ).items():
-                template.add_output(t.Output(output_name, **output_details))
+                if template.outputs.get(output_name) is None:
+                    template.add_output(t.Output(output_name, **output_details))
     cdk_deploy_parameter_args = " ".join(cdk_deploy_parameter_args)
 
     build_spec = dict(
@@ -77,7 +77,7 @@ def create_cdk_pipeline(name, version, p):
             install={
                 "commands": [
                     "env",
-                    "aws s3 cp sc-factory-artifacts-${PuppetAccountId}-${AWS::Region}/$UId.zip .",
+                    "aws s3 cp s3://sc-factory-artifacts-$ACCOUNT_ID-$REGION/cdk/1.0.0/$PRODUCT_NAME-$PRODUCT_VERSION.zip .",
                     "ls -l",
                     "unzip *.zip",
                     "ls -l",
@@ -119,10 +119,12 @@ def create_cdk_pipeline(name, version, p):
         )
     )
 
+    project_name = f"CDK-deploy-{product_name}-{product_version}"
+
     project = template.add_resource(
         codebuild.Project(
             "CDKDeploy",
-            Name=t.Ref("CDKDeployProjectName"),
+            Name=project_name,
             ServiceRole=t.Ref(CDKDeployRoleArn),
             Tags=t.Tags.from_dict(**{"ServiceCatalogPuppet:Actor": "Framework"}),
             Artifacts=codebuild.Artifacts(Type="NO_ARTIFACTS"),
@@ -157,6 +159,16 @@ def create_cdk_pipeline(name, version, p):
                         "Type": "PLAINTEXT",
                         "Name": "ON_COMPLETE_URL",
                         "Value": "CHANGE_ME",
+                    },
+                    {
+                        "Type": "PLAINTEXT",
+                        "Name": "PRODUCT_NAME",
+                        "Value": product_name,
+                    },
+                    {
+                        "Type": "PLAINTEXT",
+                        "Name": "PRODUCT_VERSION",
+                        "Value": product_version,
                     },
                 ],
             ),
@@ -230,8 +242,7 @@ def create_cdk_pipeline(name, version, p):
             "DeployDetails",
             ServiceToken=t.GetAtt(fun, "Arn"),
             Handle=t.Ref(wait_condition_handle),
-            Project=t.Ref("CDKDeployProjectName"),
-            UId=uid,
+            Project=project_name,
             CDK_DEPLOY_EXTRA_ARGS=t.Ref("CDKDeployExtraArgs"),
             CDK_DEPLOY_TOOLKIT_STACK_NAME=t.Ref("CDKDeployToolkitStackName"),
             PUPPET_ACCOUNT_ID=t.Ref("PuppetAccountId"),
@@ -248,4 +259,4 @@ def create_cdk_pipeline(name, version, p):
         )
     )
 
-    print(template.to_yaml(clean_up=True))
+    return template

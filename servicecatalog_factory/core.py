@@ -1702,6 +1702,7 @@ def update_provisioned_product(region, name, product_id, description, template_u
                 )
 
 
-def generate_template(name, version, p):
+def generate_template(name, version, product_name, product_version, p)-> str:
     if name == "CDK" and version == "1.0.0":
-        cdk_support.create_cdk_pipeline(name, version, p)
+        return cdk_support.create_cdk_pipeline(name, version, product_name, product_version, p).to_yaml(clean_up=True)
+    raise Exception(f"Unknown {name} and {version}")

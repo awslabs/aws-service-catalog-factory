@@ -52,7 +52,7 @@ resources = [
                             },
                             build={
                                 "commands": [
-                                    f"servicecatalog-factory generate-template $NAME $VERSION sct-synth-output > product.template.yaml",
+                                    f"servicecatalog-factory generate-template $NAME $VERSION . > product.template.yaml",
                                 ]
                             },
                         ),
