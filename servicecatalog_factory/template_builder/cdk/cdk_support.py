@@ -1,6 +1,7 @@
 import json
 import troposphere as t
 import yaml
+import os
 from troposphere import codebuild
 from troposphere import awslambda
 from troposphere import cloudformation
@@ -10,7 +11,7 @@ from servicecatalog_factory import config
 PREFIX = "sct-synth-output"
 
 START_PROJECT_CODE = open(
-    "/Users/eamonnf/Development/aws-service-catalog-factory/servicecatalog_factory/code.py",
+    f"{os.path.dirname(__file__)}/code.py",
     "r",
 ).read()
 
