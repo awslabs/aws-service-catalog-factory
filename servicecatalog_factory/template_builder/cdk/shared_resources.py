@@ -23,8 +23,8 @@ resources = [
             Image=constants.ENVIRONMENT_IMAGE_DEFAULT,
             Type=constants.ENVIRONMENT_TYPE_DEFAULT,
             EnvironmentVariables=[
-                {"Type": "PLAINTEXT", "Name": "NAME", "Value": "CHANGE_ME",},
-                {"Type": "PLAINTEXT", "Name": "VERSION", "Value": "CHANGE_ME",},
+                {"Type": "PLAINTEXT", "Name": "NAME", "Value": "CHANGE_ME", },
+                {"Type": "PLAINTEXT", "Name": "VERSION", "Value": "CHANGE_ME", },
             ],
         ),
         Source=codebuild.Source(
@@ -107,9 +107,9 @@ resources = [
                                             ]
                             },
                         ),
-                        artifacts=dict(
-                            name=BUILD_OUTPUT_ARTIFACT, files=["*", "**/*"],
-                        ),
+                        artifacts={
+                            "name": BUILD_OUTPUT_ARTIFACT, "files": ["*", "**/*"], "exclude-paths": ["node_modules"],
+                        },
                     )
                 )
             ),

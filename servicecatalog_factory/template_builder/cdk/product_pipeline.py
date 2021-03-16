@@ -5,8 +5,11 @@ from servicecatalog_factory.template_builder.base_template import (
     BaseTemplate,
     SOURCE_OUTPUT_ARTIFACT,
     BUILD_OUTPUT_ARTIFACT,
+    PACKAGE_OUTPUT_ARTIFACT,
 )
 import json
+
+from servicecatalog_factory.template_builder import shared_resources
 
 from servicecatalog_factory.template_builder.cdk.shared_resources import CDK_BUILD_PROJECT_NAME
 
@@ -155,7 +158,28 @@ class CDK100Template(BaseTemplate):
             ],
         )
 
-        # package_stage = codepipeline.Stages(Name="Package", Actions=[])
+        package_stage = codepipeline.Stages(Name="Package", Actions=[
+            codepipeline.Actions(
+                InputArtifacts=[
+                    codepipeline.InputArtifacts(Name=BUILD_OUTPUT_ARTIFACT),
+                ],
+                Name=template.get("Name"),
+                ActionTypeId=codepipeline.ActionTypeId(
+                    Category="Build",
+                    Owner="AWS",
+                    Version="1",
+                    Provider="CodeBuild",
+                ),
+                OutputArtifacts=[
+                    codepipeline.OutputArtifacts(Name=PACKAGE_OUTPUT_ARTIFACT)
+                ],
+                Configuration={
+                    "ProjectName": shared_resources.PACKAGE_PROJECT_NAME,
+                    "PrimarySource": BUILD_OUTPUT_ARTIFACT,
+                },
+                RunOrder=1,
+            )
+        ])
         #
         # deploy_stage = codepipeline.Stages(Name="Deploy", Actions=[])
 
@@ -163,8 +187,7 @@ class CDK100Template(BaseTemplate):
             codepipeline.Pipeline(
                 "Pipeline",
                 RoleArn=t.Sub("arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/CodePipelineRole"),
-                Stages=[source_stage, build_stage],
-                # Stages=[source_stage, build_stage, package_stage, deploy_stage],
+                Stages=[source_stage, build_stage, package_stage],
                 Name=t.Sub("${AWS::StackName}-pipeline"),
                 ArtifactStores=[
                     codepipeline.ArtifactStoreMap(
