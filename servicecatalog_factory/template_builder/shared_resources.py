@@ -4,12 +4,12 @@ import yaml
 from servicecatalog_factory import constants
 from servicecatalog_factory.template_builder.base_template import VALIDATE_OUTPUT_ARTIFACT
 
-PACKAGE_PROJECT_NAME = "ServiceCatalog-Factory-SharedPackage"
+VALIDATE_PROJECT_NAME = "ServiceCatalog-Factory-SharedValidate"
 
 resources = [
     codebuild.Project(
-        "Package",
-        Name=PACKAGE_PROJECT_NAME,
+        "Validate",
+        Name=VALIDATE_PROJECT_NAME,
         ServiceRole=t.Sub(
             "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodeRole"
         ),

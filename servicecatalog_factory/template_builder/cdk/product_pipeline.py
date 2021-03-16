@@ -5,7 +5,7 @@ from servicecatalog_factory.template_builder.base_template import (
     BaseTemplate,
     SOURCE_OUTPUT_ARTIFACT,
     BUILD_OUTPUT_ARTIFACT,
-    PACKAGE_OUTPUT_ARTIFACT,
+    VALIDATE_OUTPUT_ARTIFACT,
 )
 import json
 
@@ -158,12 +158,12 @@ class CDK100Template(BaseTemplate):
             ],
         )
 
-        package_stage = codepipeline.Stages(Name="Package", Actions=[
+        package_stage = codepipeline.Stages(Name="Validate", Actions=[
             codepipeline.Actions(
                 InputArtifacts=[
                     codepipeline.InputArtifacts(Name=BUILD_OUTPUT_ARTIFACT),
                 ],
-                Name=template.get("Name"),
+                Name="Validate",
                 ActionTypeId=codepipeline.ActionTypeId(
                     Category="Build",
                     Owner="AWS",
@@ -171,10 +171,10 @@ class CDK100Template(BaseTemplate):
                     Provider="CodeBuild",
                 ),
                 OutputArtifacts=[
-                    codepipeline.OutputArtifacts(Name=PACKAGE_OUTPUT_ARTIFACT)
+                    codepipeline.OutputArtifacts(Name=VALIDATE_OUTPUT_ARTIFACT)
                 ],
                 Configuration={
-                    "ProjectName": shared_resources.PACKAGE_PROJECT_NAME,
+                    "ProjectName": shared_resources.VALIDATE_PROJECT_NAME,
                     "PrimarySource": BUILD_OUTPUT_ARTIFACT,
                 },
                 RunOrder=1,
