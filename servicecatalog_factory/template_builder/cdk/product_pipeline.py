@@ -6,12 +6,13 @@ from servicecatalog_factory.template_builder.base_template import (
     SOURCE_OUTPUT_ARTIFACT,
     BUILD_OUTPUT_ARTIFACT,
     VALIDATE_OUTPUT_ARTIFACT,
+    PACKAGE_OUTPUT_ARTIFACT,
 )
 import json
 
 from servicecatalog_factory.template_builder import shared_resources
 
-from servicecatalog_factory.template_builder.cdk.shared_resources import CDK_BUILD_PROJECT_NAME
+from servicecatalog_factory.template_builder.cdk import shared_resources as cdk_shared_resources
 
 
 class CDK100Template(BaseTemplate):
@@ -135,7 +136,7 @@ class CDK100Template(BaseTemplate):
                     InputArtifacts=[
                         codepipeline.InputArtifacts(Name=SOURCE_OUTPUT_ARTIFACT),
                     ],
-                    Name=template.get("Name"),
+                    Name=f'{template.get("Name")}-{template.get("Version")}',
                     ActionTypeId=codepipeline.ActionTypeId(
                         Category="Build",
                         Owner="AWS",
@@ -146,7 +147,7 @@ class CDK100Template(BaseTemplate):
                         codepipeline.OutputArtifacts(Name=BUILD_OUTPUT_ARTIFACT)
                     ],
                     Configuration={
-                        "ProjectName": CDK_BUILD_PROJECT_NAME,
+                        "ProjectName": cdk_shared_resources.CDK_BUILD_PROJECT_NAME,
                         "PrimarySource": SOURCE_OUTPUT_ARTIFACT,
                         "EnvironmentVariables": t.Sub(json.dumps([
                             dict(name="NAME",value=name,type="PLAINTEXT"),
@@ -158,14 +159,14 @@ class CDK100Template(BaseTemplate):
             ],
         )
 
-        package_stage = codepipeline.Stages(Name="Validate", Actions=[
+        validate_stage = codepipeline.Stages(Name="Validate", Actions=[
             codepipeline.Actions(
                 InputArtifacts=[
                     codepipeline.InputArtifacts(Name=BUILD_OUTPUT_ARTIFACT),
                 ],
                 Name="Validate",
                 ActionTypeId=codepipeline.ActionTypeId(
-                    Category="Build",
+                    Category="Test",
                     Owner="AWS",
                     Version="1",
                     Provider="CodeBuild",
@@ -181,13 +182,40 @@ class CDK100Template(BaseTemplate):
             )
         ])
         #
+        package_stage = codepipeline.Stages(Name="Package", Actions=[
+            codepipeline.Actions(
+                InputArtifacts=[
+                    codepipeline.InputArtifacts(Name=BUILD_OUTPUT_ARTIFACT),
+                ],
+                Name="Validate",
+                ActionTypeId=codepipeline.ActionTypeId(
+                    Category="Build",
+                    Owner="AWS",
+                    Version="1",
+                    Provider="CodeBuild",
+                ),
+                OutputArtifacts=[
+                    codepipeline.OutputArtifacts(Name=PACKAGE_OUTPUT_ARTIFACT)
+                ],
+                Configuration={
+                    "ProjectName": cdk_shared_resources.CDK_PACKAGE_PROJECT_NAME,
+                    "PrimarySource": BUILD_OUTPUT_ARTIFACT,
+                    "EnvironmentVariables": t.Sub(json.dumps([
+                        dict(name="NAME",value=name,type="PLAINTEXT"),
+                        dict(name="VERSION",value=version,type="PLAINTEXT"),
+                    ]))
+                },
+                RunOrder=1,
+            )
+        ])
+
         # deploy_stage = codepipeline.Stages(Name="Deploy", Actions=[])
 
         pipeline = tpl.add_resource(
             codepipeline.Pipeline(
                 "Pipeline",
                 RoleArn=t.Sub("arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/CodePipelineRole"),
-                Stages=[source_stage, build_stage, package_stage],
+                Stages=[source_stage, build_stage, validate_stage, package_stage],
                 Name=t.Sub("${AWS::StackName}-pipeline"),
                 ArtifactStores=[
                     codepipeline.ArtifactStoreMap(

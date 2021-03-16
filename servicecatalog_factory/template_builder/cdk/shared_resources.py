@@ -56,9 +56,9 @@ resources = [
                                 ]
                             },
                         ),
-                        artifacts=dict(
-                            name=BUILD_OUTPUT_ARTIFACT, files=["*", "**/*"],
-                        ),
+                        artifacts={
+                            "name": BUILD_OUTPUT_ARTIFACT, "files": ["*", "**/*"], "exclude-paths": ["node_modules"],
+                        },
                     )
                 )
             ),
@@ -98,7 +98,7 @@ resources = [
                             build={
                                 "commands": ["zip -r $NAME-$VERSION.zip ."]
                                             + [
-                                                f"aws s3 cp $NAME-$VERSION.zip s3://sc-factory-artifacts-$ACCOUNT_ID-{region}/cdk/1.0.0/"
+                                                f"aws s3 cp --quiet $NAME-$VERSION.zip s3://sc-factory-artifacts-$ACCOUNT_ID-{region}/cdk/1.0.0/"
                                                 for region in config.get_regions()
                                             ]
                                             + [
