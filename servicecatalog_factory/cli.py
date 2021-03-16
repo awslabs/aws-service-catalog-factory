@@ -405,18 +405,13 @@ def update_provisioned_product(region, name, product_id, description, template_u
 
 
 @cli.command()
+@click.argument("name")
+@click.argument("version")
 @click.argument("p", type=click.Path(exists=True))
-@click.argument("product-name")
-@click.argument("product-version")
-@click.option("--uid", envvar="CODEBUILD_BUILD_ID")
-def create_cdk_pipeline(p, product_name, product_version, uid):
+def generate_template(name, version, p):
     # need to run npm run cdk synth -- --output sct-synth-output first
-    cdk_support.create_cdk_pipeline(
-        p,
-        f"{product_name}-{product_version}-{uid}"
-        if uid
-        else f"{product_name}-{product_version}",
-    )
+    if name == "CDK" and version == "1.0.0":
+        cdk_support.create_cdk_pipeline(name, version, p)
 
 
 if __name__ == "__main__":

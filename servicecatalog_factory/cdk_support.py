@@ -9,10 +9,13 @@ from servicecatalog_factory import config
 
 PREFIX = "sct-synth-output"
 
-START_PROJECT_CODE = open("/Users/eamonnf/Development/aws-service-catalog-factory/servicecatalog_factory/code.py", 'r').read()
+START_PROJECT_CODE = open(
+    "/Users/eamonnf/Development/aws-service-catalog-factory/servicecatalog_factory/code.py",
+    "r",
+).read()
 
 
-def create_cdk_pipeline(p, uid):
+def create_cdk_pipeline(name, version, p):
     all_regions = config.get_regions()
     description = "todo"
     template = t.Template(Description=description)
@@ -214,9 +217,7 @@ def create_cdk_pipeline(p, uid):
     )
 
     wait_condition_handle = template.add_resource(
-        cloudformation.WaitConditionHandle(
-            "WaitConditionHandle",
-        )
+        cloudformation.WaitConditionHandle("WaitConditionHandle",)
     )
 
     class DeployDetailsCustomResource(cloudformation.AWSCustomObject):
@@ -226,14 +227,12 @@ def create_cdk_pipeline(p, uid):
     deploy = template.add_resource(
         DeployDetailsCustomResource(
             "DeployDetails",
-            ServiceToken=t.GetAtt(fun, 'Arn'),
+            ServiceToken=t.GetAtt(fun, "Arn"),
             Handle=t.Ref(wait_condition_handle),
             Project=t.Ref("CDKDeployProjectName"),
             UId=uid,
-
             CDK_DEPLOY_EXTRA_ARGS=t.Ref("CDKDeployExtraArgs"),
             CDK_DEPLOY_TOOLKIT_STACK_NAME=t.Ref("CDKDeployToolkitStackName"),
-
             PUPPET_ACCOUNT_ID=t.Ref("PuppetAccountId"),
             CDK_DEPLOY_PARAMETER_ARGS=t.Sub(cdk_deploy_parameter_args),
         )

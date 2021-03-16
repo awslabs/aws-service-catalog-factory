@@ -35,6 +35,7 @@ from . import constants
 from . import aws
 from . import luigi_tasks_and_targets
 from . import config
+from servicecatalog_factory.template_builder import product_templates
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -243,9 +244,10 @@ def generate_for_portfolios_versions(
 ):
     for version_pipeline_to_build in pipeline_versions:
         version_details = version_pipeline_to_build.get("version")
+        product_details = version_pipeline_to_build.get("product")
 
         if version_details.get("Status", "active") == "terminated":
-            product_name = version_pipeline_to_build.get("product").get("Name")
+            product_name = product_details.get("Name")
 
             for region, product_args in products_by_region.get(product_name).items():
                 task_id = f"pipeline_template_{product_name}-{version_details.get('Name')}-{region}"
@@ -254,9 +256,9 @@ def generate_for_portfolios_versions(
                 )
 
         else:
-            product_name = version_pipeline_to_build.get("product").get("Name")
+            product_name = product_details.get("Name")
             tags = {}
-            for tag in version_pipeline_to_build.get("product").get("Tags", []):
+            for tag in product_details.get("Tags", []):
                 tags[tag.get("Key")] = tag.get("Value")
 
             for tag in version_details.get("Tags", []):
@@ -268,9 +270,13 @@ def generate_for_portfolios_versions(
             create_args = {
                 "all_regions": all_regions,
                 "version": version_details,
-                "product": version_pipeline_to_build.get("product"),
+                "product": product_details,
                 "provisioner": version_details.get(
                     "Provisioner", {"Type": "CloudFormation"}
+                ),
+                "template": utils.merge(
+                    product_details.get("Template", {}),
+                    version_details.get("Template", {}),
                 ),
                 "products_args_by_region": products_by_region.get(product_name),
                 "factory_version": factory_version,
@@ -296,7 +302,6 @@ def generate_for_portfolios_versions(
 def generate_for_products_versions(
     all_regions, all_tasks, factory_version, products_versions, products_by_region,
 ):
-
     for product_name, pipeline_details in products_versions.items():
 
         for version in pipeline_details:
@@ -912,6 +917,13 @@ def bootstrap(
     }
     with betterboto_client.ClientContextManager("cloudformation") as cloudformation:
         cloudformation.create_or_update(**args)
+        cloudformation.create_or_update(
+            StackName=constants.BOOTSTRAP_TEMPLATES_STACK_NAME,
+            TemplateBody=product_templates.get_template().to_yaml(
+                clean_up=True
+            ),
+            Capabilities=["CAPABILITY_NAMED_IAM"],
+        )
         response = cloudformation.describe_stacks(
             StackName=constants.BOOTSTRAP_STACK_NAME
         )

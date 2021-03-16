@@ -16,6 +16,7 @@ from . import aws
 from . import constants
 from . import utils
 from . import config
+from servicecatalog_factory.template_builder import product_template_factory
 
 logger = logging.getLogger(__file__)
 
@@ -517,6 +518,8 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
     product = luigi.DictParameter()
 
     provisioner = luigi.DictParameter()
+    template = luigi.DictParameter()
+
     factory_version = luigi.Parameter()
 
     products_args_by_region = luigi.DictParameter()
@@ -544,6 +547,93 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
             "create_products_tasks": create_products_tasks,
         }
 
+    def handle_terraform_provisioner(
+        self, product_ids_by_region, friendly_uid, tags, source
+    ):
+        template = utils.ENV.get_template(constants.PRODUCT_TERRAFORM)
+        rendered = template.render(
+            friendly_uid=f"{friendly_uid}-{self.version.get('Name')}",
+            version=self.version,
+            product=self.product,
+            Options=utils.merge(
+                self.product.get("Options", {}), self.version.get("Options", {})
+            ),
+            Source=source,
+            ALL_REGIONS=self.all_regions,
+            product_ids_by_region=product_ids_by_region,
+            TF_VARS=" ".join(self.provisioner.get("TFVars", [])),
+            FACTORY_VERSION=self.factory_version,
+            tags=tags,
+        )
+        rendered = jinja2.Template(rendered).render(
+            friendly_uid=f"{friendly_uid}-{self.version.get('Name')}",
+            version=self.version,
+            product=self.product,
+            Options=utils.merge(
+                self.product.get("Options", {}), self.version.get("Options", {})
+            ),
+            Source=utils.merge(
+                self.product.get("Source", {}), self.version.get("Source", {})
+            ),
+            ALL_REGIONS=self.all_regions,
+            product_ids_by_region=product_ids_by_region,
+            TF_VARS=" ".join(self.provisioner.get("TFVars", [])),
+            FACTORY_VERSION=self.factory_version,
+        )
+        return rendered
+
+    def handle_cloudformation_provisioner(
+        self, product_ids_by_region, friendly_uid, tags, source
+    ):
+        template = utils.ENV.get_template(constants.PRODUCT_CLOUDFORMATION)
+
+        stages = utils.merge(
+            self.product.get("Stages", {}), self.version.get("Stages", {})
+        )
+
+        if stages.get("Package") is None:
+            stages["Package"] = dict(
+                BuildSpecImage=self.version.get(
+                    "BuildSpecImage",
+                    self.product.get(
+                        "BuildSpecImage", constants.PACKAGE_BUILD_SPEC_IMAGE_DEFAULT,
+                    ),
+                ),
+                BuildSpec=self.version.get(
+                    "BuildSpec",
+                    self.product.get("BuildSpec", constants.PACKAGE_BUILD_SPEC_DEFAULT),
+                ),
+            )
+
+        rendered = template.render(
+            friendly_uid=f"{friendly_uid}-{self.version.get('Name')}",
+            version=self.version,
+            product=self.product,
+            template_format=self.provisioner.get("Format", "yaml"),
+            Options=utils.merge(
+                self.product.get("Options", {}), self.version.get("Options", {})
+            ),
+            Source=source,
+            Stages=stages,
+            ALL_REGIONS=self.all_regions,
+            product_ids_by_region=product_ids_by_region,
+            FACTORY_VERSION=self.factory_version,
+            tags=tags,
+        )
+        rendered = jinja2.Template(rendered).render(
+            friendly_uid=f"{friendly_uid}-{self.version.get('Name')}",
+            version=self.version,
+            product=self.product,
+            Options=utils.merge(
+                self.product.get("Options", {}), self.version.get("Options", {})
+            ),
+            Source=source,
+            Stages=stages,
+            ALL_REGIONS=self.all_regions,
+            product_ids_by_region=product_ids_by_region,
+        )
+        return rendered
+
     def run(self):
         logger_prefix = f"{self.product.get('Name')}-{self.version.get('Name')}"
         logger.info(f"{logger_prefix} - Getting product id")
@@ -555,6 +645,10 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
             {"Key": tag.get("Key"), "Value": tag.get("Value"),} for tag in self.tags
         ]
 
+        source = utils.merge(
+            self.product.get("Source", {}), self.version.get("Source", {})
+        )
+
         for region, product_details_content in (
             self.input().get("create_products_tasks").items()
         ):
@@ -562,94 +656,19 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
             product_ids_by_region[region] = product_details.get("ProductId")
             friendly_uid = product_details.get("uid")
 
-        if self.provisioner.get("Type") == "CloudFormation":
-            template = utils.ENV.get_template(constants.PRODUCT_CLOUDFORMATION)
+        if self.template.get("Name"):
+            rendered = product_template_factory.get(
+                self.template.get("Name"), self.template.get("Version")
+            ).render(self.template, self.product.get("Name"), self.version.get("Name"), source, product_ids_by_region, tags, friendly_uid)
 
-            stages = utils.merge(
-                self.product.get("Stages", {}), self.version.get("Stages", {})
-            )
-
-            if stages.get("Package") is None:
-                stages["Package"] = dict(
-                    BuildSpecImage=self.version.get(
-                        "BuildSpecImage",
-                        self.product.get(
-                            "BuildSpecImage",
-                            constants.PACKAGE_BUILD_SPEC_IMAGE_DEFAULT,
-                        ),
-                    ),
-                    BuildSpec=self.version.get(
-                        "BuildSpec",
-                        self.product.get(
-                            "BuildSpec", constants.PACKAGE_BUILD_SPEC_DEFAULT
-                        ),
-                    ),
-                )
-
-            rendered = template.render(
-                friendly_uid=f"{friendly_uid}-{self.version.get('Name')}",
-                version=self.version,
-                product=self.product,
-                template_format=self.provisioner.get("Format", "yaml"),
-                Options=utils.merge(
-                    self.product.get("Options", {}), self.version.get("Options", {})
-                ),
-                Source=utils.merge(
-                    self.product.get("Source", {}), self.version.get("Source", {})
-                ),
-                Stages=stages,
-                ALL_REGIONS=self.all_regions,
-                product_ids_by_region=product_ids_by_region,
-                FACTORY_VERSION=self.factory_version,
-                tags=tags,
-            )
-            rendered = jinja2.Template(rendered).render(
-                friendly_uid=f"{friendly_uid}-{self.version.get('Name')}",
-                version=self.version,
-                product=self.product,
-                Options=utils.merge(
-                    self.product.get("Options", {}), self.version.get("Options", {})
-                ),
-                Source=utils.merge(
-                    self.product.get("Source", {}), self.version.get("Source", {})
-                ),
-                Stages=stages,
-                ALL_REGIONS=self.all_regions,
-                product_ids_by_region=product_ids_by_region,
+        elif self.provisioner.get("Type") == "CloudFormation":
+            rendered = self.handle_cloudformation_provisioner(
+                product_ids_by_region, friendly_uid, tags, source
             )
 
         elif self.provisioner.get("Type") == "Terraform":
-            template = utils.ENV.get_template(constants.PRODUCT_TERRAFORM)
-            rendered = template.render(
-                friendly_uid=f"{friendly_uid}-{self.version.get('Name')}",
-                version=self.version,
-                product=self.product,
-                Options=utils.merge(
-                    self.product.get("Options", {}), self.version.get("Options", {})
-                ),
-                Source=utils.merge(
-                    self.product.get("Source", {}), self.version.get("Source", {})
-                ),
-                ALL_REGIONS=self.all_regions,
-                product_ids_by_region=product_ids_by_region,
-                TF_VARS=" ".join(self.provisioner.get("TFVars", [])),
-                FACTORY_VERSION=self.factory_version,
-                tags=tags,
-            )
-            rendered = jinja2.Template(rendered).render(
-                friendly_uid=f"{friendly_uid}-{self.version.get('Name')}",
-                version=self.version,
-                product=self.product,
-                Options=utils.merge(
-                    self.product.get("Options", {}), self.version.get("Options", {})
-                ),
-                Source=utils.merge(
-                    self.product.get("Source", {}), self.version.get("Source", {})
-                ),
-                ALL_REGIONS=self.all_regions,
-                product_ids_by_region=product_ids_by_region,
-                TF_VARS=" ".join(self.provisioner.get("TFVars", [])),
-                FACTORY_VERSION=self.factory_version,
+            rendered = self.handle_terraform_provisioner(
+                product_ids_by_region, friendly_uid, tags, source
             )
 
         else:
@@ -665,6 +684,7 @@ class CreateVersionPipelineTask(FactoryTask):
     product = luigi.DictParameter()
 
     provisioner = luigi.DictParameter()
+    template = luigi.DictParameter()
 
     products_args_by_region = luigi.DictParameter()
 
@@ -691,6 +711,7 @@ class CreateVersionPipelineTask(FactoryTask):
             version=self.version,
             product=self.product,
             provisioner=self.provisioner,
+            template=self.template,
             products_args_by_region=self.products_args_by_region,
             factory_version=self.factory_version,
             tags=self.tags,
@@ -707,7 +728,12 @@ class CreateVersionPipelineTask(FactoryTask):
                 {"Key": tag.get("Key"), "Value": tag.get("Value"),}
             )
         with betterboto_client.ClientContextManager("cloudformation") as cloudformation:
-            if self.provisioner.get("Type") == "CloudFormation":
+
+            if self.template.get("Name"):
+                response = cloudformation.create_or_update(
+                    StackName=friendly_uid, TemplateBody=template_contents, Tags=tags,
+                )
+            elif self.provisioner.get("Type") == "CloudFormation":
                 response = cloudformation.create_or_update(
                     StackName=friendly_uid, TemplateBody=template_contents, Tags=tags,
                 )

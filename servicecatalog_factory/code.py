@@ -2,6 +2,7 @@ import json
 from urllib.request import Request, urlopen
 import boto3
 
+
 def handler(event, context):
     request_type = event["RequestType"]
     try:
@@ -9,20 +10,31 @@ def handler(event, context):
             properties = event.get("ResourceProperties")
             project_name = properties.get("Project")
             codebuild = boto3.client("codebuild")
-            args = ['CDK_DEPLOY_EXTRA_ARGS', 'CDK_DEPLOY_TOOLKIT_STACK_NAME', 'PUPPET_ACCOUNT_ID', 'CDK_DEPLOY_PARAMETER_ARGS']
+            args = [
+                "CDK_DEPLOY_EXTRA_ARGS",
+                "CDK_DEPLOY_TOOLKIT_STACK_NAME",
+                "PUPPET_ACCOUNT_ID",
+                "CDK_DEPLOY_PARAMETER_ARGS",
+            ]
 
             bootstrapper_build = codebuild.start_build(
                 projectName=project_name,
                 environmentVariablesOverride=[
                     {
                         "name": "UId",
-                        "value": properties.get('UId'),
+                        "value": properties.get("UId"),
                         "type": "PLAINTEXT",
-                    },{
+                    },
+                    {
                         "name": "ON_COMPLETE_URL",
-                        "value": properties.get('Handle'),
+                        "value": properties.get("Handle"),
                         "type": "PLAINTEXT",
-                    }] + [{"name": p, "type":"PLAINTEXT", "value": properties.get(p)} for p in args],
+                    },
+                ]
+                + [
+                    {"name": p, "type": "PLAINTEXT", "value": properties.get(p)}
+                    for p in args
+                ],
             ).get("build")
             build_status = bootstrapper_build.get("buildStatus")
             send_response(
@@ -35,12 +47,7 @@ def handler(event, context):
             )
         else:
             send_response(
-                event,
-                context,
-                "SUCCESS",
-                {
-                    "Message": f"{request_type} successful",
-                },
+                event, context, "SUCCESS", {"Message": f"{request_type} successful",},
             )
 
     except Exception as ex:
