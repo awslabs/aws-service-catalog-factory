@@ -16,7 +16,7 @@ from . import aws
 from . import constants
 from . import utils
 from . import config
-from .template_builder import product_template_factory
+from servicecatalog_factory.template_builder import product_template_factory
 
 logger = logging.getLogger(__file__)
 
