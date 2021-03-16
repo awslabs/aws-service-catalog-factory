@@ -3,7 +3,6 @@
 import time
 
 import traceback
-from copy import deepcopy
 from pathlib import Path
 import jinja2
 import luigi
@@ -12,11 +11,11 @@ import logging
 import json
 import cfn_tools
 
-from . import aws
-from . import constants
-from . import utils
-from . import config
-from servicecatalog_factory.template_builder import product_template_factory
+from servicecatalog_factory import aws
+from servicecatalog_factory import constants
+from servicecatalog_factory import utils
+from servicecatalog_factory import config
+# from servicecatalog_factory.template_builder import product_template_factory
 
 logger = logging.getLogger(__file__)
 
@@ -657,9 +656,10 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
             friendly_uid = product_details.get("uid")
 
         if self.template.get("Name"):
-            rendered = product_template_factory.get(
-                self.template.get("Name"), self.template.get("Version")
-            ).render(self.template, self.product.get("Name"), self.version.get("Name"), source, product_ids_by_region, tags, friendly_uid)
+            pass
+            # rendered = product_template_factory.get(
+            #     self.template.get("Name"), self.template.get("Version")
+            # ).render(self.template, self.product.get("Name"), self.version.get("Name"), source, product_ids_by_region, tags, friendly_uid)
 
         elif self.provisioner.get("Type") == "CloudFormation":
             rendered = self.handle_cloudformation_provisioner(

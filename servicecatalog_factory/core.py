@@ -30,12 +30,13 @@ import shutil
 from datetime import datetime
 from luigi import LuigiStatusCode
 
-from . import utils
-from . import constants
-from . import aws
-from . import luigi_tasks_and_targets
-from . import config
+from servicecatalog_factory import utils
+from servicecatalog_factory import constants
+from servicecatalog_factory import aws
+from servicecatalog_factory import luigi_tasks_and_targets
+from servicecatalog_factory import config
 from servicecatalog_factory.template_builder import product_templates
+from servicecatalog_factory.template_builder.cdk import cdk_support
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -1699,3 +1700,8 @@ def update_provisioned_product(region, name, product_id, description, template_u
                     ProductId=product_id,
                     ProvisioningArtifactId=provisioning_artifact_detail.get("Id"),
                 )
+
+
+def generate_template(name, version, p):
+    if name == "CDK" and version == "1.0.0":
+        cdk_support.create_cdk_pipeline(name, version, p)

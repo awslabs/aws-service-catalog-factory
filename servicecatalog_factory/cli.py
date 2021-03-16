@@ -2,7 +2,6 @@
 # SPDX-License-Identifier: Apache-2.0
 import yaml
 from servicecatalog_factory import core
-from servicecatalog_factory import cdk_support
 import logging
 import click
 
@@ -409,9 +408,7 @@ def update_provisioned_product(region, name, product_id, description, template_u
 @click.argument("version")
 @click.argument("p", type=click.Path(exists=True))
 def generate_template(name, version, p):
-    # need to run npm run cdk synth -- --output sct-synth-output first
-    if name == "CDK" and version == "1.0.0":
-        cdk_support.create_cdk_pipeline(name, version, p)
+    core.generate_template(name, version, p)
 
 
 if __name__ == "__main__":

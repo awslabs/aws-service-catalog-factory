@@ -1,5 +1,3 @@
-from servicecatalog_factory import config
-
 import troposphere as t
 
 from servicecatalog_factory.template_builder.cdk import shared_resources

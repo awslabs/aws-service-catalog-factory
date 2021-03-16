@@ -5,7 +5,9 @@ package_dir = \
 {'': '.'}
 
 packages = \
-['servicecatalog_factory']
+['servicecatalog_factory',
+ 'servicecatalog_factory.template_builder',
+ 'servicecatalog_factory.template_builder.cdk']
 
 package_data = \
 {'': ['*'],
@@ -25,7 +27,8 @@ install_requires = \
  'pylint==2.5.0',
  'pyyaml==5.3.1',
  'requests==2.22.0',
- 'terminaltables==3.1.0']
+ 'terminaltables==3.1.0',
+ 'troposphere>=2.6.4,<3.0.0']
 
 entry_points = \
 {'console_scripts': ['servicecatalog-factory = servicecatalog_factory.cli:cli']}
