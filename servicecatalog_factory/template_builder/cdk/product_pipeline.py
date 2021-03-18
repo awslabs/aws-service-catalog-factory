@@ -212,7 +212,7 @@ class CDK100Template(BaseTemplate):
                     InputArtifacts=[
                         codepipeline.InputArtifacts(Name=BUILD_OUTPUT_ARTIFACT),
                     ],
-                    Name="Validate",
+                    Name="Package",
                     ActionTypeId=codepipeline.ActionTypeId(
                         Category="Build",
                         Owner="AWS",
@@ -248,7 +248,7 @@ class CDK100Template(BaseTemplate):
                     InputArtifacts=[
                         codepipeline.InputArtifacts(Name=PACKAGE_OUTPUT_ARTIFACT),
                     ],
-                    Name="Validate",
+                    Name="Deploy",
                     ActionTypeId=codepipeline.ActionTypeId(
                         Category="Build",
                         Owner="AWS",
