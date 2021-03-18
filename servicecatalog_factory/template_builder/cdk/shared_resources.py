@@ -20,19 +20,11 @@ def get_commands_for_deploy() -> list:
     commands = []
     for region in all_regions:
         url = f"https://sc-factory-artifacts-$ACCOUNT_ID-{region}.s3.{region}.amazonaws.com/cdk/1.0.0/$NAME/$VERSION/product.template-{region}.yaml"
-        commands += [
-            f"export R=$(echo {region} | sed 's/-/_/g')",
-            "echo $R",
-            'export PRODUCT_ID=$(eval "echo \$PRODUCT_ID_$R")',
-            "echo $PRODUCT_ID",
-            f"export PRODUCT_ID=$PRODUCT_ID_{region.replace('-','_')}",
-            "echo $PRODUCT_ID",
-        ]
         commands.append(
-            f"echo aws servicecatalog create-provisioning-artifact --region {region} --product-id $PRODUCT_ID --parameters Name=$VERSION,Description=\"$DESCRIPTION\",Info={{LoadTemplateFromURL={url}}},Type=CLOUD_FORMATION_TEMPLATE"
+            f"echo aws servicecatalog create-provisioning-artifact --region {region} --product-id $PRODUCT_ID_{region.replace('-','_')} --parameters Name=$VERSION,Description=\"$DESCRIPTION\",Info={{LoadTemplateFromURL={url}}},Type=CLOUD_FORMATION_TEMPLATE"
         )
         commands.append(
-            f"aws servicecatalog create-provisioning-artifact --region {region} --product-id $PRODUCT_ID --parameters Name=$VERSION,Description=\"$DESCRIPTION\",Info={{LoadTemplateFromURL={url}}},Type=CLOUD_FORMATION_TEMPLATE"
+            f"aws servicecatalog create-provisioning-artifact --region {region} --product-id $PRODUCT_ID_{region.replace('-','_')} --parameters Name=$VERSION,Description=\"$DESCRIPTION\",Info={{LoadTemplateFromURL={url}}},Type=CLOUD_FORMATION_TEMPLATE"
         )
 
     return commands
