@@ -7,18 +7,31 @@ from servicecatalog_factory.template_builder.base_template import (
     BUILD_OUTPUT_ARTIFACT,
     VALIDATE_OUTPUT_ARTIFACT,
     PACKAGE_OUTPUT_ARTIFACT,
+    DEPLOY_OUTPUT_ARTIFACT,
 )
 import json
 
 from servicecatalog_factory.template_builder import shared_resources
 
-from servicecatalog_factory.template_builder.cdk import shared_resources as cdk_shared_resources
+from servicecatalog_factory.template_builder.cdk import (
+    shared_resources as cdk_shared_resources,
+)
 
 
 class CDK100Template(BaseTemplate):
-    def render(self, template, name, version, source, product_ids_by_region, tags, friendly_uid) -> str:
-        description = f"{friendly_uid}-{version}"
-        tpl = t.Template(Description=description)
+    def render(
+        self,
+        template,
+        name,
+        version,
+        description,
+        source,
+        product_ids_by_region,
+        tags,
+        friendly_uid,
+    ) -> str:
+        template_description = f"{friendly_uid}-{version}"
+        tpl = t.Template(Description=template_description)
 
         all_regions = product_ids_by_region.keys()
 
@@ -28,7 +41,9 @@ class CDK100Template(BaseTemplate):
                 dict(
                     codecommit=codepipeline.Actions(
                         RunOrder=1,
-                        RoleArn=t.Sub("arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/SourceRole"),
+                        RoleArn=t.Sub(
+                            "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/SourceRole"
+                        ),
                         ActionTypeId=codepipeline.ActionTypeId(
                             Category="Source",
                             Owner="AWS",
@@ -82,7 +97,9 @@ class CDK100Template(BaseTemplate):
                     ),
                     codestarsourceconnection=codepipeline.Actions(
                         RunOrder=1,
-                        RoleArn=t.Sub("arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/SourceRole"),
+                        RoleArn=t.Sub(
+                            "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/SourceRole"
+                        ),
                         ActionTypeId=codepipeline.ActionTypeId(
                             Category="Source",
                             Owner="AWS",
@@ -149,73 +166,137 @@ class CDK100Template(BaseTemplate):
                     Configuration={
                         "ProjectName": cdk_shared_resources.CDK_BUILD_PROJECT_NAME,
                         "PrimarySource": SOURCE_OUTPUT_ARTIFACT,
-                        "EnvironmentVariables": t.Sub(json.dumps([
-                            dict(name="NAME",value=name,type="PLAINTEXT"),
-                            dict(name="VERSION",value=version,type="PLAINTEXT"),
-                        ]))
+                        "EnvironmentVariables": t.Sub(
+                            json.dumps(
+                                [
+                                    dict(name="NAME", value=name, type="PLAINTEXT"),
+                                    dict(
+                                        name="VERSION", value=version, type="PLAINTEXT"
+                                    ),
+                                ]
+                            )
+                        ),
                     },
                     RunOrder=1,
                 )
             ],
         )
 
-        validate_stage = codepipeline.Stages(Name="Validate", Actions=[
-            codepipeline.Actions(
-                InputArtifacts=[
-                    codepipeline.InputArtifacts(Name=BUILD_OUTPUT_ARTIFACT),
-                ],
-                Name="Validate",
-                ActionTypeId=codepipeline.ActionTypeId(
-                    Category="Test",
-                    Owner="AWS",
-                    Version="1",
-                    Provider="CodeBuild",
-                ),
-                OutputArtifacts=[
-                    codepipeline.OutputArtifacts(Name=VALIDATE_OUTPUT_ARTIFACT)
-                ],
-                Configuration={
-                    "ProjectName": shared_resources.VALIDATE_PROJECT_NAME,
-                    "PrimarySource": BUILD_OUTPUT_ARTIFACT,
-                },
-                RunOrder=1,
-            )
-        ])
+        validate_stage = codepipeline.Stages(
+            Name="Validate",
+            Actions=[
+                codepipeline.Actions(
+                    InputArtifacts=[
+                        codepipeline.InputArtifacts(Name=BUILD_OUTPUT_ARTIFACT),
+                    ],
+                    Name="Validate",
+                    ActionTypeId=codepipeline.ActionTypeId(
+                        Category="Test", Owner="AWS", Version="1", Provider="CodeBuild",
+                    ),
+                    OutputArtifacts=[
+                        codepipeline.OutputArtifacts(Name=VALIDATE_OUTPUT_ARTIFACT)
+                    ],
+                    Configuration={
+                        "ProjectName": shared_resources.VALIDATE_PROJECT_NAME,
+                        "PrimarySource": BUILD_OUTPUT_ARTIFACT,
+                    },
+                    RunOrder=1,
+                )
+            ],
+        )
         #
-        package_stage = codepipeline.Stages(Name="Package", Actions=[
-            codepipeline.Actions(
-                InputArtifacts=[
-                    codepipeline.InputArtifacts(Name=BUILD_OUTPUT_ARTIFACT),
-                ],
-                Name="Validate",
-                ActionTypeId=codepipeline.ActionTypeId(
-                    Category="Build",
-                    Owner="AWS",
-                    Version="1",
-                    Provider="CodeBuild",
-                ),
-                OutputArtifacts=[
-                    codepipeline.OutputArtifacts(Name=PACKAGE_OUTPUT_ARTIFACT)
-                ],
-                Configuration={
-                    "ProjectName": cdk_shared_resources.CDK_PACKAGE_PROJECT_NAME,
-                    "PrimarySource": BUILD_OUTPUT_ARTIFACT,
-                    "EnvironmentVariables": t.Sub(json.dumps([
-                        dict(name="NAME",value=name,type="PLAINTEXT"),
-                        dict(name="VERSION",value=version,type="PLAINTEXT"),
-                    ]))
-                },
-                RunOrder=1,
-            )
-        ])
+        package_stage = codepipeline.Stages(
+            Name="Package",
+            Actions=[
+                codepipeline.Actions(
+                    InputArtifacts=[
+                        codepipeline.InputArtifacts(Name=BUILD_OUTPUT_ARTIFACT),
+                    ],
+                    Name="Validate",
+                    ActionTypeId=codepipeline.ActionTypeId(
+                        Category="Build",
+                        Owner="AWS",
+                        Version="1",
+                        Provider="CodeBuild",
+                    ),
+                    OutputArtifacts=[
+                        codepipeline.OutputArtifacts(Name=PACKAGE_OUTPUT_ARTIFACT)
+                    ],
+                    Configuration={
+                        "ProjectName": cdk_shared_resources.CDK_PACKAGE_PROJECT_NAME,
+                        "PrimarySource": BUILD_OUTPUT_ARTIFACT,
+                        "EnvironmentVariables": t.Sub(
+                            json.dumps(
+                                [
+                                    dict(name="NAME", value=name, type="PLAINTEXT"),
+                                    dict(
+                                        name="VERSION", value=version, type="PLAINTEXT"
+                                    ),
+                                ]
+                            )
+                        ),
+                    },
+                    RunOrder=1,
+                )
+            ],
+        )
 
-        # deploy_stage = codepipeline.Stages(Name="Deploy", Actions=[])
+        deploy_stage = codepipeline.Stages(
+            Name="Deploy",
+            Actions=[
+                codepipeline.Actions(
+                    InputArtifacts=[
+                        codepipeline.InputArtifacts(Name=PACKAGE_OUTPUT_ARTIFACT),
+                    ],
+                    Name="Validate",
+                    ActionTypeId=codepipeline.ActionTypeId(
+                        Category="Build",
+                        Owner="AWS",
+                        Version="1",
+                        Provider="CodeBuild",
+                    ),
+                    OutputArtifacts=[
+                        codepipeline.OutputArtifacts(Name=DEPLOY_OUTPUT_ARTIFACT)
+                    ],
+                    Configuration={
+                        "ProjectName": cdk_shared_resources.CDK_DEPLOY_PROJECT_NAME,
+                        "PrimarySource": PACKAGE_OUTPUT_ARTIFACT,
+                        "EnvironmentVariables": t.Sub(
+                            json.dumps(
+                                [
+                                    dict(name="NAME", value=name, type="PLAINTEXT"),
+                                    dict(
+                                        name="VERSION", value=version, type="PLAINTEXT"
+                                    ),
+                                    dict(
+                                        name="DESCRIPTION",
+                                        value=description,
+                                        type="PLAINTEXT",
+                                    ),
+                                ] + [
+                                    dict(name=f"PRODUCT_ID_{region.replace('-', '_')}", value=product_ids_by_region[region], type="PLAINTEXT") for region in all_regions
+                                ]
+                            )
+                        ),
+                    },
+                    RunOrder=1,
+                )
+            ],
+        )
 
         pipeline = tpl.add_resource(
             codepipeline.Pipeline(
                 "Pipeline",
-                RoleArn=t.Sub("arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/CodePipelineRole"),
-                Stages=[source_stage, build_stage, validate_stage, package_stage],
+                RoleArn=t.Sub(
+                    "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/CodePipelineRole"
+                ),
+                Stages=[
+                    source_stage,
+                    build_stage,
+                    validate_stage,
+                    package_stage,
+                    deploy_stage,
+                ],
                 Name=t.Sub("${AWS::StackName}-pipeline"),
                 ArtifactStores=[
                     codepipeline.ArtifactStoreMap(

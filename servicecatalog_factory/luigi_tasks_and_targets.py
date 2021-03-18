@@ -658,7 +658,16 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
         if self.template.get("Name"):
             rendered = product_template_factory.get(
                 self.template.get("Name"), self.template.get("Version")
-            ).render(self.template, self.product.get("Name"), self.version.get("Name"), source, product_ids_by_region, tags, friendly_uid)
+            ).render(
+                self.template,
+                self.product.get("Name"),
+                self.version.get("Name"),
+                self.version.get("Description", self.product.get("Description")),
+                source,
+                product_ids_by_region,
+                tags,
+                friendly_uid,
+            )
 
         elif self.provisioner.get("Type") == "CloudFormation":
             rendered = self.handle_cloudformation_provisioner(

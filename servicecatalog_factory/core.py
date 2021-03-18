@@ -36,7 +36,9 @@ from servicecatalog_factory import aws
 from servicecatalog_factory import luigi_tasks_and_targets
 from servicecatalog_factory import config
 from servicecatalog_factory.template_builder import product_templates
-from servicecatalog_factory.template_builder.cdk import cdk_support
+from servicecatalog_factory.template_builder.cdk import (
+    template_pipeline as cdk_template_pipeline,
+)
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -920,9 +922,7 @@ def bootstrap(
         cloudformation.create_or_update(**args)
         cloudformation.create_or_update(
             StackName=constants.BOOTSTRAP_TEMPLATES_STACK_NAME,
-            TemplateBody=product_templates.get_template().to_yaml(
-                clean_up=True
-            ),
+            TemplateBody=product_templates.get_template().to_yaml(clean_up=True),
             Capabilities=["CAPABILITY_NAMED_IAM"],
         )
         response = cloudformation.describe_stacks(
@@ -1702,7 +1702,9 @@ def update_provisioned_product(region, name, product_id, description, template_u
                 )
 
 
-def generate_template(name, version, product_name, product_version, p)-> str:
+def generate_template(name, version, product_name, product_version, p) -> str:
     if name == "CDK" and version == "1.0.0":
-        return cdk_support.create_cdk_pipeline(name, version, product_name, product_version, p).to_yaml(clean_up=True)
+        return cdk_template_pipeline.create_cdk_pipeline(
+            name, version, product_name, product_version, p
+        ).to_yaml(clean_up=True)
     raise Exception(f"Unknown {name} and {version}")

@@ -10,10 +10,7 @@ from servicecatalog_factory import config
 
 PREFIX = "sct-synth-output"
 
-START_PROJECT_CODE = open(
-    f"{os.path.dirname(__file__)}/code.py",
-    "r",
-).read()
+START_PROJECT_CODE = open(f"{os.path.dirname(__file__)}/code.py", "r",).read()
 
 
 def create_cdk_pipeline(name, version, product_name, product_version, p) -> t.Template:
@@ -59,7 +56,9 @@ def create_cdk_pipeline(name, version, product_name, product_version, p) -> t.Te
                 "Parameters", {}
             ).items():
                 if template.parameters.get(parameter_name) is None:
-                    template.add_parameter(t.Parameter(parameter_name, **parameter_details))
+                    template.add_parameter(
+                        t.Parameter(parameter_name, **parameter_details)
+                    )
                 cdk_deploy_parameter_args.append(
                     f"--parameters {artifact_name}:{parameter_name}=${{{parameter_name}}}"
                 )
@@ -160,16 +159,8 @@ def create_cdk_pipeline(name, version, product_name, product_version, p) -> t.Te
                         "Name": "ON_COMPLETE_URL",
                         "Value": "CHANGE_ME",
                     },
-                    {
-                        "Type": "PLAINTEXT",
-                        "Name": "NAME",
-                        "Value": product_name,
-                    },
-                    {
-                        "Type": "PLAINTEXT",
-                        "Name": "VERSION",
-                        "Value": product_version,
-                    },
+                    {"Type": "PLAINTEXT", "Name": "NAME", "Value": product_name,},
+                    {"Type": "PLAINTEXT", "Name": "VERSION", "Value": product_version,},
                 ],
             ),
             Source=codebuild.Source(

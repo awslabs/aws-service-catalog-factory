@@ -2,7 +2,9 @@ import troposphere as t
 from troposphere import codebuild
 import yaml
 from servicecatalog_factory import constants
-from servicecatalog_factory.template_builder.base_template import VALIDATE_OUTPUT_ARTIFACT
+from servicecatalog_factory.template_builder.base_template import (
+    VALIDATE_OUTPUT_ARTIFACT,
+)
 
 VALIDATE_PROJECT_NAME = "ServiceCatalog-Factory-SharedValidate"
 
