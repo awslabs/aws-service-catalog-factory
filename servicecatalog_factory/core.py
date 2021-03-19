@@ -1,4 +1,4 @@
-# Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
 import hashlib
@@ -30,11 +30,15 @@ import shutil
 from datetime import datetime
 from luigi import LuigiStatusCode
 
-from . import utils
-from . import constants
-from . import aws
-from . import luigi_tasks_and_targets
-from . import config
+from servicecatalog_factory import utils
+from servicecatalog_factory import constants
+from servicecatalog_factory import aws
+from servicecatalog_factory import luigi_tasks_and_targets
+from servicecatalog_factory import config
+from servicecatalog_factory.template_builder import product_templates
+from servicecatalog_factory.template_builder.cdk import (
+    template_pipeline as cdk_template_pipeline,
+)
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
@@ -53,12 +57,7 @@ ENV = Environment(loader=FileSystemLoader(TEMPLATE_DIR), extensions=["jinja2.ext
 
 
 def get_regions():
-    with betterboto_client.ClientContextManager(
-        "ssm", region_name=constants.HOME_REGION
-    ) as ssm:
-        response = ssm.get_parameter(Name=constants.CONFIG_PARAM_NAME)
-        config = yaml.safe_load(response.get("Parameter").get("Value"))
-        return config.get("regions")
+    return config.get_regions()
 
 
 def merge(dict1, dict2):
@@ -248,9 +247,10 @@ def generate_for_portfolios_versions(
 ):
     for version_pipeline_to_build in pipeline_versions:
         version_details = version_pipeline_to_build.get("version")
+        product_details = version_pipeline_to_build.get("product")
 
         if version_details.get("Status", "active") == "terminated":
-            product_name = version_pipeline_to_build.get("product").get("Name")
+            product_name = product_details.get("Name")
 
             for region, product_args in products_by_region.get(product_name).items():
                 task_id = f"pipeline_template_{product_name}-{version_details.get('Name')}-{region}"
@@ -259,9 +259,9 @@ def generate_for_portfolios_versions(
                 )
 
         else:
-            product_name = version_pipeline_to_build.get("product").get("Name")
+            product_name = product_details.get("Name")
             tags = {}
-            for tag in version_pipeline_to_build.get("product").get("Tags", []):
+            for tag in product_details.get("Tags", []):
                 tags[tag.get("Key")] = tag.get("Value")
 
             for tag in version_details.get("Tags", []):
@@ -273,9 +273,13 @@ def generate_for_portfolios_versions(
             create_args = {
                 "all_regions": all_regions,
                 "version": version_details,
-                "product": version_pipeline_to_build.get("product"),
+                "product": product_details,
                 "provisioner": version_details.get(
                     "Provisioner", {"Type": "CloudFormation"}
+                ),
+                "template": utils.merge(
+                    product_details.get("Template", {}),
+                    version_details.get("Template", {}),
                 ),
                 "products_args_by_region": products_by_region.get(product_name),
                 "factory_version": factory_version,
@@ -301,7 +305,6 @@ def generate_for_portfolios_versions(
 def generate_for_products_versions(
     all_regions, all_tasks, factory_version, products_versions, products_by_region,
 ):
-
     for product_name, pipeline_details in products_versions.items():
 
         for version in pipeline_details:
@@ -892,10 +895,16 @@ def bootstrap(
             }
         )
     template = Template(template).render(
-        VERSION=constants.VERSION, ALL_REGIONS=all_regions, Source=source_args, create_repo=create_repo
+        VERSION=constants.VERSION,
+        ALL_REGIONS=all_regions,
+        Source=source_args,
+        create_repo=create_repo,
     )
     template = Template(template).render(
-        VERSION=constants.VERSION, ALL_REGIONS=all_regions, Source=source_args, create_repo=create_repo
+        VERSION=constants.VERSION,
+        ALL_REGIONS=all_regions,
+        Source=source_args,
+        create_repo=create_repo,
     )
     args = {
         "StackName": constants.BOOTSTRAP_STACK_NAME,
@@ -911,6 +920,11 @@ def bootstrap(
     }
     with betterboto_client.ClientContextManager("cloudformation") as cloudformation:
         cloudformation.create_or_update(**args)
+        cloudformation.create_or_update(
+            StackName=constants.BOOTSTRAP_TEMPLATES_STACK_NAME,
+            TemplateBody=product_templates.get_template().to_yaml(clean_up=True),
+            Capabilities=["CAPABILITY_NAMED_IAM"],
+        )
         response = cloudformation.describe_stacks(
             StackName=constants.BOOTSTRAP_STACK_NAME
         )
@@ -1596,13 +1610,19 @@ def deploy_launch_constraints(partition):
     all_regions = get_regions()
 
     for region in all_regions:
-        with betterboto_client.ClientContextManager("cloudformation", region_name=region) as cfn:
-            cfn.ensure_deleted(StackName=f"servicecatalog-factory-constraints-launch-role-{region}")
-            template_body = open(f"output/constraints/launch-role/{region}.template.yaml", "r").read()
+        with betterboto_client.ClientContextManager(
+            "cloudformation", region_name=region
+        ) as cfn:
+            cfn.ensure_deleted(
+                StackName=f"servicecatalog-factory-constraints-launch-role-{region}"
+            )
+            template_body = open(
+                f"output/constraints/launch-role/{region}.template.yaml", "r"
+            ).read()
             cfn.create_or_update(
                 StackName=f"servicecatalog-factory-constraints-launch-role-v2-{region}",
                 TemplateBody=template_body,
-                RoleARN=f"arn:{partition}:iam::{account_id}:role/servicecatalog-factory/FactoryCloudFormationDeployRole"
+                RoleARN=f"arn:{partition}:iam::{account_id}:role/servicecatalog-factory/FactoryCloudFormationDeployRole",
             )
 
 
@@ -1680,3 +1700,11 @@ def update_provisioned_product(region, name, product_id, description, template_u
                     ProductId=product_id,
                     ProvisioningArtifactId=provisioning_artifact_detail.get("Id"),
                 )
+
+
+def generate_template(name, version, product_name, product_version, p) -> str:
+    if name == "CDK" and version == "1.0.0":
+        return cdk_template_pipeline.create_cdk_pipeline(
+            name, version, product_name, product_version, p
+        ).to_yaml(clean_up=True)
+    raise Exception(f"Unknown {name} and {version}")

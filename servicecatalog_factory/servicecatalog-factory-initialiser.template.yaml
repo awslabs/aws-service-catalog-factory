@@ -1,4 +1,4 @@
-# Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
 AWSTemplateFormatVersion: "2010-09-09"
@@ -73,12 +73,14 @@ Parameters:
     Type: String
   SCMShouldCreateRepo:
     Type: String
+    Description: "Setting this to True means the tool creates the repo and manages it. Changing from True to False will cause already created repos to be deleted."
     AllowedValues:
       - "true"
       - "false"
     Default: "true"
   Version:
     Type: String
+    Description: "Do not change this unless told to do so"
     Default: aws-service-catalog-factory
 
 

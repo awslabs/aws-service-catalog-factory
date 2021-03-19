@@ -87,12 +87,12 @@ Resources:
                 Version: '1'
               Configuration:
                 BucketName: {{ Source.Configuration.BucketName }}
-                ObjectKey: {{ Source.Configuration.ObjectKey }}
+                S3ObjectKey: {{ Source.Configuration.S3ObjectKey }}
               OutputArtifacts:
                 - Name: Source
               RunOrder: '1'
 
-            {% else %}
+              {% else %}
 
             - Name: Source
               ActionTypeId:

@@ -1,4 +1,4 @@
-# Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 import yaml
 from servicecatalog_factory import core
@@ -378,6 +378,7 @@ def set_regions(regions):
 def generate_launch_constraints(p):
     core.generate_launch_constraints(p)
 
+
 @cli.command()
 @click.option("--partition", envvar="PARTITION")
 def deploy_launch_constraints(partition):
@@ -400,6 +401,16 @@ def print_source_directory(pipeline_name, execution_id, artifact):
 @click.argument("template-url")
 def update_provisioned_product(region, name, product_id, description, template_url):
     core.update_provisioned_product(region, name, product_id, description, template_url)
+
+
+@cli.command()
+@click.argument("name")
+@click.argument("version")
+@click.argument("product_name")
+@click.argument("product_version")
+@click.argument("p", type=click.Path(exists=True))
+def generate_template(name, version, product_name, product_version, p):
+    click.echo(core.generate_template(name, version, product_name, product_version, p))
 
 
 if __name__ == "__main__":

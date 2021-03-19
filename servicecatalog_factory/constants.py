@@ -1,4 +1,4 @@
-# Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
 import os
@@ -10,9 +10,10 @@ HASH_PREFIX = "a"
 CONFIG_PARAM_NAME = "/servicecatalog-factory/config"
 
 PUBLISHED_VERSION = pkg_resources.require("aws-service-catalog-factory")[0].version
-VERSION = PUBLISHED_VERSION
+VERSION = os.getenv("SCF_VERSION_OVERRIDE", PUBLISHED_VERSION)
 
 BOOTSTRAP_STACK_NAME = "servicecatalog-factory"
+BOOTSTRAP_TEMPLATES_STACK_NAME = "servicecatalog-factory-templates"
 SERVICE_CATALOG_FACTORY_REPO_NAME = "ServiceCatalogFactory"
 NON_RECOVERABLE_STATES = [
     "ROLLBACK_COMPLETE",
@@ -74,3 +75,9 @@ PACKAGE_BUILD_SPEC_DEFAULT = """
           - '*'
           - '**/*'
 """
+
+ENVIRONMENT_COMPUTE_TYPE_DEFAULT = "BUILD_GENERAL1_SMALL"
+ENVIRONMENT_IMAGE_DEFAULT = "aws/codebuild/standard:4.0"
+ENVIRONMENT_TYPE_DEFAULT = "LINUX_CONTAINER"
+
+BUILDSPEC_RUNTIME_VERSIONS_NODEJS_DEFAULT = "12"
