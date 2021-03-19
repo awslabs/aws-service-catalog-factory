@@ -45,8 +45,8 @@ resources = [
             Image=constants.ENVIRONMENT_IMAGE_DEFAULT,
             Type=constants.ENVIRONMENT_TYPE_DEFAULT,
             EnvironmentVariables=[
-                {"Type": "PLAINTEXT", "Name": "NAME", "Value": "CHANGE_ME", },
-                {"Type": "PLAINTEXT", "Name": "VERSION", "Value": "CHANGE_ME", },
+                {"Type": "PLAINTEXT", "Name": "NAME", "Value": "CHANGE_ME",},
+                {"Type": "PLAINTEXT", "Name": "VERSION", "Value": "CHANGE_ME",},
             ],
         ),
         Source=codebuild.Source(
@@ -81,7 +81,7 @@ resources = [
                         artifacts={
                             "name": BUILD_OUTPUT_ARTIFACT,
                             "files": ["*", "**/*"],
-                            "exclude-paths": ["node_modules/*"],
+                            "exclude-paths": ["sct-synth-output/*"],
                         },
                     )
                 )
@@ -120,25 +120,26 @@ resources = [
                         version=0.2,
                         phases=dict(
                             build={
-                                "commands": ['zip -r $NAME-$VERSION.zip . -x "node_modules/*"']
-                                            + [
-                                                f"aws cloudformation package --region {region} --template $(pwd)/product.template.yaml --s3-bucket sc-factory-artifacts-$ACCOUNT_ID-{region} --s3-prefix /cdk/1.0.0/$NAME/$VERSION --output-template-file product.template-{region}.yaml"
-                                                for region in all_regions
-                                            ]
-                                            + [
-                                                f"aws s3 cp --quiet product.template-{region}.yaml s3://sc-factory-artifacts-$ACCOUNT_ID-{region}/cdk/1.0.0/$NAME/$VERSION/product.template-{region}.yaml"
-                                                for region in all_regions
-                                            ]
-                                            + [
-                                                f"aws s3 cp --quiet $NAME-$VERSION.zip s3://sc-factory-artifacts-$ACCOUNT_ID-{region}/cdk/1.0.0/$NAME/$VERSION/$NAME-$VERSION.zip"
-                                                for region in all_regions
-                                            ]
+                                "commands": [
+                                    'zip -r $NAME-$VERSION.zip . -x "node_modules/*"'
+                                ]
+                                + [
+                                    f"aws cloudformation package --region {region} --template $(pwd)/product.template.yaml --s3-bucket sc-factory-artifacts-$ACCOUNT_ID-{region} --s3-prefix /cdk/1.0.0/$NAME/$VERSION --output-template-file product.template-{region}.yaml"
+                                    for region in all_regions
+                                ]
+                                + [
+                                    f"aws s3 cp --quiet product.template-{region}.yaml s3://sc-factory-artifacts-$ACCOUNT_ID-{region}/cdk/1.0.0/$NAME/$VERSION/product.template-{region}.yaml"
+                                    for region in all_regions
+                                ]
+                                + [
+                                    f"aws s3 cp --quiet $NAME-$VERSION.zip s3://sc-factory-artifacts-$ACCOUNT_ID-{region}/cdk/1.0.0/$NAME/$VERSION/$NAME-$VERSION.zip"
+                                    for region in all_regions
+                                ]
                             },
                         ),
                         artifacts={
                             "name": PACKAGE_OUTPUT_ARTIFACT,
-                            "files": ["*", "**/*"],
-                            "exclude-paths": ["node_modules/*"],
+                            "files": ["product.template-*.yaml"],
                         },
                     )
                 )
@@ -161,33 +162,33 @@ resources = [
             Image=constants.ENVIRONMENT_IMAGE_DEFAULT,
             Type=constants.ENVIRONMENT_TYPE_DEFAULT,
             EnvironmentVariables=[
-                                     {
-                                         "Type": "PLAINTEXT",
-                                         "Name": "ACCOUNT_ID",
-                                         "Value": t.Sub("${AWS::AccountId}"),
-                                     },
-                                     {"Type": "PLAINTEXT", "Name": "NAME", "Value": "CHANGE_ME"},
-                                     {"Type": "PLAINTEXT", "Name": "VERSION", "Value": "CHANGE_ME"},
-                                     {"Type": "PLAINTEXT", "Name": "DESCRIPTION", "Value": "CHANGE_ME"},
-                                 ] + [
-                                     dict(Name=f"PRODUCT_ID_{region.replace('-', '_')}", Value="CHANGE_ME",
-                                          Type="PLAINTEXT") for region in all_regions
-                                 ],
+                {
+                    "Type": "PLAINTEXT",
+                    "Name": "ACCOUNT_ID",
+                    "Value": t.Sub("${AWS::AccountId}"),
+                },
+                {"Type": "PLAINTEXT", "Name": "NAME", "Value": "CHANGE_ME"},
+                {"Type": "PLAINTEXT", "Name": "VERSION", "Value": "CHANGE_ME"},
+                {"Type": "PLAINTEXT", "Name": "DESCRIPTION", "Value": "CHANGE_ME"},
+            ]
+            + [
+                dict(
+                    Name=f"PRODUCT_ID_{region.replace('-', '_')}",
+                    Value="CHANGE_ME",
+                    Type="PLAINTEXT",
+                )
+                for region in all_regions
+            ],
         ),
         Source=codebuild.Source(
             BuildSpec=t.Sub(
                 yaml.safe_dump(
                     dict(
                         version=0.2,
-                        phases=dict(
-                            build={
-                                "commands": get_commands_for_deploy()
-                            },
-                        ),
+                        phases=dict(build={"commands": get_commands_for_deploy()},),
                         artifacts={
                             "name": DEPLOY_OUTPUT_ARTIFACT,
                             "files": ["*", "**/*"],
-                            "exclude-paths": ["node_modules"],
                         },
                     )
                 )

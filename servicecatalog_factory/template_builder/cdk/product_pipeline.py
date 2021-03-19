@@ -273,8 +273,14 @@ class CDK100Template(BaseTemplate):
                                         value=description,
                                         type="PLAINTEXT",
                                     ),
-                                ] + [
-                                    dict(name=f"PRODUCT_ID_{region.replace('-', '_')}", value=product_ids_by_region[region], type="PLAINTEXT") for region in all_regions
+                                ]
+                                + [
+                                    dict(
+                                        name=f"PRODUCT_ID_{region.replace('-', '_')}",
+                                        value=product_ids_by_region[region],
+                                        type="PLAINTEXT",
+                                    )
+                                    for region in all_regions
                                 ]
                             )
                         ),

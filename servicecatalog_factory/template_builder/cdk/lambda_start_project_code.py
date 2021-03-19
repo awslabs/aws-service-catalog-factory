@@ -1,6 +1,7 @@
 import json
 from urllib.request import Request, urlopen
 import boto3
+import logging
 
 
 def handler(event, context):
@@ -12,37 +13,39 @@ def handler(event, context):
             codebuild = boto3.client("codebuild")
             args = [
                 "CDK_DEPLOY_EXTRA_ARGS",
-                "CDK_DEPLOY_TOOLKIT_STACK_NAME",
+                "CDK_TOOLKIT_STACK_NAME",
                 "PUPPET_ACCOUNT_ID",
                 "CDK_DEPLOY_PARAMETER_ARGS",
+                "CDK_DEPLOY_REQUIRE_APPROVAL",
+                "NAME",
+                "VERSION",
             ]
 
+            evo = [
+                {
+                    "name": "ON_COMPLETE_URL",
+                    "value": properties.get("Handle"),
+                    "type": "PLAINTEXT",
+                },
+            ] + [
+                {"name": p, "type": "PLAINTEXT", "value": properties.get(p)}
+                for p in args
+            ]
+
+            print(evo)
+
             bootstrapper_build = codebuild.start_build(
-                projectName=project_name,
-                environmentVariablesOverride=[
-                    {
-                        "name": "UId",
-                        "value": properties.get("UId"),
-                        "type": "PLAINTEXT",
-                    },
-                    {
-                        "name": "ON_COMPLETE_URL",
-                        "value": properties.get("Handle"),
-                        "type": "PLAINTEXT",
-                    },
-                ]
-                + [
-                    {"name": p, "type": "PLAINTEXT", "value": properties.get(p)}
-                    for p in args
-                ],
+                projectName=project_name, environmentVariablesOverride=evo,
             ).get("build")
             build_status = bootstrapper_build.get("buildStatus")
+            build_id = bootstrapper_build.get("id")
             send_response(
                 event,
                 context,
                 "SUCCESS",
                 {
                     "Message": f"{request_type} successful.  Build status: {build_status}",
+                    "BuildId": build_id,
                 },
             )
         else:
@@ -51,20 +54,21 @@ def handler(event, context):
             )
 
     except Exception as ex:
-        send_response(event, context, "FAILED", {"Message": "Exception"})
+        print(logging.traceback.format_exc())
+        send_response(event, context, "FAILED", {"Message": f"Exception {ex}"})
 
 
-def send_response(e, c, rs, rd):
-    print(e, c, rs, rd)
+def send_response(e, c, status, data):
+    print(e, c, status, data)
     r = json.dumps(
         {
-            "Status": rs,
+            "Status": status,
             "Reason": "CloudWatch Log Stream: " + c.log_stream_name,
             "PhysicalResourceId": c.log_stream_name,
             "StackId": e["StackId"],
             "RequestId": e["RequestId"],
             "LogicalResourceId": e["LogicalResourceId"],
-            "Data": rd,
+            "Data": data,
         }
     )
     d = str.encode(r)
