@@ -1,17 +1,12 @@
+# Copyright 2019 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
 import json
 import troposphere as t
-import os
 from troposphere import cloudformation
 from servicecatalog_factory import constants
 
 PREFIX = "sct-synth-output"
-
-START_PROJECT_CODE = open(
-    f"{os.path.dirname(__file__)}/lambda_start_project_code.py", "r",
-).read()
-GET_OUTPUTS_CODE_PROJECT_CODE = open(
-    f"{os.path.dirname(__file__)}/lambda_get_outputs_code.py", "r",
-).read()
 
 
 def create_cdk_pipeline(name, version, product_name, product_version, p) -> t.Template:
