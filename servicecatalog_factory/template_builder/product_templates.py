@@ -9,7 +9,7 @@ from servicecatalog_factory.template_builder.cdk import (
 
 
 def get_template() -> t.Template:
-    description = "todo"
+    description = "Shared resources used by product pipelines"
     tpl = t.Template(Description=description)
 
     for resource in shared_resources.resources + cdk_shared_resources.resources:
