@@ -4,6 +4,7 @@
 import yaml
 from betterboto import client as betterboto_client
 from . import constants
+import functools
 
 
 def get_stack_version():
@@ -17,6 +18,7 @@ def get_stack_version():
         )
 
 
+@functools.lru_cache(maxsize=32)
 def get_regions():
     with betterboto_client.ClientContextManager(
         "ssm", region_name=constants.HOME_REGION
