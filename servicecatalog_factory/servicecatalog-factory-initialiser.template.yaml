@@ -4,7 +4,7 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: |
   Initialiser template used to bring up the install ServiceCatalog-Factory
-  {"version": "0.51.0", "framework": "servicecatalog-factory", "role": "initialiser"}
+  {"version": "0.54.0", "framework": "servicecatalog-factory", "role": "initialiser"}
 
 
 Metadata:
@@ -15,23 +15,22 @@ Metadata:
         Parameters:
           - EnabledRegions
       - Label:
-          default: "Source Code Management"
+          default: "Source Code Management - choose which one of the following sources you will use:"
         Parameters:
           - SCMSourceProvider
       - Label:
-          default: "CodeCommit Only"
+          default: "Option 1: CodeCommit"
         Parameters:
           - SCMRepositoryName
           - SCMBranchName
-          - SCMShouldCreateRepo
       - Label:
-          default: "CodeStarSourceConnection Only"
+          default: "Option 2: CodeStarSourceConnection"
         Parameters:
           - SCMConnectionArn
           - SCMFullRepositoryId
           - SCMBranchName
       - Label:
-          default: "S3 Only"
+          default: "Option 3: S3"
         Parameters:
           - SCMBucketName
           - SCMObjectKey

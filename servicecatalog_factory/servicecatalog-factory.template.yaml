@@ -47,7 +47,7 @@ Resources:
           Value: "Framework"
 
 
-  {% if Source.Provider.lower() == 'codecommit' and create_repo %}
+  {% if Source.Provider.lower() == 'codecommit' %}
   CodeRepo:
     Type: AWS::CodeCommit::Repository
     Properties:
