@@ -292,13 +292,9 @@ Resources:
     Properties:
       RoleArn: !GetAtt PipelineRole.Arn
       Name: !Sub "${AWS::StackName}-pipeline"
-      ArtifactStores:
-        {% for region in ALL_REGIONS %}
-        - Region: {{ region }}
-          ArtifactStore:
-            Type: S3
-            Location: !Sub "sc-factory-pipeline-artifacts-${AWS::AccountId}-{{region}}"
-        {% endfor %}
+      ArtifactStore:
+        Type: S3
+        Location: !Sub "sc-factory-pipeline-artifacts-${AWS::AccountId}-${AWS::Region}"
       RestartExecutionOnUpdate: true
       Stages:
         - Name: Source
