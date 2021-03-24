@@ -17,9 +17,8 @@ DEPLOY_IN_GOVCLOUD_PROJECT_NAME = "ServiceCatalog-Factory-SharedDeployInGovCloud
 def get_commands_for_deploy() -> list:
     commands = []
     for region in config.get_regions():
-        url = f"https://sc-factory-artifacts-$ACCOUNT_ID-{region}.s3.{region}.amazonaws.com/cloudformation/$CODEPIPELINE_ID/product.template-{region}.yaml"
         commands.append(
-            f"servicecatalog-factory create-or-update-provisioning-artifact {region} $PRODUCT_ID_{region.replace('-', '_')} $VERSION {url} \"$DESCRIPTION\""
+            f"servicecatalog-factory create-or-update-provisioning-artifact-from-codepipeline-id $PIPELINE_NAME $AWS_REGION $CODEPIPELINE_ID {region}"
         )
 
     return commands
@@ -86,22 +85,29 @@ def get_resources() -> list:
                 Image=constants.ENVIRONMENT_IMAGE_DEFAULT,
                 Type=constants.ENVIRONMENT_TYPE_DEFAULT,
                 EnvironmentVariables=[
-                    {
-                        "Type": "PLAINTEXT",
-                        "Name": "ACCOUNT_ID",
-                        "Value": t.Sub("${AWS::AccountId}"),
-                    },
-                    {"Type": "PLAINTEXT", "Name": "NAME", "Value": "CHANGE_ME"},
-                    {"Type": "PLAINTEXT", "Name": "VERSION", "Value": "CHANGE_ME"},
-                    {"Type": "PLAINTEXT", "Name": "DESCRIPTION", "Value": "CHANGE_ME"},
-                    {
-                        "Type": "PLAINTEXT",
-                        "Name": "CODEPIPELINE_ID",
-                        "Value": "CHANGE_ME",
-                    },
+                    codebuild.EnvironmentVariable(
+                        Type="PLAINTEXT",
+                        Name="ACCOUNT_ID",
+                        Value=t.Sub("${AWS::AccountId}"),
+                    ),
+                    codebuild.EnvironmentVariable(
+                        Type="PLAINTEXT", Name="NAME", Value="CHANGE_ME"
+                    ),
+                    codebuild.EnvironmentVariable(
+                        Type="PLAINTEXT", Name="VERSION", Value="CHANGE_ME"
+                    ),
+                    codebuild.EnvironmentVariable(
+                        Type="PLAINTEXT", Name="DESCRIPTION", Value="CHANGE_ME"
+                    ),
+                    codebuild.EnvironmentVariable(
+                        Type="PLAINTEXT", Name="CODEPIPELINE_ID", Value="CHANGE_ME"
+                    ),
+                    codebuild.EnvironmentVariable(
+                        Name="TEMPLATE_FORMAT", Type="PLAINTEXT", Value="yaml",
+                    ),
                 ]
                 + [
-                    dict(
+                    codebuild.EnvironmentVariable(
                         Name=f"PRODUCT_ID_{region.replace('-', '_')}",
                         Value="CHANGE_ME",
                         Type="PLAINTEXT",

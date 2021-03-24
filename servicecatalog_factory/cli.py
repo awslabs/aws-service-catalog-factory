@@ -413,16 +413,18 @@ def generate_template(name, version, product_name, product_version, p):
 
 
 @cli.command()
+@click.argument("pipeline-name")
+@click.argument("pipeline-region")
+@click.argument("codepipeline-id")
 @click.argument("region")
-@click.argument("product-id")
-@click.argument("version-name")
-@click.argument("template-url")
-@click.argument("description")
-def create_or_update_provisioning_artifact(
-    region, product_id, version_name, template_url, description
+def create_or_update_provisioning_artifact_from_codepipeline_id(
+    pipeline_name, pipeline_region, codepipeline_id, region
 ):
+    action_configuration = servicecatalog_facade.set_template_url_for_codepipeline_id(
+        pipeline_name, codepipeline_id, region
+    )
     servicecatalog_facade.create_or_update_provisioning_artifact(
-        region, product_id, version_name, template_url, description
+        region, pipeline_region, action_configuration
     )
 
 
