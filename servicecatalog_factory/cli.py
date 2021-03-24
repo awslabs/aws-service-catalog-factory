@@ -1,7 +1,7 @@
 # Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 import yaml
-from servicecatalog_factory import core
+from servicecatalog_factory import core, servicecatalog_facade
 import logging
 import click
 
@@ -34,9 +34,8 @@ def validate(p):
 
 @cli.command()
 @click.argument("p", type=click.Path(exists=True))
-@click.option("--branch-override")
-def generate_via_luigi(p, branch_override=None):
-    core.generate_via_luigi(p, branch_override)
+def generate_via_luigi(p):
+    core.generate_via_luigi(p)
 
 
 @cli.command()
@@ -411,6 +410,20 @@ def update_provisioned_product(region, name, product_id, description, template_u
 @click.argument("p", type=click.Path(exists=True))
 def generate_template(name, version, product_name, product_version, p):
     click.echo(core.generate_template(name, version, product_name, product_version, p))
+
+
+@cli.command()
+@click.argument("region")
+@click.argument("product-id")
+@click.argument("version-name")
+@click.argument("template-url")
+@click.argument("description")
+def create_or_update_provisioning_artifact(
+    region, product_id, version_name, template_url, description
+):
+    servicecatalog_facade.create_or_update_provisioning_artifact(
+        region, product_id, version_name, template_url, description
+    )
 
 
 if __name__ == "__main__":

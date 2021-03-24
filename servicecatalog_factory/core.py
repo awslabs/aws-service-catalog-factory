@@ -139,14 +139,15 @@ def check_for_external_definitions_for(portfolio, portfolio_file_name, type):
                 component["Versions"].append(version_spec)
 
 
-def generate_via_luigi(p, branch_override=None):
-    factory_version = (
-        constants.VERSION
-        if branch_override is None
-        else "https://github.com/awslabs/aws-service-catalog-factory/archive/{}.zip".format(
-            branch_override
-        )
-    )
+def generate_via_luigi(p):
+    # factory_version = (
+    #     constants.VERSION
+    #     if branch_override is None
+    #     else "https://github.com/awslabs/aws-service-catalog-factory/archive/{}.zip".format(
+    #         branch_override
+    #     )
+    # )
+    factory_version = constants.VERSION
     logger.info("Generating")
     all_tasks = {}
     all_regions = get_regions()

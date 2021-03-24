@@ -12,7 +12,9 @@ def get_template() -> t.Template:
     description = "Shared resources used by product pipelines"
     tpl = t.Template(Description=description)
 
-    for resource in shared_resources.get_resources() + cdk_shared_resources.get_resources():
+    for resource in (
+        shared_resources.get_resources() + cdk_shared_resources.get_resources()
+    ):
         tpl.add_resource(resource)
 
     return tpl
