@@ -91,32 +91,12 @@ def get_resources() -> list:
                         Value=t.Sub("${AWS::AccountId}"),
                     ),
                     codebuild.EnvironmentVariable(
-                        Name="NAME", Type="PLAINTEXT", Value="CHANGE_ME"
-                    ),
-                    codebuild.EnvironmentVariable(
-                        Name="VERSION", Type="PLAINTEXT", Value="CHANGE_ME"
-                    ),
-                    codebuild.EnvironmentVariable(
-                        Name="DESCRIPTION", Type="PLAINTEXT", Value="CHANGE_ME"
-                    ),
-                    codebuild.EnvironmentVariable(
                         Name="PIPELINE_NAME", Type="PLAINTEXT", Value="CHANGE_ME"
                     ),
                     codebuild.EnvironmentVariable(
                         Name="CODEPIPELINE_ID", Type="PLAINTEXT", Value="CHANGE_ME"
                     ),
-                    codebuild.EnvironmentVariable(
-                        Name="TEMPLATE_FORMAT", Type="PLAINTEXT", Value="yaml",
-                    ),
                 ]
-                + [
-                    codebuild.EnvironmentVariable(
-                        Name=f"PRODUCT_ID_{region.replace('-', '_')}",
-                        Value="CHANGE_ME",
-                        Type="PLAINTEXT",
-                    )
-                    for region in all_regions
-                ],
             ),
             Source=codebuild.Source(
                 BuildSpec=t.Sub(
