@@ -177,7 +177,21 @@ def get_resources() -> list:
                     yaml.safe_dump(
                         dict(
                             version=0.2,
-                            phases=dict(build={"commands": get_commands_for_deploy()}, ),
+                            phases=dict(
+                                install={
+                                    "runtime-versions": dict(
+                                        python="3.7",
+                                    ),
+                                    "commands": [
+                                        f"pip install {constants.VERSION}"
+                                        if "http" in constants.VERSION
+                                        else f"pip install aws-service-catalog-factory=={constants.VERSION}",
+                                    ],
+                                },
+                                build={
+                                    "commands": get_commands_for_deploy()
+                                },
+                            ),
                             artifacts={
                                 "name": DEPLOY_OUTPUT_ARTIFACT,
                                 "files": ["*", "**/*"],
