@@ -108,6 +108,9 @@ def get_resources() -> list:
                     },
                     {"Type": "PLAINTEXT", "Name": "NAME", "Value": "CHANGE_ME"},
                     {"Type": "PLAINTEXT", "Name": "VERSION", "Value": "CHANGE_ME"},
+                    {"Type": "PLAINTEXT", "Name": "CODEPIPELINE_ID", "Value": "CHANGE_ME"},
+                    {"Type": "PLAINTEXT", "Name": "PIPELINE_NAME", "Value": "CHANGE_ME"},
+                    {"Type": "PLAINTEXT", "Name": "TEMPLATE_FORMAT", "Value": "CHANGE_ME"},
                 ],
             ),
             Source=codebuild.Source(
@@ -119,16 +122,10 @@ def get_resources() -> list:
                                 build={
                                     "commands": [
                                                     'zip -r $NAME-$VERSION.zip . -x "node_modules/*"'
-                                                ]
-                                                + [
+                                                ] + [
                                                     f"aws cloudformation package --region {region} --template $(pwd)/product.template.yaml --s3-bucket sc-factory-artifacts-$ACCOUNT_ID-{region} --s3-prefix /cdk/1.0.0/$NAME/$VERSION --output-template-file product.template-{region}.yaml"
                                                     for region in all_regions
-                                                ]
-                                                # + [
-                                                #     f"aws s3 cp --quiet product.template-{region}.yaml s3://sc-factory-artifacts-$ACCOUNT_ID-{region}/cdk/1.0.0/$NAME/$VERSION/product.template-{region}.yaml"
-                                                #     for region in all_regions
-                                                # ]
-                                                + [
+                                                ] + [
                                                     f"aws s3 cp --quiet $NAME-$VERSION.zip s3://sc-factory-artifacts-$ACCOUNT_ID-{region}/cdk/1.0.0/$NAME/$VERSION/$NAME-$VERSION.zip"
                                                     for region in all_regions
                                                 ]

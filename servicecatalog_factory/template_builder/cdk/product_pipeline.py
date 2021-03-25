@@ -230,10 +230,11 @@ class CDK100Template(BaseTemplate):
                         "EnvironmentVariables": t.Sub(
                             json.dumps(
                                 [
+                                    dict(name="PIPELINE_NAME", value="${AWS::StackName}-pipeline", type="PLAINTEXT"),
+                                    dict(name="CODEPIPELINE_ID", value="#{codepipeline.PipelineExecutionId}", type="PLAINTEXT"),
                                     dict(name="NAME", value=name, type="PLAINTEXT"),
-                                    dict(
-                                        name="VERSION", value=version, type="PLAINTEXT"
-                                    ),
+                                    dict(name="VERSION", value=version, type="PLAINTEXT"),
+                                    dict(name="TEMPLATE_FORMAT", value="yaml", type="PLAINTEXT"),
                                 ]
                             )
                         ),
@@ -266,8 +267,8 @@ class CDK100Template(BaseTemplate):
                         "EnvironmentVariables": t.Sub(
                             json.dumps(
                                 [
-                                    dict(name="ACCOUNT_ID", value=t.Ref("AWS::AccountId"), type="PLAINTEXT"),
-                                    dict(name="PIPELINE_NAME", value=t.Sub("${AWS::StackName}-pipeline"), type="PLAINTEXT"),
+                                    dict(name="ACCOUNT_ID", value="AWS::AccountId", type="PLAINTEXT"),
+                                    dict(name="PIPELINE_NAME", value="${AWS::StackName}-pipeline", type="PLAINTEXT"),
                                     dict(name="CODEPIPELINE_ID", value="#{codepipeline.PipelineExecutionId}", type="PLAINTEXT"),
                                 ]
                             )
