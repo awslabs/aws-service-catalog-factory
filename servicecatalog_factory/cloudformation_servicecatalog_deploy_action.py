@@ -7,6 +7,15 @@ from betterboto import client as betterboto_client
 import time
 
 
+def deploy(pipeline_name, pipeline_region, codepipeline_id, region):
+    action_configuration = set_template_url_for_codepipeline_id(
+        pipeline_name, codepipeline_id, region
+    )
+    create_or_update_provisioning_artifact(
+        region, pipeline_region, action_configuration
+    )
+
+
 def get_package_action_from(pipeline_name, codepipeline_id):
     with betterboto_client.ClientContextManager(
             "codepipeline"

@@ -1,7 +1,7 @@
 # Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 import yaml
-from servicecatalog_factory import core, servicecatalog_facade
+from servicecatalog_factory import core, cloudformation_servicecatalog_deploy_action
 import logging
 import click
 
@@ -420,12 +420,7 @@ def generate_template(name, version, product_name, product_version, p):
 def create_or_update_provisioning_artifact_from_codepipeline_id(
     pipeline_name, pipeline_region, codepipeline_id, region
 ):
-    action_configuration = servicecatalog_facade.set_template_url_for_codepipeline_id(
-        pipeline_name, codepipeline_id, region
-    )
-    servicecatalog_facade.create_or_update_provisioning_artifact(
-        region, pipeline_region, action_configuration
-    )
+    cloudformation_servicecatalog_deploy_action.deploy(pipeline_name, pipeline_region, codepipeline_id, region)
 
 
 if __name__ == "__main__":
