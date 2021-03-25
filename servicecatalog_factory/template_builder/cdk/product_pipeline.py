@@ -266,23 +266,9 @@ class CDK100Template(BaseTemplate):
                         "EnvironmentVariables": t.Sub(
                             json.dumps(
                                 [
-                                    dict(name="NAME", value=name, type="PLAINTEXT"),
-                                    dict(
-                                        name="VERSION", value=version, type="PLAINTEXT"
-                                    ),
-                                    dict(
-                                        name="DESCRIPTION",
-                                        value=description,
-                                        type="PLAINTEXT",
-                                    ),
-                                ]
-                                + [
-                                    dict(
-                                        name=f"PRODUCT_ID_{region.replace('-', '_')}",
-                                        value=product_ids_by_region[region],
-                                        type="PLAINTEXT",
-                                    )
-                                    for region in all_regions
+                                    dict(name="ACCOUNT_ID", value=t.Ref("AWS::AccountId"), type="PLAINTEXT"),
+                                    dict(name="PIPELINE_NAME", value=t.Sub("${AWS::StackName}-pipeline"), type="PLAINTEXT"),
+                                    dict(name="CODEPIPELINE_ID", value="#{codepipeline.PipelineExecutionId}", type="PLAINTEXT"),
                                 ]
                             )
                         ),
