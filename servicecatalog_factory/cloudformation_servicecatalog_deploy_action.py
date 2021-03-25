@@ -61,12 +61,15 @@ def set_template_url_for_codepipeline_id(
 
     template_format = action_configuration.get("TEMPLATE_FORMAT")
 
+    print(f"bucket is {bucket}")
+    print(f"key is {key}")
+
     with betterboto_client.ClientContextManager(
         "s3"
     ) as s3:
         template = zipfile.ZipFile(
             io.BytesIO(s3.get_object(Bucket=bucket, Key=key).get("Body").read())
-        ).open(f"product.template.{template_format}", 'r').read()
+        ).open(f"product.template-{region}.{template_format}", 'r').read()
         s3.put_object(
             Bucket=bucket,
             Key=return_key,
