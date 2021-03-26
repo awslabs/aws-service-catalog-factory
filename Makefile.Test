@@ -5,7 +5,7 @@ FACTORY_VENV=${WS}/factory
 
 ## @Testing runs unit tests
 unit-tests: ## runs unit tests for the project
-	poetry run pytest -vv --exitfirst --junit-xml=reports/junit/junit.xml --cov=./servicecatalog_factory --cov-branch
+	poetry run pytest -vv --exitfirst --junit-xml=reports/junit/junit.xml --cov=./servicecatalog_factory --cov-branch --ignore=ignored
 
 ## @Testing installs factory into given ENV_NUMBER
 test-factory-install:
