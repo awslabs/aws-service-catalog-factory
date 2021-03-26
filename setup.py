@@ -25,7 +25,7 @@ install_requires = \
  'luigi==2.8.6',
  'pykwalify==1.7.0',
  'pylint==2.5.0',
- 'PyYAML>=5.4',
+ 'pyyaml==5.4',
  'requests==2.22.0',
  'terminaltables==3.1.0',
  'troposphere>=2.6.4,<3.0.0']
