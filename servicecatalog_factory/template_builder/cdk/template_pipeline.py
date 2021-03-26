@@ -118,7 +118,7 @@ def create_cdk_pipeline(name, version, product_name, product_version, p) -> t.Te
             DependsOn=["WaiterCondition", "WaitConditionHandle", "DeployDetails",],
             ServiceToken=t.Ref("GetOutputsForGivenCodebuildIdFunctionArn"),
             CodeBuildBuildId=t.GetAtt("DeployDetails", "BuildId"),
-            BucketName=t.Sub("sc-cdk-artifacts-${AWS:AccountId}"),
+            BucketName=t.Sub("sc-cdk-artifacts-${AWS::AccountId}"),
             ObjectKeyPrefix=t.Sub(f"cdk/1.0.0/{product_name}/{product_version}"),
         )
     )
