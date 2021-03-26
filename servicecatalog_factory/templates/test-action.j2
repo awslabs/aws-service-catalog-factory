@@ -5,7 +5,8 @@
                 Version: 1
                 Provider: CodeBuild
               Configuration:
-                ProjectName: !Ref {{ action }}Project
+                ProjectName: {% if action == "Validate" %}ServiceCatalog-Factory-SharedValidate{% else %}!Ref {{ action }}Project{% endif %}
+                EnvironmentVariables: '[{"name":"TEMPLATE_FORMAT","value":"{{ template_format }}","type":"PLAINTEXT"}]'
               RunOrder: 1
               InputArtifacts:
               {% if ShouldParseAsJinja2Template %}

@@ -618,6 +618,7 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
             product_ids_by_region=product_ids_by_region,
             FACTORY_VERSION=self.factory_version,
             tags=tags,
+            PARTITION=constants.PARTITION,
         )
         rendered = jinja2.Template(rendered).render(
             friendly_uid=f"{friendly_uid}-{self.version.get('Name')}",
@@ -630,6 +631,7 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
             Stages=stages,
             ALL_REGIONS=self.all_regions,
             product_ids_by_region=product_ids_by_region,
+            PARTITION=constants.PARTITION,
         )
         return rendered
 

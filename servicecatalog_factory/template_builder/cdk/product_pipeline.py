@@ -230,10 +230,20 @@ class CDK100Template(BaseTemplate):
                         "EnvironmentVariables": t.Sub(
                             json.dumps(
                                 [
+                                    dict(name="PIPELINE_NAME", value="${AWS::StackName}-pipeline", type="PLAINTEXT"),
+                                    dict(name="CODEPIPELINE_ID", value="#{codepipeline.PipelineExecutionId}", type="PLAINTEXT"),
                                     dict(name="NAME", value=name, type="PLAINTEXT"),
+                                    dict(name="VERSION", value=version, type="PLAINTEXT"),
+                                    dict(name="DESCRIPTION", value=description, type="PLAINTEXT"),
+                                    dict(name="TEMPLATE_FORMAT", value="yaml", type="PLAINTEXT"),
+                                    dict(name="PROVISIONER", value="cdk/1.0.0", type="PLAINTEXT"),
+                                ] + [
                                     dict(
-                                        name="VERSION", value=version, type="PLAINTEXT"
-                                    ),
+                                        name=f"PRODUCT_ID_{region.replace('-', '_')}",
+                                        value=product_ids_by_region[region],
+                                        type="PLAINTEXT",
+                                    )
+                                    for region in all_regions
                                 ]
                             )
                         ),
@@ -266,23 +276,10 @@ class CDK100Template(BaseTemplate):
                         "EnvironmentVariables": t.Sub(
                             json.dumps(
                                 [
-                                    dict(name="NAME", value=name, type="PLAINTEXT"),
-                                    dict(
-                                        name="VERSION", value=version, type="PLAINTEXT"
-                                    ),
-                                    dict(
-                                        name="DESCRIPTION",
-                                        value=description,
-                                        type="PLAINTEXT",
-                                    ),
-                                ]
-                                + [
-                                    dict(
-                                        name=f"PRODUCT_ID_{region.replace('-', '_')}",
-                                        value=product_ids_by_region[region],
-                                        type="PLAINTEXT",
-                                    )
-                                    for region in all_regions
+                                    dict(name="ACCOUNT_ID", value="${AWS::AccountId}", type="PLAINTEXT"),
+                                    dict(name="PIPELINE_NAME", value="${AWS::StackName}-pipeline", type="PLAINTEXT"),
+                                    dict(name="CODEPIPELINE_ID", value="#{codepipeline.PipelineExecutionId}", type="PLAINTEXT"),
+                                    dict(name="PROVISIONER", value="cdk/1.0.0", type="PLAINTEXT"),
                                 ]
                             )
                         ),
@@ -312,14 +309,14 @@ class CDK100Template(BaseTemplate):
                         ArtifactStore=codepipeline.ArtifactStore(
                             Type="S3",
                             Location=t.Sub(
-                                "sc-puppet-pipeline-artifacts-${AWS::AccountId}-"
+                                "sc-factory-artifacts-${AWS::AccountId}-"
                                 + region
                             ),
                         ),
                     )
                     for region in all_regions
                 ],
-                RestartExecutionOnUpdate=True,
+                RestartExecutionOnUpdate=False,
             )
         )
         return tpl.to_yaml(clean_up=True)
