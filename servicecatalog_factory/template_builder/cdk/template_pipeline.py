@@ -10,7 +10,7 @@ PREFIX = "sct-synth-output"
 
 
 def create_cdk_pipeline(name, version, product_name, product_version, p) -> t.Template:
-    description = f"""Bootstrap template used to bring up the main ServiceCatalog-Puppet AWS CodePipeline with dependencies
+    description = f"""Builds a cdk pipeline
 {{"version": "{constants.VERSION}", "framework": "servicecatalog-factory", "role": "product-pipeline", "type": "{name}", "version": "{version}"}}"""
     template = t.Template(Description=description)
     template.add_parameter(
