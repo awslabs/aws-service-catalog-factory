@@ -48,10 +48,11 @@ def fake_portfolio():
     }
 
 
-@mocker.patch('os.path.abspath', return_value='some/path/asset.py')
+@mocker.patch("os.path.abspath", return_value="some/path/asset.py")
 def test_resolve_from_site_packages(abspath_mocked):
     # setup
     from servicecatalog_factory import core as sut
+
     what = "asset.py"
     site_path = os.path.sep.join(["some", "path"])
     expected_result = os.path.sep.join([site_path, what])
@@ -67,6 +68,7 @@ def test_resolve_from_site_packages(abspath_mocked):
 def test_read_from_site_packages(mocked_open):
     # setup
     from servicecatalog_factory import core as sut
+
     what = "asset.py"
     expected_result = "foobar"
     mocked_open().read.return_value = expected_result
@@ -83,6 +85,7 @@ def test_read_from_site_packages(mocked_open):
 def test_get_regions(mocked_betterboto_client):
     # setup
     from servicecatalog_factory import core as sut
+
     expected_result = [
         "us-east-1",
         "us-east-2",
@@ -99,8 +102,9 @@ def test_get_regions(mocked_betterboto_client):
     assert actual_result == expected_result
 
 
-with such.A('get_config') as it:
-    @it.should('work')
+with such.A("get_config") as it:
+
+    @it.should("work")
     @params(
         ({"hello": "world"}, {"foo": "bar"}, {"hello": "world", "foo": "bar"}),
         ({}, {"foo": "bar"}, {"foo": "bar"}),
@@ -116,6 +120,7 @@ with such.A('get_config') as it:
 
         # verify
         assert expected_results == actual_results
+
     it.createTests(globals())
 
 
@@ -123,6 +128,7 @@ with such.A('get_config') as it:
 def test_get_stacks(mocked_betterboto_client):
     # setup
     from servicecatalog_factory import core as sut
+
     args = {
         "StackStatusFilter": [
             "CREATE_IN_PROGRESS",
@@ -160,6 +166,7 @@ def test_get_stacks(mocked_betterboto_client):
 def test_get_stacks_if_empty(mocked_betterboto_client):
     # setup
     from servicecatalog_factory import core as sut
+
     args = {
         "StackStatusFilter": [
             "CREATE_IN_PROGRESS",
@@ -192,10 +199,12 @@ def test_get_stacks_if_empty(mocked_betterboto_client):
     assert actual_result == expected_result
     mocked_betterboto_client().__enter__().list_stacks.assert_called_with(**args)
 
+
 @mocker.patch("servicecatalog_factory.core.bootstrap")
 def test_bootstrap_branch(bootstrap_mocked):
     # setup
     from servicecatalog_factory import core as sut
+
     branch_name = "foo"
     (
         branch_to_bootstrap,

@@ -5,6 +5,7 @@
 def test_bootstrap_stack_name():
     # setup
     from servicecatalog_factory import constants as sut
+
     expected_result = "servicecatalog-factory"
 
     # execute
@@ -15,6 +16,7 @@ def test_bootstrap_stack_name():
 def test_service_catalog_factory_repo_name():
     # setup
     from servicecatalog_factory import constants as sut
+
     expected_result = "ServiceCatalogFactory"
 
     # execute
@@ -25,6 +27,7 @@ def test_service_catalog_factory_repo_name():
 def test_non_recoverable_states():
     # setup
     from servicecatalog_factory import constants as sut
+
     expected_result = [
         "ROLLBACK_COMPLETE",
         "CREATE_IN_PROGRESS",
