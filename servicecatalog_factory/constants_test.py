@@ -1,18 +1,10 @@
 # Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-from pytest import fixture
 
-
-@fixture
-def sut():
-    from servicecatalog_factory import constants
-
-    return constants
-
-
-def test_bootstrap_stack_name(sut):
+def test_bootstrap_stack_name():
     # setup
+    from servicecatalog_factory import constants as sut
     expected_result = "servicecatalog-factory"
 
     # execute
@@ -20,8 +12,9 @@ def test_bootstrap_stack_name(sut):
     assert sut.BOOTSTRAP_STACK_NAME == expected_result
 
 
-def test_service_catalog_factory_repo_name(sut):
+def test_service_catalog_factory_repo_name():
     # setup
+    from servicecatalog_factory import constants as sut
     expected_result = "ServiceCatalogFactory"
 
     # execute
@@ -29,8 +22,9 @@ def test_service_catalog_factory_repo_name(sut):
     assert sut.SERVICE_CATALOG_FACTORY_REPO_NAME == expected_result
 
 
-def test_non_recoverable_states(sut):
+def test_non_recoverable_states():
     # setup
+    from servicecatalog_factory import constants as sut
     expected_result = [
         "ROLLBACK_COMPLETE",
         "CREATE_IN_PROGRESS",

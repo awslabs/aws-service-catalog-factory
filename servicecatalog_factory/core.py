@@ -641,56 +641,6 @@ def get_stacks():
         return results
 
 
-def deploy(p):  # TODO is this used?
-    stacks = get_stacks()
-    for portfolio_file_name in os.listdir(p):
-        if ".yaml" in portfolio_file_name:
-            p_name = portfolio_file_name.split(".")[0]
-            output_path = os.path.sep.join([constants.OUTPUT, p_name])
-            portfolios_file_path = os.path.sep.join([p, portfolio_file_name])
-            portfolios = generate_portfolios(portfolios_file_path)
-            for portfolio in portfolios.get("Portfolios"):
-                for product in portfolio.get("Components", []):
-                    for version in product.get("Versions", []):
-                        friendly_uid = "-".join(
-                            [
-                                p_name,
-                                portfolio.get("DisplayName"),
-                                product.get("Name"),
-                                version.get("Name"),
-                            ]
-                        )
-                        first_run_of_stack = stacks.get(friendly_uid, False) is False
-                        logger.info(
-                            "Running deploy for: {}. Is first run: {}".format(
-                                friendly_uid, first_run_of_stack
-                            )
-                        )
-                        run_deploy_for_component(
-                            output_path, friendly_uid,
-                        )
-
-
-def get_hash_for_template(template):
-    hasher = hashlib.md5()
-    hasher.update(str.encode(template))
-    return "{}{}".format(constants.HASH_PREFIX, hasher.hexdigest())
-
-
-def run_deploy_for_component(path, friendly_uid):
-    staging_template_path = os.path.sep.join(
-        [path, "{}.template.yaml".format(friendly_uid)]
-    )
-    with open(staging_template_path) as staging_template:
-        staging_template_contents = staging_template.read()
-
-    with betterboto_client.ClientContextManager("cloudformation") as cloudformation:
-        cloudformation.create_or_update(
-            StackName=friendly_uid, TemplateBody=staging_template_contents,
-        )
-        logger.info("Finished stack: {}".format(friendly_uid))
-
-
 def nuke_product_version(portfolio_name, product, version):
     click.echo("Nuking service catalog traces")
     with betterboto_client.ClientContextManager("servicecatalog") as servicecatalog:
