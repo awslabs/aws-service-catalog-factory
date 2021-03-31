@@ -93,7 +93,7 @@ Resources:
                 Provider: S3
                 Version: '1'
               Configuration:
-                BucketName: {{ Source.Configuration.BucketName }}
+                S3Bucket: {{ Source.Configuration.BucketName }}
                 S3ObjectKey: {{ Source.Configuration.S3ObjectKey }}
               OutputArtifacts:
                 - Name: Source
