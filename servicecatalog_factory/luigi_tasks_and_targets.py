@@ -15,6 +15,8 @@ from servicecatalog_factory import constants
 from servicecatalog_factory import utils
 from servicecatalog_factory import config
 from servicecatalog_factory.template_builder import product_template_factory
+from betterboto import client as betterboto_client
+
 
 logger = logging.getLogger(__file__)
 
