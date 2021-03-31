@@ -17,39 +17,41 @@ def deploy(pipeline_name, pipeline_region, codepipeline_id, region):
 
 
 def get_package_action_from(pipeline_name, codepipeline_id):
-    with betterboto_client.ClientContextManager(
-            "codepipeline"
-    ) as codepipeline:
-        paginator = codepipeline.get_paginator('list_action_executions')
+    with betterboto_client.ClientContextManager("codepipeline") as codepipeline:
+        paginator = codepipeline.get_paginator("list_action_executions")
         pages = paginator.paginate(
-            pipelineName=pipeline_name,
-            filter={
-                'pipelineExecutionId': codepipeline_id
-            },
+            pipelineName=pipeline_name, filter={"pipelineExecutionId": codepipeline_id},
         )
         for page in pages:
             for action_execution_detail in page.get("actionExecutionDetails", []):
-                if action_execution_detail.get("stageName") == action_execution_detail.get("actionName") == "Package":
+                if (
+                    action_execution_detail.get("stageName")
+                    == action_execution_detail.get("actionName")
+                    == "Package"
+                ):
                     return action_execution_detail
         raise Exception(f"Could not find Package action for {codepipeline_id}")
 
 
-def set_template_url_for_codepipeline_id(
-    pipeline_name, codepipeline_id, region
-):
+def set_template_url_for_codepipeline_id(pipeline_name, codepipeline_id, region):
     action = get_package_action_from(pipeline_name, codepipeline_id)
-    environment_variables = json.loads(action["input"]["resolvedConfiguration"]["EnvironmentVariables"])
+    environment_variables = json.loads(
+        action["input"]["resolvedConfiguration"]["EnvironmentVariables"]
+    )
     action_configuration = dict()
     for environment_variable in environment_variables:
-        action_configuration[environment_variable.get("name")] = environment_variable.get("value")
+        action_configuration[
+            environment_variable.get("name")
+        ] = environment_variable.get("value")
 
     #
     #
     # THIS NEEDS TO BE PASSED IN OR MADE THE SAME!!!  current error is that the template is not in the zip file
     #
     #
-    return_key = "{PROVISIONER}/{region}/{NAME}/{VERSION}/{CODEPIPELINE_ID}/product.template.{TEMPLATE_FORMAT}".format(region=region, **action_configuration)
-
+    return_key = "{PROVISIONER}/{region}/{NAME}/{VERSION}/{CODEPIPELINE_ID}/product.template.{TEMPLATE_FORMAT}".format(
+        region=region, **action_configuration
+    )
 
     print(return_key)
 
@@ -64,16 +66,16 @@ def set_template_url_for_codepipeline_id(
     print(f"bucket is {bucket}")
     print(f"key is {key}")
 
-    with betterboto_client.ClientContextManager(
-        "s3"
-    ) as s3:
-        template = zipfile.ZipFile(
-            io.BytesIO(s3.get_object(Bucket=bucket, Key=key).get("Body").read())
-        ).open(f"product.template-{region}.{template_format}", 'r').read()
+    with betterboto_client.ClientContextManager("s3") as s3:
+        template = (
+            zipfile.ZipFile(
+                io.BytesIO(s3.get_object(Bucket=bucket, Key=key).get("Body").read())
+            )
+            .open(f"product.template-{region}.{template_format}", "r")
+            .read()
+        )
         s3.put_object(
-            Bucket=bucket,
-            Key=return_key,
-            Body=template,
+            Bucket=bucket, Key=return_key, Body=template,
         )
     action_configuration["BUCKET"] = bucket
     action_configuration["TEMPLATE_URL"] = return_key
@@ -97,7 +99,9 @@ def create_or_update_provisioning_artifact(
     with betterboto_client.ClientContextManager(
         "servicecatalog", region_name=region
     ) as servicecatalog:
-        click.echo(f"Creating: {version_name} in: {region} for {product}: using: {template_url}")
+        click.echo(
+            f"Creating: {version_name} in: {region} for {product}: using: {template_url}"
+        )
 
         response = servicecatalog.create_provisioning_artifact(
             ProductId=product_id,

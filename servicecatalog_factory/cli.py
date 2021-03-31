@@ -420,7 +420,9 @@ def generate_template(name, version, product_name, product_version, p):
 def create_or_update_provisioning_artifact_from_codepipeline_id(
     pipeline_name, pipeline_region, codepipeline_id, region
 ):
-    cloudformation_servicecatalog_deploy_action.deploy(pipeline_name, pipeline_region, codepipeline_id, region)
+    cloudformation_servicecatalog_deploy_action.deploy(
+        pipeline_name, pipeline_region, codepipeline_id, region
+    )
 
 
 if __name__ == "__main__":

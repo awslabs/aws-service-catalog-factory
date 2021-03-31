@@ -22,13 +22,10 @@ servicecatalog-factory = "servicecatalog_factory.cli:cli"
 issues = "https://github.com/awslabs/aws-service-catalog-factory-framework/issues"
 
 [tool.poetry.dev-dependencies]
-pytest-datadir = "*"
-pytest = "*"
-pytest-cov = "*"
 codecov = "==2.0.22"
 pylint = "*"
-pytest-mock = "*"
 black = "^19.10b0"
+nose2 = "^0.10.0"
 
 [tool.dephell.main]
 versioning = "semver"
@@ -38,7 +35,6 @@ to = {format = "poetry", path = "pyproject.toml"}
 
 [tool.poetry.dependencies]
 python = ">=3.7"
-pyyaml = "==5.4"
 docutils = "==0.14"
 jinja2 = "==2.11.3"
 click = "==7.0"
@@ -53,3 +49,4 @@ pylint = "==2.5.0"
 colorclass = "^2.2.0"
 colorama = "^0.4.4"
 troposphere = "^2.6.4"
+PyYAML = "5.4"

@@ -96,7 +96,7 @@ def get_resources() -> list:
                     codebuild.EnvironmentVariable(
                         Name="CODEPIPELINE_ID", Type="PLAINTEXT", Value="CHANGE_ME"
                     ),
-                ]
+                ],
             ),
             Source=codebuild.Source(
                 BuildSpec=t.Sub(

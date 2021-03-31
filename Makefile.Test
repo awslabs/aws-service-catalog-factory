@@ -5,7 +5,8 @@ FACTORY_VENV=${WS}/factory
 
 ## @Testing runs unit tests
 unit-tests: ## runs unit tests for the project
-	poetry run pytest -vv --exitfirst --junit-xml=reports/junit/junit.xml --cov=./servicecatalog_factory --cov-branch --ignore=ignored
+	mkdir -p reports/junit/
+	poetry run nose2 --pretty-assert -F --verbose --coverage-report html --coverage-report term --coverage-report xml -C
 
 ## @Testing installs factory into given ENV_NUMBER
 test-factory-install:
@@ -19,3 +20,6 @@ test-factory-configure:
 ## @Testing runs generate-via-luigi for current profile in the given ENV_NUMBER
 test-factory-generate-via-luigi:
 	poetry run servicecatalog-factory --info ignored/src/ServiceCatalogFactory/portfolios/
+
+unit-test-watcher: ## runs unit tests for the project
+	find servicecatalog_factory -name '*.py' | entr poetry run nose2 --pretty-assert --verbose
