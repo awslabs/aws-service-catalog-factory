@@ -6,7 +6,6 @@ import traceback
 from pathlib import Path
 import jinja2
 import luigi
-from betterboto import client as betterboto_client
 import logging
 import json
 import cfn_tools
@@ -21,6 +20,17 @@ logger = logging.getLogger(__file__)
 
 
 class FactoryTask(luigi.Task):
+    def client(self, service):
+        return betterboto_client.ClientContextManager(
+            service,
+        )
+
+    def regional_client(self, service):
+        return betterboto_client.ClientContextManager(
+            service,
+            region_name=self.region,
+        )
+
     def load_from_input(self, input_name):
         with self.input().get(input_name).open("r") as f:
             return json.loads(f.read())
@@ -69,8 +79,8 @@ class GetBucketTask(FactoryTask):
 
     def run(self):
         s3_bucket_url = None
-        with betterboto_client.ClientContextManager(
-            "cloudformation", region_name=self.region
+        with self.regional_client(
+            "cloudformation"
         ) as cloudformation:
             response = cloudformation.describe_stacks(
                 StackName=constants.BOOTSTRAP_STACK_NAME
@@ -107,8 +117,8 @@ class CreatePortfolioTask(FactoryTask):
 
     def run(self):
         logger_prefix = f"{self.region}-{self.portfolio_group_name}-{self.display_name}"
-        with betterboto_client.ClientContextManager(
-            "servicecatalog", region_name=self.region
+        with self.regional_client(
+            "servicecatalog"
         ) as service_catalog:
             generated_portfolio_name = (
                 f"{self.portfolio_group_name}-{self.display_name}"
@@ -169,8 +179,8 @@ class CreatePortfolioAssociationTask(FactoryTask):
         return luigi.LocalTarget(output_file)
 
     def run(self):
-        with betterboto_client.ClientContextManager(
-            "cloudformation", region_name=self.region
+        with self.regional_client(
+            "cloudformation"
         ) as cloudformation:
             portfolio_details = json.loads(self.input().open("r").read())
             template = utils.ENV.get_template(constants.ASSOCIATIONS)
@@ -219,8 +229,8 @@ class CreateProductTask(FactoryTask):
 
     def run(self):
         logger_prefix = f"{self.region}-{self.name}"
-        with betterboto_client.ClientContextManager(
-            "servicecatalog", region_name=self.region
+        with self.regional_client(
+            "servicecatalog"
         ) as service_catalog:
             search_products_as_admin_response = service_catalog.search_products_as_admin_single_page(
                 Filters={"FullTextSearch": [self.name]}
@@ -339,8 +349,8 @@ class DeleteProductTask(FactoryTask):
         }
 
     def run(self):
-        with betterboto_client.ClientContextManager(
-            "servicecatalog", region_name=self.region
+        with self.regional_client(
+            "servicecatalog"
         ) as service_catalog:
             self.info(f"Looking for product to delete: {self.name}")
             search_products_as_admin_response = service_catalog.search_products_as_admin_single_page(
@@ -358,8 +368,8 @@ class DeleteProductTask(FactoryTask):
                     break
 
             if found_product:
-                with betterboto_client.ClientContextManager(
-                    "cloudformation", region_name=self.region
+                with self.regional_client(
+                    "cloudformation"
                 ) as cloudformation:
                     if self.pipeline_mode == constants.PIPELINE_MODE_SPILT:
                         self.delete_pipelines(
@@ -442,8 +452,8 @@ class AssociateProductWithPortfolioTask(FactoryTask):
         portfolio_id = portfolio.get("Id")
         product = json.loads(self.input().get("create_product_task").open("r").read())
         product_id = product.get("ProductId")
-        with betterboto_client.ClientContextManager(
-            "servicecatalog", region_name=self.region
+        with self.regional_client(
+            "servicecatalog"
         ) as service_catalog:
             logger.info(f"{logger_prefix}: Searching for existing association")
 
@@ -483,8 +493,8 @@ class EnsureProductVersionDetailsCorrect(FactoryTask):
         version_name = self.version.get("Name")
         version_active = self.version.get("Active", True)
 
-        with betterboto_client.ClientContextManager(
-            "servicecatalog", region_name=self.region
+        with self.regional_client(
+            "servicecatalog"
         ) as service_catalog:
             response = service_catalog.list_provisioning_artifacts(ProductId=product_id)
             logger.info("Checking through: {}".format(response))
@@ -737,7 +747,7 @@ class CreateVersionPipelineTask(FactoryTask):
             tags.append(
                 {"Key": tag.get("Key"), "Value": tag.get("Value"),}
             )
-        with betterboto_client.ClientContextManager("cloudformation") as cloudformation:
+        with self.client("cloudformation") as cloudformation:
 
             if self.template.get("Name"):
                 response = cloudformation.create_or_update(
@@ -792,8 +802,8 @@ class DeleteAVersionTask(FactoryTask):
         self.info(f"Starting delete of {product_id} {self.version}")
         region = self.product_args.get("region")
         found = False
-        with betterboto_client.ClientContextManager(
-            "servicecatalog", region_name=region
+        with self.regional_client(
+            "servicecatalog"
         ) as servicecatalog:
             provisioning_artifact_details = servicecatalog.list_provisioning_artifacts_single_page(
                 ProductId=product_id,
@@ -817,8 +827,8 @@ class DeleteAVersionTask(FactoryTask):
 
         product["found"] = found
 
-        with betterboto_client.ClientContextManager(
-            "cloudformation", region_name=region
+        with self.regional_client(
+            "cloudformation"
         ) as cloudformation:
             cloudformation.ensure_deleted(
                 StackName=f"{product.get('uid')}-{self.version}"
@@ -940,7 +950,7 @@ class CreateCombinedProductPipelineTask(FactoryTask):
         provisioner = self.product.get("Provisioner", {}).get(
             "Type", constants.PROVISIONERS_DEFAULT
         )
-        with betterboto_client.ClientContextManager("cloudformation") as cloudformation:
+        with self.client("cloudformation") as cloudformation:
             if provisioner == constants.PROVISIONERS_CLOUDFORMATION:
                 response = cloudformation.create_or_update(
                     StackName=friendly_uid, TemplateBody=template_contents, Tags=tags,
