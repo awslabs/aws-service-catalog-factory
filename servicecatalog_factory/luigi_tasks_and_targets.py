@@ -729,7 +729,6 @@ class CreateVersionPipelineTask(FactoryTask):
                 {"Key": tag.get("Key"), "Value": tag.get("Value"),}
             )
         with self.client("cloudformation") as cloudformation:
-
             if self.template.get("Name"):
                 response = cloudformation.create_or_update(
                     StackName=friendly_uid, TemplateBody=template_contents, Tags=tags,
@@ -751,9 +750,10 @@ class CreateVersionPipelineTask(FactoryTask):
                     ],
                     Tags=tags,
                 )
+            else:
+                raise Exception("did not do anything")
 
-        with self.output().open("w") as f:
-            f.write(json.dumps(response, indent=4, default=str,))
+        self.write_output(response)
 
         self.info(f"Finished")
 

@@ -1,8 +1,13 @@
 # Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 import troposphere as t
+import yaml
 
 from troposphere import codepipeline
+from troposphere import codebuild
+
+from servicecatalog_factory import constants
+from servicecatalog_factory import utils
 from servicecatalog_factory.template_builder.base_template import (
     BaseTemplate,
     SOURCE_OUTPUT_ARTIFACT,
@@ -148,6 +153,76 @@ class CDK100Template(BaseTemplate):
             ],
         )
 
+        build_project_name = t.Sub("${AWS::StackName}-build")
+        configuration = template.get("Configuration", {})
+        runtime_versions = dict(
+            nodejs=constants.BUILDSPEC_RUNTIME_VERSIONS_NODEJS_DEFAULT,
+        )
+        if configuration.get("runtime-versions"):
+            runtime_versions.update(configuration.get("runtime-versions"))
+
+        extra_commands = list(configuration.get("install", {}).get("commands", []))
+
+        tpl.add_resource(
+            codebuild.Project(
+                "BuildProject",
+                Name=build_project_name,
+                ServiceRole=t.Sub(
+                    "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodeRole"
+                ),
+                Tags=t.Tags.from_dict(**{"ServiceCatalogPuppet:Actor": "Framework"}),
+                Artifacts=codebuild.Artifacts(Type="CODEPIPELINE"),
+                TimeoutInMinutes=60,
+                Environment=codebuild.Environment(
+                    ComputeType=constants.ENVIRONMENT_COMPUTE_TYPE_DEFAULT,
+                    Image=constants.ENVIRONMENT_IMAGE_DEFAULT,
+                    Type=constants.ENVIRONMENT_TYPE_DEFAULT,
+                    EnvironmentVariables=[
+                        {"Type": "PLAINTEXT", "Name": "TEMPLATE", "Value": "CHANGE_ME",},
+                        {"Type": "PLAINTEXT", "Name": "NAME", "Value": "CHANGE_ME",},
+                        {"Type": "PLAINTEXT", "Name": "VERSION", "Value": "CHANGE_ME",},
+                    ],
+                ),
+                Source=codebuild.Source(
+                    BuildSpec=t.Sub(
+                        yaml.safe_dump(
+                            dict(
+                                version=0.2,
+                                phases=dict(
+                                    install={
+                                        "runtime-versions": runtime_versions,
+                                        "commands": [
+                                            f"pip install {constants.VERSION}"
+                                            if "http" in constants.VERSION
+                                            else f"pip install aws-service-catalog-factory=={constants.VERSION}",
+                                        ] + extra_commands
+                                    },
+                                    pre_build={
+                                        "commands": [
+                                            "npm install",
+                                            "npm run cdk synth -- --output sct-synth-output",
+                                        ],
+                                    },
+                                    build={
+                                        "commands": [
+                                            f"servicecatalog-factory generate-template $TEMPLATE . > product.template.yaml",
+                                        ]
+                                    },
+                                ),
+                                artifacts={
+                                    "name": BUILD_OUTPUT_ARTIFACT,
+                                    "files": ["*", "**/*"],
+                                    "exclude-paths": ["sct-synth-output/*"],
+                                },
+                            )
+                        )
+                    ),
+                    Type="CODEPIPELINE",
+                ),
+                Description=t.Sub("Create a build stage for template CDK 1.0.0"),
+            )
+        )
+
         build_stage = codepipeline.Stages(
             Name="Build",
             Actions=[
@@ -155,7 +230,7 @@ class CDK100Template(BaseTemplate):
                     InputArtifacts=[
                         codepipeline.InputArtifacts(Name=SOURCE_OUTPUT_ARTIFACT),
                     ],
-                    Name=f'{template.get("Name")}-{template.get("Version")}',
+                    Name='Build',
                     ActionTypeId=codepipeline.ActionTypeId(
                         Category="Build",
                         Owner="AWS",
@@ -166,11 +241,12 @@ class CDK100Template(BaseTemplate):
                         codepipeline.OutputArtifacts(Name=BUILD_OUTPUT_ARTIFACT)
                     ],
                     Configuration={
-                        "ProjectName": cdk_shared_resources.CDK_BUILD_PROJECT_NAME,
+                        "ProjectName": build_project_name,
                         "PrimarySource": SOURCE_OUTPUT_ARTIFACT,
                         "EnvironmentVariables": t.Sub(
                             json.dumps(
                                 [
+                                    dict(name="TEMPLATE", value=json.dumps(utils.unwrap(template)), type="PLAINTEXT"),
                                     dict(name="NAME", value=name, type="PLAINTEXT"),
                                     dict(
                                         name="VERSION", value=version, type="PLAINTEXT"
@@ -328,7 +404,7 @@ class CDK100Template(BaseTemplate):
             ],
         )
 
-        pipeline = tpl.add_resource(
+        tpl.add_resource(
             codepipeline.Pipeline(
                 "Pipeline",
                 RoleArn=t.Sub(
@@ -357,4 +433,5 @@ class CDK100Template(BaseTemplate):
                 RestartExecutionOnUpdate=False,
             )
         )
+
         return tpl.to_yaml(clean_up=True)

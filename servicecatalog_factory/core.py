@@ -37,7 +37,7 @@ from servicecatalog_factory import luigi_tasks_and_targets
 from servicecatalog_factory import config
 from servicecatalog_factory.template_builder import product_templates
 from servicecatalog_factory.template_builder.cdk import (
-    template_pipeline as cdk_template_pipeline,
+    product_template as cdk_product_template,
 )
 
 logger = logging.getLogger()
@@ -1653,9 +1653,12 @@ def update_provisioned_product(region, name, product_id, description, template_u
                 )
 
 
-def generate_template(name, version, product_name, product_version, p) -> str:
+def generate_template(product_name, product_version, template, p) -> str:
+    t = json.loads(template)
+    name = t.get("Name")
+    version = t.get("Version")
     if name == "CDK" and version == "1.0.0":
-        return cdk_template_pipeline.create_cdk_pipeline(
-            name, version, product_name, product_version, p
+        return cdk_product_template.create_cdk_pipeline(
+            name, version, product_name, product_version, template, p
         ).to_yaml(clean_up=True)
     raise Exception(f"Unknown {name} and {version}")

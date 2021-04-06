@@ -8,5 +8,14 @@ DEPLOY_OUTPUT_ARTIFACT = "Deploy"
 
 
 class BaseTemplate(object):
-    def render(self, product_ids_by_region, tags) -> str:
+    def render(self,
+               template,
+               name,
+               version,
+               description,
+               source,
+               product_ids_by_region,
+               tags,
+               friendly_uid,
+               ) -> str:
         return ""
