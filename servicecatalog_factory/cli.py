@@ -408,7 +408,7 @@ def update_provisioned_product(region, name, product_id, description, template_u
 @click.argument("template")
 @click.argument("p", type=click.Path(exists=True))
 def generate_template(product_name, product_version, template, p):
-    print(f"template is {template}")
+    click.echo(f"template is {template}")
     click.echo(core.generate_template(product_name, product_version, template, p))
 
 
