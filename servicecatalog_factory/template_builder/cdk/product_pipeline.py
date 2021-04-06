@@ -205,7 +205,7 @@ class CDK100Template(BaseTemplate):
                                     },
                                     build={
                                         "commands": [
-                                            f"servicecatalog-factory generate-template $TEMPLATE . > product.template.yaml",
+                                            f"servicecatalog-factory generate-template $NAME $VERSION $TEMPLATE . > product.template.yaml",
                                         ]
                                     },
                                 ),
