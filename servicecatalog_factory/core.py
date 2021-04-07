@@ -1654,9 +1654,7 @@ def update_provisioned_product(region, name, product_id, description, template_u
 
 
 def generate_template(product_name, product_version, template, p) -> str:
-    raise Exception(f"in core template:{template}")
     t = json.loads(template)
-    click.echo(f"in core t:{t}")
     name = t.get("Name")
     version = t.get("Version")
     if name == "CDK" and version == "1.0.0":
