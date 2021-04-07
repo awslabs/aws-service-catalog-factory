@@ -17,40 +17,43 @@ def create_cdk_pipeline(name, version, product_name, product_version, template_c
 {{"version": "{constants.VERSION}", "framework": "servicecatalog-factory", "role": "product-pipeline", "type": "{name}", "version": "{version}"}}"""
     configuration = template_config.get("Configuration")
     template = t.Template(Description=description)
-    template.add_parameter(
-        t.Parameter("CDKDeployRequireApproval", Type="String", Default="never")
-    )
-    template.add_parameter(
-        t.Parameter(
-            "CDKDeployComputeType", Type="String", Default="BUILD_GENERAL1_SMALL"
-        )
-    )
-    template.add_parameter(
-        t.Parameter(
-            "CDKDeployImage", Type="String", Default="aws/codebuild/standard:4.0"
-        )
-    )
+
     template.add_parameter(t.Parameter("PuppetAccountId", Type="String"))
     template.add_parameter(
-        t.Parameter("CDKToolkitStackName", Type="String", Default="CDKToolKit")
+        t.Parameter(
+            "CDKSupportCDKDeployRequireApproval", Type="String", Default="never"
+        )
     )
     template.add_parameter(
         t.Parameter(
-            "CDKDeployExtraArgs",
+            "CDKSupportCDKComputeType", Type="String", Default="BUILD_GENERAL1_SMALL"
+        )
+    )
+    template.add_parameter(
+        t.Parameter(
+            "CDKSupportCDKDeployImage", Type="String", Default="aws/codebuild/standard:4.0"
+        )
+    )
+    template.add_parameter(
+        t.Parameter("CDKSupportCDKToolkitStackName", Type="String", Default="CDKToolKit")
+    )
+    template.add_parameter(
+        t.Parameter(
+            "CDKSupportCDKDeployExtraArgs",
             Type="String",
             Default="",
             Description="Extra args to pass to CDK deploy",
         )
     )
-    template.add_parameter(t.Parameter("StartCDKDeployFunctionArn", Type="String",))
+    template.add_parameter(t.Parameter("CDKSupportStartCDKDeployFunctionArn", Type="String",))
     template.add_parameter(
-        t.Parameter("GetOutputsForGivenCodebuildIdFunctionArn", Type="String",)
+        t.Parameter("CDKSupportGetOutputsForGivenCodebuildIdFunctionArn", Type="String",)
     )
     template.add_parameter(
         t.Parameter("CDKSupportIAMRolePaths", Type="String", Default="/servicecatalog-factory-cdk-support/")
     )
     template.add_parameter(
-        t.Parameter("CDKSupportDeployRoleName", Type="String", Default="CDKDeployRoleName")
+        t.Parameter("CDKSupportCDKDeployRoleName", Type="String", Default="CDKDeployRoleName")
     )
 
     manifest = json.loads(open(f"{p}/{PREFIX}/manifest.json", "r").read())
@@ -109,7 +112,7 @@ def create_cdk_pipeline(name, version, product_name, product_version, template_c
             "CDKDeploy",
             Name=t.Sub("${AWS::StackName}-deploy"),
             Description='Run CDK deploy for given source code',
-            ServiceRole= t.Sub("arn:aws:iam::${AWS::AccountId}:role${CDKSupportIAMRolePaths}${CDKSupportDeployRoleName}"),
+            ServiceRole= t.Sub("arn:aws:iam::${AWS::AccountId}:role${CDKSupportIAMRolePaths}${CDKSupportCDKDeployRoleName}"),
             Artifacts=codebuild.Artifacts(
                 Location= t.Sub('sc-factory-artifacts-${PuppetAccountId}-${AWS::Region}'),
                 Name= "cdk-1.0.0-artifacts",
@@ -117,7 +120,7 @@ def create_cdk_pipeline(name, version, product_name, product_version, template_c
                 Type= "S3",
             ),
             Environment=codebuild.Environment(
-                ComputeType= t.Ref('CDKDeployComputeType'),
+                ComputeType= t.Ref('CDKSupportCDKComputeType'),
                 EnvironmentVariables=[
                     codebuild.EnvironmentVariable(Name="CDK_DEPLOY_REQUIRE_APPROVAL", Type="PLAINTEXT", Value="CHANGE_ME"),
                     codebuild.EnvironmentVariable(Name="CDK_DEPLOY_EXTRA_ARGS", Type="PLAINTEXT", Value="CHANGE_ME"),
@@ -130,7 +133,7 @@ def create_cdk_pipeline(name, version, product_name, product_version, template_c
                     codebuild.EnvironmentVariable(Name="NAME", Type="PLAINTEXT", Value="CHANGE_ME"),
                     codebuild.EnvironmentVariable(Name="VERSION", Type="PLAINTEXT", Value="CHANGE_ME"),
                 ],
-                Image=t.Ref('CDKDeployImage'),
+                Image=t.Ref('CDKSupportCDKDeployImage'),
                 Type="LINUX_CONTAINER",
             ),
             Source=codebuild.Source(
@@ -182,15 +185,15 @@ fi
 
     template.add_resource(
         DeployDetailsCustomResource(
-            "DeployDetails",
-            ServiceToken=t.Ref("StartCDKDeployFunctionArn"),
+            "StartCDKDeploy",
+            ServiceToken=t.Ref("CDKSupportStartCDKDeployFunctionArn"),
             Handle=t.Ref(wait_condition_handle),
             Project=t.Sub("${AWS::StackName}-deploy"),
-            CDK_DEPLOY_EXTRA_ARGS=t.Ref("CDKDeployExtraArgs"),
-            CDK_TOOLKIT_STACK_NAME=t.Ref("CDKToolkitStackName"),
+            CDK_DEPLOY_EXTRA_ARGS=t.Ref("CDKSupportCDKDeployExtraArgs"),
+            CDK_TOOLKIT_STACK_NAME=t.Ref("CDKSupportCDKToolkitStackName"),
             PUPPET_ACCOUNT_ID=t.Ref("PuppetAccountId"),
             CDK_DEPLOY_PARAMETER_ARGS=t.Sub(cdk_deploy_parameter_args),
-            CDK_DEPLOY_REQUIRE_APPROVAL=t.Ref("CDKDeployRequireApproval"),
+            CDK_DEPLOY_REQUIRE_APPROVAL=t.Ref("CDKSupportCDKDeployRequireApproval"),
             NAME=product_name,
             VERSION=product_version,
         )
@@ -198,8 +201,8 @@ fi
 
     template.add_resource(
         cloudformation.WaitCondition(
-            "WaiterCondition",
-            DependsOn="DeployDetails",
+            "WaitForCDKDeployToComplete",
+            DependsOn="StartCDKDeploy",
             Handle=t.Ref(wait_condition_handle),
             Timeout=28800,
         )
@@ -208,9 +211,9 @@ fi
     template.add_resource(
         DeployDetailsCustomResource(
             "GetOutputsCode",
-            DependsOn=["WaiterCondition", "WaitConditionHandle", "DeployDetails",],
-            ServiceToken=t.Ref("GetOutputsForGivenCodebuildIdFunctionArn"),
-            CodeBuildBuildId=t.GetAtt("DeployDetails", "BuildId"),
+            DependsOn=["WaitForCDKDeployToComplete", "WaitConditionHandle", "StartCDKDeploy",],
+            ServiceToken=t.Ref("CDKSupportGetOutputsForGivenCodebuildIdFunctionArn"),
+            CodeBuildBuildId=t.GetAtt("StartCDKDeploy", "BuildId"),
             BucketName=t.Sub("sc-cdk-artifacts-${AWS::AccountId}"),
             ObjectKeyPrefix=t.Sub(f"cdk/1.0.0/{product_name}/{product_version}"),
         )
