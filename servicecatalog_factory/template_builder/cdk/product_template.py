@@ -46,7 +46,12 @@ def create_cdk_pipeline(name, version, product_name, product_version, template_c
     template.add_parameter(
         t.Parameter("GetOutputsForGivenCodebuildIdFunctionArn", Type="String",)
     )
-    template.add_parameter(t.Parameter("CDKDeployProject", Type="String",))
+    template.add_parameter(
+        t.Parameter("CDKSupportIAMRolePaths", Type="String", Default="/servicecatalog-factory-cdk-support/")
+    )
+    template.add_parameter(
+        t.Parameter("CDKSupportDeployRoleName", Type="String", Default="CDKDeployRoleName")
+    )
 
     manifest = json.loads(open(f"{p}/{PREFIX}/manifest.json", "r").read())
 
@@ -104,7 +109,7 @@ def create_cdk_pipeline(name, version, product_name, product_version, template_c
             "CDKDeploy",
             Name=t.Sub("${AWS::StackName}-deploy"),
             Description='Run CDK deploy for given source code',
-            ServiceRole= t.Sub("arn:aws:iam::${AWS::AccountId}:role${IAMRolePaths}${CDKDeployRoleName}"),
+            ServiceRole= t.Sub("arn:aws:iam::${AWS::AccountId}:role${CDKSupportIAMRolePaths}${CDKSupportDeployRoleName}"),
             Artifacts=codebuild.Artifacts(
                 Location= t.Sub('sc-factory-artifacts-${PuppetAccountId}-${AWS::Region}'),
                 Name= "cdk-1.0.0-artifacts",
@@ -180,7 +185,7 @@ fi
             "DeployDetails",
             ServiceToken=t.Ref("StartCDKDeployFunctionArn"),
             Handle=t.Ref(wait_condition_handle),
-            Project=t.Ref("CDKDeployProject"),
+            Project=t.Sub("${AWS::StackName}-deploy"),
             CDK_DEPLOY_EXTRA_ARGS=t.Ref("CDKDeployExtraArgs"),
             CDK_TOOLKIT_STACK_NAME=t.Ref("CDKToolkitStackName"),
             PUPPET_ACCOUNT_ID=t.Ref("PuppetAccountId"),
