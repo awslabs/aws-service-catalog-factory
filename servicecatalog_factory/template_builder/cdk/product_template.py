@@ -261,6 +261,7 @@ fi
     template.add_resource(
         DeployDetailsCustomResource(
             "StartCDKDeploy",
+            DependsOn=[t.Sub("${AWS::StackName}-deploy"), t.Sub("${AWS::StackName}-destroy")],
             ServiceToken=t.Ref("CDKSupportStartCDKDeployFunctionArn"),
             Handle=t.Ref(wait_condition_handle),
             CreateUpdateProject=t.Sub("${AWS::StackName}-deploy"),
