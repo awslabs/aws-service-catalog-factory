@@ -264,7 +264,7 @@ fi
             ServiceToken=t.Ref("CDKSupportStartCDKDeployFunctionArn"),
             Handle=t.Ref(wait_condition_handle),
             CreateUpdateProject=t.Sub("${AWS::StackName}-deploy"),
-            DeleteProject=t.Sub("${AWS::StackName}-delete"),
+            DeleteProject=t.Sub("${AWS::StackName}-destroy"),
             CDK_DEPLOY_EXTRA_ARGS=t.Ref("CDKSupportCDKDeployExtraArgs"),
             CDK_TOOLKIT_STACK_NAME=t.Ref("CDKSupportCDKToolkitStackName"),
             PUPPET_ACCOUNT_ID=t.Ref("PuppetAccountId"),
