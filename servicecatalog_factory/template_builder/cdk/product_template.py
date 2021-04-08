@@ -120,7 +120,7 @@ def create_cdk_pipeline(name, version, product_name, product_version, template_c
                 Type= "S3",
             ),
             Environment=codebuild.Environment(
-                ComputeType= t.Ref('CDKSupportCDKComputeType'),
+                ComputeType=t.Ref('CDKSupportCDKComputeType'),
                 EnvironmentVariables=[
                     codebuild.EnvironmentVariable(Name="CDK_DEPLOY_REQUIRE_APPROVAL", Type="PLAINTEXT", Value="CHANGE_ME"),
                     codebuild.EnvironmentVariable(Name="CDK_DEPLOY_EXTRA_ARGS", Type="PLAINTEXT", Value="CHANGE_ME"),
@@ -147,10 +147,10 @@ def create_cdk_pipeline(name, version, product_name, product_version, template_c
                                     "runtime-versions": runtime_versions,
                                     "on-failure": "CONTINUE",
                                     "commands": [
-                                        "aws s3 cp s3://sc-factory-artifacts-$PUPPET_ACCOUNT_ID-$REGION/cdk/1.0.0/$NAME/$VERSION/$NAME-$VERSION.zip $NAME-$VERSION.zip",
-                                        "unzip $NAME-$VERSION.zip",
-                                        "npm install",
-                                    ] + extra_commands
+                                                    "aws s3 cp s3://sc-factory-artifacts-$PUPPET_ACCOUNT_ID-$REGION/cdk/1.0.0/$NAME/$VERSION/$NAME-$VERSION.zip $NAME-$VERSION.zip",
+                                                    "unzip $NAME-$VERSION.zip",
+                                                    "npm install",
+                                                ] + extra_commands
                                 },
                                 build={
                                     "on-failure": "CONTINUE",
@@ -160,7 +160,82 @@ if [ "$CODEBUILD_BUILD_SUCCEEDING" = "1" ]; then
     npm run cdk deploy -- --toolkit-stack-name $CDK_TOOLKIT_STACK_NAME --require-approval $CDK_DEPLOY_REQUIRE_APPROVAL --outputs-file scf_outputs.json $CDK_DEPLOY_EXTRA_ARGS $CDK_DEPLOY_PARAMETER_ARGS '*'
     aws s3 cp scf_outputs.json s3://sc-cdk-artifacts-${AWS::AccountId}/cdk/1.0.0/$NAME/$VERSION/scf_outputs-$CODEBUILD_BUILD_ID.json
 fi"""
+                                    ]},
+                                post_build={"commands": [
+                                    """
+if [ "$CODEBUILD_BUILD_SUCCEEDING" = "1" ]; then
+    curl -X PUT -H 'Content-Type:' --data-binary '{"Status" : "SUCCESS", "Reason" : "Deploy completed", "UniqueId" : "$CODEBUILD_BUILD_ID", "Data" : "'"$CODEBUILD_BUILD_ID"'"}' "$ON_COMPLETE_URL"
+else
+    curl -X PUT -H 'Content-Type:' --data-binary '{"Status" : "FAILURE", "Reason" : "Deploy failed", "UniqueId" : "'"$CODEBUILD_BUILD_ID"'", "Data" : "'"$CODEBUILD_BUILD_ID"'"}' "$ON_COMPLETE_URL"
+fi                                    
+                                    """
                                 ]},
+                            ),
+                            artifacts={
+                                "name": "CDKDeploy",
+                                "files": ["*", "**/*"],
+                            },
+                        )
+                    )
+                ),
+            ),
+            TimeoutInMinutes=480,
+        )
+    )
+
+    template.add_resource(
+        codebuild.Project(
+            "CDKDestroy",
+            Name=t.Sub("${AWS::StackName}-destroy"),
+            Description='Run CDK destroy for given source code',
+            ServiceRole= t.Sub("arn:aws:iam::${AWS::AccountId}:role${CDKSupportIAMRolePaths}${CDKSupportCDKDeployRoleName}"),
+            Artifacts=codebuild.Artifacts(
+                Location= t.Sub('sc-factory-artifacts-${PuppetAccountId}-${AWS::Region}'),
+                Name= "cdk-1.0.0-artifacts",
+                NamespaceType= "BUILD_ID",
+                Type= "S3",
+            ),
+            Environment=codebuild.Environment(
+                ComputeType=t.Ref('CDKSupportCDKComputeType'),
+                EnvironmentVariables=[
+                    codebuild.EnvironmentVariable(Name="CDK_DEPLOY_REQUIRE_APPROVAL", Type="PLAINTEXT", Value="CHANGE_ME"),
+                    codebuild.EnvironmentVariable(Name="CDK_DEPLOY_EXTRA_ARGS", Type="PLAINTEXT", Value="CHANGE_ME"),
+                    codebuild.EnvironmentVariable(Name="CDK_TOOLKIT_STACK_NAME", Type="PLAINTEXT", Value="CHANGE_ME"),
+                    codebuild.EnvironmentVariable(Name="UId", Type="PLAINTEXT", Value="CHANGE_ME"),
+                    codebuild.EnvironmentVariable(Name="PUPPET_ACCOUNT_ID", Type="PLAINTEXT", Value="CHANGE_ME"),
+                    codebuild.EnvironmentVariable(Name="REGION", Type="PLAINTEXT", Value=t.Ref("AWS::Region")),
+                    codebuild.EnvironmentVariable(Name="CDK_DEPLOY_PARAMETER_ARGS", Type="PLAINTEXT", Value="CHANGE_ME"),
+                    codebuild.EnvironmentVariable(Name="ON_COMPLETE_URL", Type="PLAINTEXT", Value="CHANGE_ME"),
+                    codebuild.EnvironmentVariable(Name="NAME", Type="PLAINTEXT", Value="CHANGE_ME"),
+                    codebuild.EnvironmentVariable(Name="VERSION", Type="PLAINTEXT", Value="CHANGE_ME"),
+                ],
+                Image=t.Ref('CDKSupportCDKDeployImage'),
+                Type="LINUX_CONTAINER",
+            ),
+            Source=codebuild.Source(
+                Type="NO_SOURCE",
+                BuildSpec= t.Sub(
+                    yaml.safe_dump(
+                        dict(
+                            version=0.2,
+                            phases=dict(
+                                install={
+                                    "runtime-versions": runtime_versions,
+                                    "on-failure": "CONTINUE",
+                                    "commands": [
+                                                    "aws s3 cp s3://sc-factory-artifacts-$PUPPET_ACCOUNT_ID-$REGION/cdk/1.0.0/$NAME/$VERSION/$NAME-$VERSION.zip $NAME-$VERSION.zip",
+                                                    "unzip $NAME-$VERSION.zip",
+                                                    "npm install",
+                                                ] + extra_commands
+                                },
+                                build={
+                                    "on-failure": "CONTINUE",
+                                    "commands": [
+                                        """
+if [ "$CODEBUILD_BUILD_SUCCEEDING" = "1" ]; then
+    npm run cdk destroy -- --toolkit-stack-name $CDK_TOOLKIT_STACK_NAME --force --ignore-errors '*'
+fi"""
+                                    ]},
                                 post_build={"commands": [
                                     """
 if [ "$CODEBUILD_BUILD_SUCCEEDING" = "1" ]; then
@@ -188,7 +263,8 @@ fi
             "StartCDKDeploy",
             ServiceToken=t.Ref("CDKSupportStartCDKDeployFunctionArn"),
             Handle=t.Ref(wait_condition_handle),
-            Project=t.Sub("${AWS::StackName}-deploy"),
+            CreateUpdateProject=t.Sub("${AWS::StackName}-deploy"),
+            DeleteProject=t.Sub("${AWS::StackName}-delete"),
             CDK_DEPLOY_EXTRA_ARGS=t.Ref("CDKSupportCDKDeployExtraArgs"),
             CDK_TOOLKIT_STACK_NAME=t.Ref("CDKSupportCDKToolkitStackName"),
             PUPPET_ACCOUNT_ID=t.Ref("PuppetAccountId"),
