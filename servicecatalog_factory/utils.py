@@ -34,3 +34,16 @@ def merge(dict1, dict2):
         else:
             result[key] = deepcopy(dict2[key])
     return result
+
+
+def unwrap(input):
+    if hasattr(input, "get_wrapped"):
+        result = input.get_wrapped()
+    else:
+        result = input
+
+    if isinstance(result, dict):
+        for k in result.keys():
+            result[k] = unwrap(result.get(k))
+
+    return result

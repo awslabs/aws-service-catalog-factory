@@ -403,13 +403,12 @@ def update_provisioned_product(region, name, product_id, description, template_u
 
 
 @cli.command()
-@click.argument("name")
-@click.argument("version")
 @click.argument("product_name")
 @click.argument("product_version")
+@click.argument("template")
 @click.argument("p", type=click.Path(exists=True))
-def generate_template(name, version, product_name, product_version, p):
-    click.echo(core.generate_template(name, version, product_name, product_version, p))
+def generate_template(product_name, product_version, template, p):
+    click.echo(core.generate_template(product_name, product_version, template, p))
 
 
 @cli.command()

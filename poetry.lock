@@ -36,7 +36,7 @@ tests = ["coverage", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "zope.i
 
 [[package]]
 name = "better-boto"
-version = "0.26.0"
+version = "0.36.0"
 description = "Helpers to make using boto3 more enjoyable"
 category = "main"
 optional = false
@@ -484,7 +484,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7"
-content-hash = "cfd8264f1881745af6ce04597af09ee5b3c8420c672a3357bae672c97577464f"
+content-hash = "15435783acd7c00c6f4483a2b29e0b984f5866363f02d8ff83211689909724bb"
 
 [metadata.files]
 appdirs = [
@@ -500,8 +500,8 @@ attrs = [
     {file = "attrs-19.3.0.tar.gz", hash = "sha256:f7b7ce16570fe9965acd6d30101a28f62fb4a7f9e926b3bbc9b61f8b04247e72"},
 ]
 better-boto = [
-    {file = "better-boto-0.26.0.tar.gz", hash = "sha256:1f4eeb52c64eccc972f12a02c36c5e393ba011d975e7e0ce0c64c067d32c4ff2"},
-    {file = "better_boto-0.26.0-py3-none-any.whl", hash = "sha256:b7373119c537ef1fb745dc2c2c2defa12dee2dc8c5bfd6f9765e5a3ccd9ae433"},
+    {file = "better-boto-0.36.0.tar.gz", hash = "sha256:b64833ba661e35cc79212d60f41190c18a7d4374f560960ecb1c0a2c4dc38268"},
+    {file = "better_boto-0.36.0-py3-none-any.whl", hash = "sha256:1d8baf99d2448a9eec023b93eedb4b9bb79bdfd605cc004d06e4d36917883552"},
 ]
 black = [
     {file = "black-19.10b0-py36-none-any.whl", hash = "sha256:1b30e59be925fafc1ee4565e5e08abef6b03fe455102883820fe5ee2e4734e0b"},
