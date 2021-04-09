@@ -113,12 +113,6 @@ def create_cdk_pipeline(name, version, product_name, product_version, template_c
             Name=t.Sub("${AWS::StackName}-deploy"),
             Description='Run CDK deploy for given source code',
             ServiceRole= t.Sub("arn:aws:iam::${AWS::AccountId}:role${CDKSupportIAMRolePaths}${CDKSupportCDKDeployRoleName}"),
-            Artifacts=codebuild.Artifacts(
-                Location= t.Sub('sc-factory-artifacts-${PuppetAccountId}-${AWS::Region}'),
-                Name= "cdk-1.0.0-artifacts",
-                NamespaceType= "BUILD_ID",
-                Type= "S3",
-            ),
             Environment=codebuild.Environment(
                 ComputeType=t.Ref('CDKSupportCDKComputeType'),
                 EnvironmentVariables=[
@@ -189,12 +183,6 @@ fi
             Name=t.Sub("${AWS::StackName}-destroy"),
             Description='Run CDK destroy for given source code',
             ServiceRole= t.Sub("arn:aws:iam::${AWS::AccountId}:role${CDKSupportIAMRolePaths}${CDKSupportCDKDeployRoleName}"),
-            Artifacts=codebuild.Artifacts(
-                Location= t.Sub('sc-factory-artifacts-${PuppetAccountId}-${AWS::Region}'),
-                Name= "cdk-1.0.0-artifacts",
-                NamespaceType= "BUILD_ID",
-                Type= "S3",
-            ),
             Environment=codebuild.Environment(
                 ComputeType=t.Ref('CDKSupportCDKComputeType'),
                 EnvironmentVariables=[
