@@ -91,10 +91,6 @@ def create_cdk_pipeline(name, version, product_name, product_version, template_c
                     template.add_output(t.Output(output_name, **new_output))
     cdk_deploy_parameter_args = " ".join(cdk_deploy_parameter_args)
 
-    wait_condition_handle = template.add_resource(
-        cloudformation.WaitConditionHandle("WaitConditionHandle",)
-    )
-
     class DeployDetailsCustomResource(cloudformation.AWSCustomObject):
         resource_type = "Custom::DeployDetails"
         props = dict()
@@ -112,9 +108,9 @@ def create_cdk_pipeline(name, version, product_name, product_version, template_c
             "CDKDeploy",
             Name=t.Sub("${AWS::StackName}-deploy"),
             Description='Run CDK deploy for given source code',
-            ServiceRole= t.Sub("arn:aws:iam::${AWS::AccountId}:role${CDKSupportIAMRolePaths}${CDKSupportCDKDeployRoleName}"),
+            ServiceRole=t.Sub("arn:aws:iam::${AWS::AccountId}:role${CDKSupportIAMRolePaths}${CDKSupportCDKDeployRoleName}"),
             Artifacts=codebuild.Artifacts(
-                Type= "S3",
+                Type="S3",
             ),
             Environment=codebuild.Environment(
                 ComputeType=t.Ref('CDKSupportCDKComputeType'),
@@ -257,7 +253,6 @@ fi
             "StartCDKDeploy",
             DependsOn=["CDKDeploy", "CDKDestroy"],
             ServiceToken=t.Ref("CDKSupportStartCDKDeployFunctionArn"),
-            Handle=t.Ref(wait_condition_handle),
             CreateUpdateProject=t.Ref("CDKDeploy"),
             DeleteProject=t.Ref("CDKDestroy"),
             CDK_DEPLOY_EXTRA_ARGS=t.Ref("CDKSupportCDKDeployExtraArgs"),
@@ -271,18 +266,9 @@ fi
     )
 
     template.add_resource(
-        cloudformation.WaitCondition(
-            "WaitForCDKDeployToComplete",
-            DependsOn="StartCDKDeploy",
-            Handle=t.Ref(wait_condition_handle),
-            Timeout=28800,
-        )
-    )
-
-    template.add_resource(
         DeployDetailsCustomResource(
             "GetOutputsCode",
-            DependsOn=["WaitForCDKDeployToComplete", "WaitConditionHandle", "StartCDKDeploy",],
+            DependsOn=["StartCDKDeploy",],
             ServiceToken=t.Ref("CDKSupportGetOutputsForGivenCodebuildIdFunctionArn"),
             CodeBuildBuildId=t.GetAtt("StartCDKDeploy", "BuildId"),
             BucketName=t.Sub("sc-cdk-artifacts-${AWS::AccountId}"),
