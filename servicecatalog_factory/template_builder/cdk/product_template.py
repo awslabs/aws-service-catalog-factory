@@ -138,7 +138,6 @@ def create_cdk_pipeline(name, version, product_name, product_version, template_c
                             phases=dict(
                                 install={
                                     "runtime-versions": runtime_versions,
-                                    "on-failure": "CONTINUE",
                                     "commands": [
                                                     "aws s3 cp s3://sc-factory-artifacts-$PUPPET_ACCOUNT_ID-$REGION/cdk/1.0.0/$NAME/$VERSION/$NAME-$VERSION.zip $NAME-$VERSION.zip",
                                                     "unzip $NAME-$VERSION.zip",
@@ -146,23 +145,10 @@ def create_cdk_pipeline(name, version, product_name, product_version, template_c
                                                 ] + extra_commands
                                 },
                                 build={
-                                    "on-failure": "CONTINUE",
                                     "commands": [
-                                        """
-if [ "$CODEBUILD_BUILD_SUCCEEDING" = "1" ]; then
-    npm run cdk deploy -- --toolkit-stack-name $CDK_TOOLKIT_STACK_NAME --require-approval $CDK_DEPLOY_REQUIRE_APPROVAL --outputs-file scf_outputs.json $CDK_DEPLOY_EXTRA_ARGS $CDK_DEPLOY_PARAMETER_ARGS '*'
-    aws s3 cp scf_outputs.json s3://sc-cdk-artifacts-${AWS::AccountId}/cdk/1.0.0/$NAME/$VERSION/scf_outputs-$CODEBUILD_BUILD_ID.json
-fi"""
+                                        "npm run cdk deploy -- --toolkit-stack-name $CDK_TOOLKIT_STACK_NAME --require-approval $CDK_DEPLOY_REQUIRE_APPROVAL --outputs-file scf_outputs.json $CDK_DEPLOY_EXTRA_ARGS $CDK_DEPLOY_PARAMETER_ARGS '*'",
+                                        "aws s3 cp scf_outputs.json s3://sc-cdk-artifacts-${AWS::AccountId}/cdk/1.0.0/$NAME/$VERSION/scf_outputs-$CODEBUILD_BUILD_ID.json",
                                     ]},
-                                post_build={"commands": [
-                                    """
-if [ "$CODEBUILD_BUILD_SUCCEEDING" = "1" ]; then
-    curl -X PUT -H 'Content-Type:' --data-binary '{"Status" : "SUCCESS", "Reason" : "Deploy completed", "UniqueId" : "$CODEBUILD_BUILD_ID", "Data" : "'"$CODEBUILD_BUILD_ID"'"}' "$ON_COMPLETE_URL"
-else
-    curl -X PUT -H 'Content-Type:' --data-binary '{"Status" : "FAILURE", "Reason" : "Deploy failed", "UniqueId" : "'"$CODEBUILD_BUILD_ID"'", "Data" : "'"$CODEBUILD_BUILD_ID"'"}' "$ON_COMPLETE_URL"
-fi                                    
-                                    """
-                                ]},
                             ),
                             artifacts={
                                 "name": "CDKDeploy",
@@ -211,7 +197,6 @@ fi
                             phases=dict(
                                 install={
                                     "runtime-versions": runtime_versions,
-                                    "on-failure": "CONTINUE",
                                     "commands": [
                                                     "aws s3 cp s3://sc-factory-artifacts-$PUPPET_ACCOUNT_ID-$REGION/cdk/1.0.0/$NAME/$VERSION/$NAME-$VERSION.zip $NAME-$VERSION.zip",
                                                     "unzip $NAME-$VERSION.zip",
@@ -219,22 +204,9 @@ fi
                                                 ] + extra_commands
                                 },
                                 build={
-                                    "on-failure": "CONTINUE",
                                     "commands": [
-                                        """
-if [ "$CODEBUILD_BUILD_SUCCEEDING" = "1" ]; then
-    npm run cdk destroy -- --toolkit-stack-name $CDK_TOOLKIT_STACK_NAME --force --ignore-errors '*'
-fi"""
+                                        "npm run cdk destroy -- --toolkit-stack-name $CDK_TOOLKIT_STACK_NAME --force --ignore-errors '*'"
                                     ]},
-                                post_build={"commands": [
-                                    """
-if [ "$CODEBUILD_BUILD_SUCCEEDING" = "1" ]; then
-    curl -X PUT -H 'Content-Type:' --data-binary '{"Status" : "SUCCESS", "Reason" : "Deploy completed", "UniqueId" : "$CODEBUILD_BUILD_ID", "Data" : "'"$CODEBUILD_BUILD_ID"'"}' "$ON_COMPLETE_URL"
-else
-    curl -X PUT -H 'Content-Type:' --data-binary '{"Status" : "FAILURE", "Reason" : "Deploy failed", "UniqueId" : "'"$CODEBUILD_BUILD_ID"'", "Data" : "'"$CODEBUILD_BUILD_ID"'"}' "$ON_COMPLETE_URL"
-fi                                    
-                                    """
-                                ]},
                             ),
                             artifacts={
                                 "name": "CDKDeploy",
