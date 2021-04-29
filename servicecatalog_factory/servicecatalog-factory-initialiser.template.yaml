@@ -4,7 +4,7 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: |
   Initialiser template used to bring up the install ServiceCatalog-Factory
-  {"version": "0.54.0", "framework": "servicecatalog-factory", "role": "initialiser"}
+  {"version": "0.57.2", "framework": "servicecatalog-factory", "role": "initialiser"}
 
 
 Metadata:
@@ -84,6 +84,15 @@ Parameters:
 
 
 Resources:
+  InitialiserVersionParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: service-catalog-factory-initialiser-version
+      Type: String
+      Value: '0.57.2--zzz' #InitialiserVersion
+      Tags:
+        "ServiceCatalogFactory:Actor": "Framework"
+
   InitialiserRole:
     Type: AWS::IAM::Role
     Properties:
@@ -284,6 +293,7 @@ Resources:
           - !Ref SCMFullRepositoryId
           - !Ref SCMBucketName
           - !Ref SCMObjectKey
+          - !GetAtt InitialiserVersionParam.Value
           - !Ref Version
 
 Outputs:
@@ -293,3 +303,5 @@ Outputs:
     Value: !Sub "ssh://git-codecommit.${AWS::Region}.amazonaws.com/v1/repos/ServiceCatalogFactory"
   ServiceCatalogFactoryRepoCloneURLHTTPS:
     Value: !Sub "https://git-codecommit.${AWS::Region}.amazonaws.com/v1/repos/ServiceCatalogFactory"
+  InitialiserVersion:
+    Value: !GetAtt InitialiserVersionParam.Value
