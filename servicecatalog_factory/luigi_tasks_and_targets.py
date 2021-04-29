@@ -783,7 +783,7 @@ class DeleteAVersionTask(FactoryTask):
         self.info(f"Starting delete of {product_id} {self.version}")
         region = self.product_args.get("region")
         found = False
-        with self.regional_client("servicecatalog") as servicecatalog:
+        with betterboto_client.ClientContextManager("servicecatalog", region_name=region,) as servicecatalog:
             provisioning_artifact_details = servicecatalog.list_provisioning_artifacts_single_page(
                 ProductId=product_id,
             ).get(
@@ -806,7 +806,7 @@ class DeleteAVersionTask(FactoryTask):
 
         product["found"] = found
 
-        with self.regional_client("cloudformation") as cloudformation:
+        with betterboto_client.ClientContextManager("cloudformation", region_name=region,) as cloudformation:
             cloudformation.ensure_deleted(
                 StackName=f"{product.get('uid')}-{self.version}"
             )
