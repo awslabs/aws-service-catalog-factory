@@ -27,6 +27,6 @@
         - Key: "ServiceCatalogFactory:Actor"
           Value: "Generated"
 {% for tag in tags %}
-        - Key: {{ tag.get("Key") }}
-          Value: {{ tag.get("Value") }}
+        - Key: "{{ tag.get("Key") }}"
+          Value: "{{ tag.get("Value") }}"
 {% endfor %}
