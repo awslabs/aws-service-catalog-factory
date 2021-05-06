@@ -52,8 +52,8 @@ Resources:
         - Key: "ServiceCatalogFactory:Actor"
           Value: "Generated"
 {% for tag in tags %}
-        - Key: {{ tag.get("Key") }}
-          Value: {{ tag.get("Value") }}
+        - Key: "{{ tag.get("Key") }}"
+          Value: "{{ tag.get("Value") }}"
 {% endfor %}
       ArtifactStores:
       {% for region in ALL_REGIONS %}
@@ -185,8 +185,8 @@ Resources:
         - Key: "ServiceCatalogFactory:Actor"
           Value: "Generated"
 {% for tag in tags %}
-        - Key: {{ tag.get("Key") }}
-          Value: {{ tag.get("Value") }}
+        - Key: "{{ tag.get("Key") }}"
+          Value: "{{ tag.get("Value") }}"
 {% endfor %}
       ServiceRole: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodeRole"
       Artifacts:
