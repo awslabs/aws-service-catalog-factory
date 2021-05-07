@@ -7,7 +7,6 @@ from troposphere import codepipeline
 from troposphere import codebuild
 
 from servicecatalog_factory import constants
-from servicecatalog_factory import utils
 from servicecatalog_factory.template_builder.base_template import (
     BaseTemplate,
     SOURCE_OUTPUT_ARTIFACT,
@@ -178,9 +177,10 @@ class CDK100Template(BaseTemplate):
                     Image=constants.ENVIRONMENT_IMAGE_DEFAULT,
                     Type=constants.ENVIRONMENT_TYPE_DEFAULT,
                     EnvironmentVariables=[
-                        {"Type": "PLAINTEXT", "Name": "TEMPLATE", "Value": "CHANGE_ME",},
                         {"Type": "PLAINTEXT", "Name": "NAME", "Value": "CHANGE_ME",},
                         {"Type": "PLAINTEXT", "Name": "VERSION", "Value": "CHANGE_ME",},
+                        {"Type": "PLAINTEXT", "Name": "PROVISIONER_NAME", "Value": "CHANGE_ME",},
+                        {"Type": "PLAINTEXT", "Name": "PROVISIONER_VERSION", "Value": "CHANGE_ME",},
                     ],
                 ),
                 Source=codebuild.Source(
@@ -205,7 +205,7 @@ class CDK100Template(BaseTemplate):
                                     },
                                     build={
                                         "commands": [
-                                            f"servicecatalog-factory generate-template $NAME $VERSION \"$TEMPLATE\" . > product.template.yaml",
+                                            f"servicecatalog-factory generate-template $PROVISIONER_NAME $PROVISIONER_VERSION $NAME $VERSION . > product.template.yaml",
                                         ]
                                     },
                                 ),
@@ -246,7 +246,8 @@ class CDK100Template(BaseTemplate):
                         "EnvironmentVariables": t.Sub(
                             json.dumps(
                                 [
-                                    dict(name="TEMPLATE", value=json.dumps(utils.unwrap(template)), type="PLAINTEXT"),
+                                    dict(name="PROVISIONER_NAME", value='CDK', type="PLAINTEXT"),
+                                    dict(name="PROVISIONER_VERSION", value='1.0.0', type="PLAINTEXT"),
                                     dict(name="NAME", value=name, type="PLAINTEXT"),
                                     dict(
                                         name="VERSION", value=version, type="PLAINTEXT"
@@ -332,17 +333,9 @@ class CDK100Template(BaseTemplate):
                                     ),
                                     dict(
                                         name="PROVISIONER",
-                                        value="cdk/1.0.0",
+                                        value="CDK/1.0.0",
                                         type="PLAINTEXT",
                                     ),
-                                ]
-                                + [
-                                    dict(
-                                        name=f"PRODUCT_ID_{region.replace('-', '_')}",
-                                        value=product_ids_by_region[region],
-                                        type="PLAINTEXT",
-                                    )
-                                    for region in all_regions
                                 ]
                             )
                         ),
@@ -392,7 +385,7 @@ class CDK100Template(BaseTemplate):
                                     ),
                                     dict(
                                         name="PROVISIONER",
-                                        value="cdk/1.0.0",
+                                        value="CDK/1.0.0",
                                         type="PLAINTEXT",
                                     ),
                                 ]

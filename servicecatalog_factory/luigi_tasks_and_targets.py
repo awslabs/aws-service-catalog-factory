@@ -1,5 +1,7 @@
 # Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
+import os
+
 import time
 
 import traceback
@@ -22,6 +24,21 @@ logger = logging.getLogger(__file__)
 
 
 class FactoryTask(luigi.Task):
+
+    @property
+    def factory_account_id(self):
+        account_id = os.environ.get("ACCOUNT_ID", None)
+        if account_id is None:
+            raise Exception("You must export ACCOUNT_ID")
+        return account_id
+
+    @property
+    def factory_region(self):
+        region = os.environ.get("REGION", None)
+        if region is None:
+            raise Exception("You must export REGION")
+        return region
+
     def client(self, service):
         return betterboto_client.ClientContextManager(service,)
 
@@ -575,6 +592,14 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
     def handle_cloudformation_provisioner(
         self, product_ids_by_region, friendly_uid, tags, source
     ):
+        with self.client('s3') as s3:
+            s3.put_object(
+                Bucket=f"sc-factory-artifacts-{self.factory_account_id}-{self.factory_region}", Key=f"cloudformation/{self.product.get('Name')}/product_ids.json", Body=json.dumps(product_ids_by_region),
+            )
+            s3.put_object(
+                Bucket=f"sc-factory-artifacts-{self.factory_account_id}-{self.factory_region}", Key=f"cloudformation/{self.product.get('Name')}/{self.version.get('Name')}/template.json", Body=json.dumps(utils.unwrap(self.template)),
+            )
+
         template = utils.ENV.get_template(constants.PRODUCT_CLOUDFORMATION)
 
         stages = utils.merge(
@@ -649,6 +674,13 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
             friendly_uid = product_details.get("uid")
 
         if self.template.get("Name"):
+            with self.client('s3') as s3:
+                s3.put_object(
+                    Bucket=f"sc-factory-artifacts-{self.factory_account_id}-{self.factory_region}", Key=f"{self.template.get('Name')}/{self.template.get('Version')}/{self.product.get('Name')}/product_ids.json", Body=json.dumps(product_ids_by_region),
+                )
+                s3.put_object(
+                    Bucket=f"sc-factory-artifacts-{self.factory_account_id}-{self.factory_region}", Key=f"{self.template.get('Name')}/{self.template.get('Version')}/{self.product.get('Name')}/{self.version.get('Name')}/template.json", Body=json.dumps(utils.unwrap(self.template)),
+                )
             rendered = product_template_factory.get(
                 self.template.get("Name"), self.template.get("Version")
             ).render(

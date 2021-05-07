@@ -75,11 +75,11 @@ def get_resources() -> list:
                                         'zip -r $NAME-$VERSION.zip . -x "node_modules/*"'
                                     ]
                                     + [
-                                        f"aws cloudformation package --region {region} --template $(pwd)/product.template.yaml --s3-bucket sc-factory-artifacts-$ACCOUNT_ID-{region} --s3-prefix /cdk/1.0.0/$NAME/$VERSION --output-template-file product.template-{region}.yaml"
+                                        f"aws cloudformation package --region {region} --template $(pwd)/product.template.yaml --s3-bucket sc-factory-artifacts-$ACCOUNT_ID-{region} --s3-prefix /CDK/1.0.0/$NAME/$VERSION --output-template-file product.template-{region}.yaml"
                                         for region in all_regions
                                     ]
                                     + [
-                                        f"aws s3 cp --quiet $NAME-$VERSION.zip s3://sc-factory-artifacts-$ACCOUNT_ID-{region}/cdk/1.0.0/$NAME/$VERSION/$NAME-$VERSION.zip"
+                                        f"aws s3 cp --quiet $NAME-$VERSION.zip s3://sc-factory-artifacts-$ACCOUNT_ID-{region}/CDK/1.0.0/$NAME/$VERSION/$NAME-$VERSION.zip"
                                         for region in all_regions
                                     ]
                                 },
