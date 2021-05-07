@@ -1654,13 +1654,13 @@ def update_provisioned_product(region, name, product_id, description, template_u
 
 
 def generate_template(provisioner_name, provisioner_version, product_name, product_version, p) -> str:
-    s3 = betterboto_client.ClientContextManager('s3')
-    body = s3.get_object(
-        Bucket=f"sc-factory-artifacts-{os.environ.get('ACCOUNT_ID')}-{os.environ.get('REGION')}", Key=f"{provisioner_name}/{provisioner_version}/{product_name}/{product_version}/template.json"
-    ).get("Body").read()
-    template = json.loads(body)
-    if provisioner_name == "CDK" and provisioner_version == "1.0.0":
-        return cdk_product_template.create_cdk_pipeline(
-            provisioner_name, provisioner_version, product_name, product_version, template, p
-        ).to_yaml(clean_up=True)
-    raise Exception(f"Unknown {provisioner_name} and {provisioner_version}")
+    with betterboto_client.ClientContextManager('s3') as s3:
+        body = s3.get_object(
+            Bucket=f"sc-factory-artifacts-{os.environ.get('ACCOUNT_ID')}-{os.environ.get('REGION')}", Key=f"{provisioner_name}/{provisioner_version}/{product_name}/{product_version}/template.json"
+        ).get("Body").read()
+        template = json.loads(body)
+        if provisioner_name == "CDK" and provisioner_version == "1.0.0":
+            return cdk_product_template.create_cdk_pipeline(
+                provisioner_name, provisioner_version, product_name, product_version, template, p
+            ).to_yaml(clean_up=True)
+        raise Exception(f"Unknown {provisioner_name} and {provisioner_version}")
