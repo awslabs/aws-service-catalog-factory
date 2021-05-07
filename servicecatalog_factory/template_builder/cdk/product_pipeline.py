@@ -378,6 +378,11 @@ class CDK100Template(BaseTemplate):
                                         type="PLAINTEXT",
                                     ),
                                     dict(
+                                        name="REGION",
+                                        value="${AWS::Region}",
+                                        type="PLAINTEXT",
+                                    ),
+                                    dict(
                                         name="PIPELINE_NAME",
                                         value="${AWS::StackName}-pipeline",
                                         type="PLAINTEXT",
