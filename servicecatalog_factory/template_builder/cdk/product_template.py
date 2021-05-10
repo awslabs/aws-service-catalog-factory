@@ -11,8 +11,7 @@ from servicecatalog_factory import constants
 PREFIX = "sct-synth-output"
 
 
-def create_cdk_pipeline(name, version, product_name, product_version, template_config_as_string, p) -> t.Template:
-    template_config = json.loads(template_config_as_string)
+def create_cdk_pipeline(name, version, product_name, product_version, template_config, p) -> t.Template:
     description = f"""Builds a cdk pipeline
 {{"version": "{constants.VERSION}", "framework": "servicecatalog-factory", "role": "product-pipeline", "type": "{name}", "version": "{version}"}}"""
     configuration = template_config.get("Configuration")
@@ -139,7 +138,7 @@ def create_cdk_pipeline(name, version, product_name, product_version, template_c
                                 install={
                                     "runtime-versions": runtime_versions,
                                     "commands": [
-                                                    "aws s3 cp s3://sc-factory-artifacts-$PUPPET_ACCOUNT_ID-$REGION/cdk/1.0.0/$NAME/$VERSION/$NAME-$VERSION.zip $NAME-$VERSION.zip",
+                                                    "aws s3 cp s3://sc-factory-artifacts-$PUPPET_ACCOUNT_ID-$REGION/CDK/1.0.0/$NAME/$VERSION/$NAME-$VERSION.zip $NAME-$VERSION.zip",
                                                     "unzip $NAME-$VERSION.zip",
                                                     "npm install",
                                                 ] + extra_commands
@@ -147,7 +146,7 @@ def create_cdk_pipeline(name, version, product_name, product_version, template_c
                                 build={
                                     "commands": [
                                         "npm run cdk deploy -- --toolkit-stack-name $CDK_TOOLKIT_STACK_NAME --require-approval $CDK_DEPLOY_REQUIRE_APPROVAL --outputs-file scf_outputs.json $CDK_DEPLOY_EXTRA_ARGS $CDK_DEPLOY_PARAMETER_ARGS '*'",
-                                        "aws s3 cp scf_outputs.json s3://sc-cdk-artifacts-${AWS::AccountId}/cdk/1.0.0/$NAME/$VERSION/scf_outputs-$CODEBUILD_BUILD_ID.json",
+                                        "aws s3 cp scf_outputs.json s3://sc-cdk-artifacts-${AWS::AccountId}/CDK/1.0.0/$NAME/$VERSION/scf_outputs-$CODEBUILD_BUILD_ID.json",
                                     ]},
                             ),
                             artifacts={
@@ -198,7 +197,7 @@ def create_cdk_pipeline(name, version, product_name, product_version, template_c
                                 install={
                                     "runtime-versions": runtime_versions,
                                     "commands": [
-                                                    "aws s3 cp s3://sc-factory-artifacts-$PUPPET_ACCOUNT_ID-$REGION/cdk/1.0.0/$NAME/$VERSION/$NAME-$VERSION.zip $NAME-$VERSION.zip",
+                                                    "aws s3 cp s3://sc-factory-artifacts-$PUPPET_ACCOUNT_ID-$REGION/CDK/1.0.0/$NAME/$VERSION/$NAME-$VERSION.zip $NAME-$VERSION.zip",
                                                     "unzip $NAME-$VERSION.zip",
                                                     "npm install",
                                                 ] + extra_commands
@@ -244,7 +243,7 @@ def create_cdk_pipeline(name, version, product_name, product_version, template_c
             ServiceToken=t.Ref("CDKSupportGetOutputsForGivenCodebuildIdFunctionArn"),
             CodeBuildBuildId=t.GetAtt("StartCDKDeploy", "BuildId"),
             BucketName=t.Sub("sc-cdk-artifacts-${AWS::AccountId}"),
-            ObjectKeyPrefix=t.Sub(f"cdk/1.0.0/{product_name}/{product_version}"),
+            ObjectKeyPrefix=t.Sub(f"CDK/1.0.0/{product_name}/{product_version}"),
         )
     )
 

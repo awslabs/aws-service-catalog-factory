@@ -115,6 +115,12 @@ Resources:
           - Name: PARTITION
             Type: PLAINTEXT
             Value: !Sub "${AWS::Partition}"
+          - Name: ACCOUNT_ID
+            Type: PLAINTEXT
+            Value: !Sub "${AWS::AccountId}"
+          - Name: REGION
+            Type: PLAINTEXT
+            Value: !Sub "${AWS::Region}"
       Source:
         Type: CODEPIPELINE
         BuildSpec: |
