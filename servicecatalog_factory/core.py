@@ -1,7 +1,7 @@
 # Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
-import hashlib
+from deepmerge import always_merger
 import json
 import logging
 import os
@@ -286,6 +286,20 @@ def generate_for_portfolios_versions(
                 "factory_version": factory_version,
                 "tags": tag_list,
             }
+            if version_details.get("Source", {}).get("Configuration", {}).get("Code"):
+                source = always_merger.merge(
+                    product_details.get("Source", {}), version_details.get("Source", {})
+                )
+                configuration = source.get("Configuration")
+                code = configuration.get("Code")
+                all_tasks[
+                    f"create_code_repo_task-{configuration.get('RepositoryName')}-{configuration.get('BranchName')}"
+                ] = luigi_tasks_and_targets.CreateCodeRepoTask(
+                    repository_name=configuration.get("RepositoryName"),
+                    branch_name=configuration.get("BranchName"),
+                    bucket=code.get("S3").get("Bucket"),
+                    key=code.get("S3").get("Key"),
+                )
             t = luigi_tasks_and_targets.CreateVersionPipelineTemplateTask(**create_args)
             logger.info(
                 f"created pipeline_template_{product_name}-{version_details.get('Name')}"
@@ -1653,14 +1667,26 @@ def update_provisioned_product(region, name, product_id, description, template_u
                 )
 
 
-def generate_template(provisioner_name, provisioner_version, product_name, product_version, p) -> str:
-    with betterboto_client.ClientContextManager('s3') as s3:
-        body = s3.get_object(
-            Bucket=f"sc-factory-artifacts-{os.environ.get('ACCOUNT_ID')}-{os.environ.get('REGION')}", Key=f"{provisioner_name}/{provisioner_version}/{product_name}/{product_version}/template.json"
-        ).get("Body").read()
+def generate_template(
+    provisioner_name, provisioner_version, product_name, product_version, p
+) -> str:
+    with betterboto_client.ClientContextManager("s3") as s3:
+        body = (
+            s3.get_object(
+                Bucket=f"sc-factory-artifacts-{os.environ.get('ACCOUNT_ID')}-{os.environ.get('REGION')}",
+                Key=f"{provisioner_name}/{provisioner_version}/{product_name}/{product_version}/template.json",
+            )
+            .get("Body")
+            .read()
+        )
         template = json.loads(body)
         if provisioner_name == "CDK" and provisioner_version == "1.0.0":
             return cdk_product_template.create_cdk_pipeline(
-                provisioner_name, provisioner_version, product_name, product_version, template, p
+                provisioner_name,
+                provisioner_version,
+                product_name,
+                product_version,
+                template,
+                p,
             ).to_yaml(clean_up=True)
         raise Exception(f"Unknown {provisioner_name} and {provisioner_version}")

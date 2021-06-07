@@ -177,12 +177,24 @@ class CDK100Template(BaseTemplate):
                     Image=constants.ENVIRONMENT_IMAGE_DEFAULT,
                     Type=constants.ENVIRONMENT_TYPE_DEFAULT,
                     EnvironmentVariables=[
-                        {"Type": "PLAINTEXT", "Name": "ACCOUNT_ID", "Value": "CHANGE_ME",},
+                        {
+                            "Type": "PLAINTEXT",
+                            "Name": "ACCOUNT_ID",
+                            "Value": "CHANGE_ME",
+                        },
                         {"Type": "PLAINTEXT", "Name": "REGION", "Value": "CHANGE_ME",},
                         {"Type": "PLAINTEXT", "Name": "NAME", "Value": "CHANGE_ME",},
                         {"Type": "PLAINTEXT", "Name": "VERSION", "Value": "CHANGE_ME",},
-                        {"Type": "PLAINTEXT", "Name": "PROVISIONER_NAME", "Value": "CHANGE_ME",},
-                        {"Type": "PLAINTEXT", "Name": "PROVISIONER_VERSION", "Value": "CHANGE_ME",},
+                        {
+                            "Type": "PLAINTEXT",
+                            "Name": "PROVISIONER_NAME",
+                            "Value": "CHANGE_ME",
+                        },
+                        {
+                            "Type": "PLAINTEXT",
+                            "Name": "PROVISIONER_VERSION",
+                            "Value": "CHANGE_ME",
+                        },
                     ],
                 ),
                 Source=codebuild.Source(
@@ -197,7 +209,8 @@ class CDK100Template(BaseTemplate):
                                             f"pip install {constants.VERSION}"
                                             if "http" in constants.VERSION
                                             else f"pip install aws-service-catalog-factory=={constants.VERSION}",
-                                        ] + extra_commands
+                                        ]
+                                        + extra_commands,
                                     },
                                     pre_build={
                                         "commands": [
@@ -232,7 +245,7 @@ class CDK100Template(BaseTemplate):
                     InputArtifacts=[
                         codepipeline.InputArtifacts(Name=SOURCE_OUTPUT_ARTIFACT),
                     ],
-                    Name='Build',
+                    Name="Build",
                     ActionTypeId=codepipeline.ActionTypeId(
                         Category="Build",
                         Owner="AWS",
@@ -248,10 +261,26 @@ class CDK100Template(BaseTemplate):
                         "EnvironmentVariables": t.Sub(
                             json.dumps(
                                 [
-                                    dict(name="ACCOUNT_ID", value="${AWS::AccountId}", type="PLAINTEXT"),
-                                    dict(name="REGION", value="${AWS::Region}", type="PLAINTEXT"),
-                                    dict(name="PROVISIONER_NAME", value='CDK', type="PLAINTEXT"),
-                                    dict(name="PROVISIONER_VERSION", value='1.0.0', type="PLAINTEXT"),
+                                    dict(
+                                        name="ACCOUNT_ID",
+                                        value="${AWS::AccountId}",
+                                        type="PLAINTEXT",
+                                    ),
+                                    dict(
+                                        name="REGION",
+                                        value="${AWS::Region}",
+                                        type="PLAINTEXT",
+                                    ),
+                                    dict(
+                                        name="PROVISIONER_NAME",
+                                        value="CDK",
+                                        type="PLAINTEXT",
+                                    ),
+                                    dict(
+                                        name="PROVISIONER_VERSION",
+                                        value="1.0.0",
+                                        type="PLAINTEXT",
+                                    ),
                                     dict(name="NAME", value=name, type="PLAINTEXT"),
                                     dict(
                                         name="VERSION", value=version, type="PLAINTEXT"

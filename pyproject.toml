@@ -3,7 +3,7 @@
 
 [tool.poetry]
 name = "aws-service-catalog-factory"
-version = "0.59.0"
+version = "0.60.0"
 description = "Making it easier to build ServiceCatalog products"
 classifiers = ["Development Status :: 5 - Production/Stable", "Intended Audience :: Developers", "Programming Language :: Python :: 3", "License :: OSI Approved :: Apache Software License", "Operating System :: OS Independent", "Natural Language :: English"]
 homepage = "https://service-catalog-tools-workshop.com/"
@@ -50,3 +50,4 @@ colorama = "^0.4.4"
 troposphere = "^2.6.4"
 PyYAML = "5.4"
 better-boto = "^0.36.0"
+deepmerge = "^0.3.0"

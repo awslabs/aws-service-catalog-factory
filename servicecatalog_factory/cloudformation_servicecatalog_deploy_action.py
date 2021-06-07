@@ -93,7 +93,7 @@ def create_or_update_provisioning_artifact(
 
     bucket = f"sc-factory-artifacts-{os.environ.get('ACCOUNT_ID')}-{os.environ.get('REGION')}"
     key = f"{provisioner}/{product}/product_ids.json"
-    with betterboto_client.ClientContextManager('s3') as s3:
+    with betterboto_client.ClientContextManager("s3") as s3:
         body = s3.get_object(Bucket=bucket, Key=key,).get("Body").read()
         product_ids_by_region = json.loads(body)
         product_id = product_ids_by_region[region]
