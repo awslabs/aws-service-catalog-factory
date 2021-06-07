@@ -1,5 +1,8 @@
 .PHONY: version bootstrap bootstrap-branch
 
+ACCOUNT_ID := $(shell aws sts get-caller-identity --query Account --output text)
+REGION := $(shell echo $$AWS_DEFAULT_REGION)
+
 ## @Puppet_commands Runs servicecatalog-factory version
 version:
 	poetry run servicecatalog-factory version
@@ -20,4 +23,4 @@ upload-config:
 
 ## @factory_commands Runs servicecatalog-factory --info generate-via-luigi for the local checkout branch
 generate-via-luigi:
-	poetry run servicecatalog-factory --info generate-via-luigi ignored/src/ServiceCatalogFactory/portfolios/
+	REGION=$(REGION) ACCOUNT_ID=$(ACCOUNT_ID) poetry run servicecatalog-factory --info generate-via-luigi ignored/src/ServiceCatalogFactory/portfolios/

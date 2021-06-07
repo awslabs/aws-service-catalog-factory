@@ -1,6 +1,8 @@
 # Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
+import io
 import os
+import zipfile
 
 import time
 
@@ -24,7 +26,6 @@ logger = logging.getLogger(__file__)
 
 
 class FactoryTask(luigi.Task):
-
     @property
     def factory_account_id(self):
         account_id = os.environ.get("ACCOUNT_ID", None)
@@ -592,12 +593,16 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
     def handle_cloudformation_provisioner(
         self, product_ids_by_region, friendly_uid, tags, source
     ):
-        with self.client('s3') as s3:
+        with self.client("s3") as s3:
             s3.put_object(
-                Bucket=f"sc-factory-artifacts-{self.factory_account_id}-{self.factory_region}", Key=f"cloudformation/{self.product.get('Name')}/product_ids.json", Body=json.dumps(product_ids_by_region),
+                Bucket=f"sc-factory-artifacts-{self.factory_account_id}-{self.factory_region}",
+                Key=f"cloudformation/{self.product.get('Name')}/product_ids.json",
+                Body=json.dumps(product_ids_by_region),
             )
             s3.put_object(
-                Bucket=f"sc-factory-artifacts-{self.factory_account_id}-{self.factory_region}", Key=f"cloudformation/{self.product.get('Name')}/{self.version.get('Name')}/template.json", Body=json.dumps(utils.unwrap(self.template)),
+                Bucket=f"sc-factory-artifacts-{self.factory_account_id}-{self.factory_region}",
+                Key=f"cloudformation/{self.product.get('Name')}/{self.version.get('Name')}/template.json",
+                Body=json.dumps(utils.unwrap(self.template)),
             )
 
         template = utils.ENV.get_template(constants.PRODUCT_CLOUDFORMATION)
@@ -674,12 +679,16 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
             friendly_uid = product_details.get("uid")
 
         if self.template.get("Name"):
-            with self.client('s3') as s3:
+            with self.client("s3") as s3:
                 s3.put_object(
-                    Bucket=f"sc-factory-artifacts-{self.factory_account_id}-{self.factory_region}", Key=f"{self.template.get('Name')}/{self.template.get('Version')}/{self.product.get('Name')}/product_ids.json", Body=json.dumps(product_ids_by_region),
+                    Bucket=f"sc-factory-artifacts-{self.factory_account_id}-{self.factory_region}",
+                    Key=f"{self.template.get('Name')}/{self.template.get('Version')}/{self.product.get('Name')}/product_ids.json",
+                    Body=json.dumps(product_ids_by_region),
                 )
                 s3.put_object(
-                    Bucket=f"sc-factory-artifacts-{self.factory_account_id}-{self.factory_region}", Key=f"{self.template.get('Name')}/{self.template.get('Version')}/{self.product.get('Name')}/{self.version.get('Name')}/template.json", Body=json.dumps(utils.unwrap(self.template)),
+                    Bucket=f"sc-factory-artifacts-{self.factory_account_id}-{self.factory_region}",
+                    Key=f"{self.template.get('Name')}/{self.template.get('Version')}/{self.product.get('Name')}/{self.version.get('Name')}/template.json",
+                    Body=json.dumps(utils.unwrap(self.template)),
                 )
             rendered = product_template_factory.get(
                 self.template.get("Name"), self.template.get("Version")
@@ -815,7 +824,9 @@ class DeleteAVersionTask(FactoryTask):
         self.info(f"Starting delete of {product_id} {self.version}")
         region = self.product_args.get("region")
         found = False
-        with betterboto_client.ClientContextManager("servicecatalog", region_name=region,) as servicecatalog:
+        with betterboto_client.ClientContextManager(
+            "servicecatalog", region_name=region,
+        ) as servicecatalog:
             provisioning_artifact_details = servicecatalog.list_provisioning_artifacts_single_page(
                 ProductId=product_id,
             ).get(
@@ -838,7 +849,9 @@ class DeleteAVersionTask(FactoryTask):
 
         product["found"] = found
 
-        with betterboto_client.ClientContextManager("cloudformation", region_name=region,) as cloudformation:
+        with betterboto_client.ClientContextManager(
+            "cloudformation", region_name=region,
+        ) as cloudformation:
             cloudformation.ensure_deleted(
                 StackName=f"{product.get('uid')}-{self.version}"
             )
@@ -969,6 +982,74 @@ class CreateCombinedProductPipelineTask(FactoryTask):
 
         self.info(f"Finished")
         self.write_output(response)
+
+
+class CreateCodeRepoTask(FactoryTask):
+    repository_name = luigi.Parameter()
+    branch_name = luigi.Parameter()
+    bucket = luigi.Parameter()
+    key = luigi.Parameter()
+
+    def params_for_results_display(self):
+        return {
+            "repository_name": self.repository_name,
+            "branch_name": self.branch_name,
+        }
+
+    def run(self):
+        with self.client("s3") as s3:
+            z = zipfile.ZipFile(
+                io.BytesIO(
+                    s3.get_object(Bucket=self.bucket, Key=self.key).get("Body").read()
+                )
+            )
+            files = list()
+            for f in z.namelist():
+                files.append(
+                    dict(
+                        filePath=f,
+                        fileMode="NORMAL",
+                        fileContent=z.open(f, "r").read(),
+                    )
+                )
+        with self.client("codecommit") as codecommit:
+            try:
+                repo = codecommit.get_repository(
+                    repositoryName=self.repository_name
+                ).get("repositoryMetadata")
+            except codecommit.exceptions.RepositoryDoesNotExistException:
+                repo = codecommit.create_repository(
+                    repositoryName=self.repository_name
+                ).get("repositoryMetadata")
+
+            if repo.get("defaultBranch"):
+                try:
+                    codecommit.get_branch(
+                        repositoryName=self.repository_name,
+                        branchName=self.branch_name,
+                    ).get("branch")
+                except codecommit.exceptions.BranchDoesNotExistException:
+                    default_branch = codecommit.get_branch(
+                        repositoryName=self.repository_name,
+                        branchName=repo.get("defaultBranch"),
+                    ).get("branch")
+                    codecommit.create_branch(
+                        repositoryName=self.repository_name,
+                        branchName=self.branch_name,
+                        commitId=default_branch.get("commitId"),
+                    )
+                    codecommit.create_commit(
+                        repositoryName=self.repository_name,
+                        branchName=self.branch_name,
+                        putFiles=files,
+                        parentCommitId=default_branch.get("commitId"),
+                    )
+            else:
+                codecommit.create_commit(
+                    repositoryName=self.repository_name,
+                    branchName=self.branch_name,
+                    putFiles=files,
+                )
 
 
 def record_event(event_type, task, extra_event_data=None):

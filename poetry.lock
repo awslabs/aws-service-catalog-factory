@@ -167,6 +167,14 @@ optional = false
 python-versions = "*"
 
 [[package]]
+name = "deepmerge"
+version = "0.3.0"
+description = "a toolset to deeply merge python dictionaries."
+category = "main"
+optional = false
+python-versions = ">=3"
+
+[[package]]
 name = "docopt"
 version = "0.6.2"
 description = "Pythonic argument parser, that will make you smile"
@@ -484,7 +492,7 @@ python-versions = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7"
-content-hash = "15435783acd7c00c6f4483a2b29e0b984f5866363f02d8ff83211689909724bb"
+content-hash = "650a785fed3e11db7875aa764df19d7ea0c60979f528442397fe30ef47712abe"
 
 [metadata.files]
 appdirs = [
@@ -583,6 +591,10 @@ coverage = [
     {file = "coverage-4.4.2.win32-py3.4.exe", hash = "sha256:ab3508df9a92c1d3362343d235420d08e2662969b83134f8a97dc1451cbe5e84"},
     {file = "coverage-4.4.2.win32-py3.5.exe", hash = "sha256:43a155eb76025c61fc20c3d03b89ca28efa6f5be572ab6110b2fb68eda96bfea"},
     {file = "coverage-4.4.2.win32-py3.6.exe", hash = "sha256:f98b461cb59f117887aa634a66022c0bd394278245ed51189f63a036516e32de"},
+]
+deepmerge = [
+    {file = "deepmerge-0.3.0-py2.py3-none-any.whl", hash = "sha256:87166dbe9ba1a3348a45c9d4ada6778f518d41afc0b85aa017ea3041facc3f9c"},
+    {file = "deepmerge-0.3.0.tar.gz", hash = "sha256:f6fd7f1293c535fb599e197e750dbe8674503c5d2a89759b3c72a3c46746d4fd"},
 ]
 docopt = [
     {file = "docopt-0.6.2.tar.gz", hash = "sha256:49b3a825280bd66b3aa83585ef59c4a8c82f2c8a522dbe754a8bc8d08c85c491"},

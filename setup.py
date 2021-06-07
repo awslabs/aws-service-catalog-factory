@@ -21,6 +21,7 @@ install_requires = \
  'click==7.0',
  'colorama>=0.4.4,<0.5.0',
  'colorclass>=2.2.0,<3.0.0',
+ 'deepmerge>=0.3.0,<0.4.0',
  'docutils==0.14',
  'jinja2==2.11.3',
  'luigi==2.8.6',
@@ -35,7 +36,7 @@ entry_points = \
 
 setup_kwargs = {
     'name': 'aws-service-catalog-factory',
-    'version': '0.59.0',
+    'version': '0.60.0',
     'description': 'Making it easier to build ServiceCatalog products',
     'long_description': '# aws-service-catalog-factory\n\n![logo](./docs/logo.png) \n\n## What is it?\nThis is a python3 framework that makes it easier to build multi region AWS Service Catalog portfolios.\n\nWith this framework you define a portfolio in YAML.  For each product version in your portfolio you specify which git \nrepository it is in and the framework will build out AWS CodePipelines for each product version.\n\nThese CodePipelines can run CFN_NAG and Cloudformation_rspec on your templates enabling you to check your templates are \ngood quality that they are functionally correct.\n\n## Getting started\n\nYou can read the [installation how to](https://service-catalog-tools-workshop.com/30-how-tos/10-installation/20-service-catalog-factory.html)\nor you can read through the [every day use](https://service-catalog-tools-workshop.com/30-how-tos/50-every-day-use.html)\nguides.\n\nYou can read the [documentation](https://aws-service-catalog-factory.readthedocs.io/en/latest/) to understand the inner \nworkings. \n\n\n## Going further\n\nThe framework is one of a pair.  The other is [aws-service-catalog-puppet](https://github.com/awslabs/aws-service-catalog-puppet).\nWith Service Catalog Puppet you can provision products into multiple regions of multiple accounts using YAML and you can \nshare portfolios across multiple regions of multiple accounts. \n\n## License\n\nThis library is licensed under the Apache 2.0 License. \n',
     'author': 'Eamonn Faherty',
