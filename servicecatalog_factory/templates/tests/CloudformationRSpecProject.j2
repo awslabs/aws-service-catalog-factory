@@ -8,20 +8,32 @@
       Environment:
         Type: linuxContainer
         ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/ruby:2.3.1
+        Image: aws/codebuild/standard:4.0
       Source:
         Type: CODEPIPELINE
         BuildSpec: |
             version: 0.2
             phases:
               install:
+                runtime-versions:
+                  ruby: 2.7
+                  python: 3.7
                 commands:
                   - gem install cloudformation_rspec
+                  - gem install rspec_junit_formatter
+                  - pip install cfn-lint
               build:
                 commands:
-                  - rspec
+                  - rspec  --format progress --format RspecJunitFormatter --out reports/rspec.xml specs/
+            reports:
+              junit:
+                files:
+                  - '**/*'
+                base-directory: reports
+                file-format: JUNITXML
             artifacts:
-              files: '**/*'
+              files:
+                - '**/*'
       TimeoutInMinutes: 20
       Tags:
         - Key: "ServiceCatalogFactory:Actor"
