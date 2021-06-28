@@ -25,13 +25,15 @@
               build:
                 commands:
                   - rspec  --format progress --format RspecJunitFormatter --out reports/rspec.xml specs/
-              reports:
+            reports:
+              junit:
                 files:
-                  - '*'
+                  - '**/*'
                 base-directory: reports
                 file-format: JUNITXML
             artifacts:
-              files: '**/*'
+              files:
+                - '**/*'
       TimeoutInMinutes: 20
       Tags:
         - Key: "ServiceCatalogFactory:Actor"
