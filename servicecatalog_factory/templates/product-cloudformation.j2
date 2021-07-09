@@ -48,17 +48,17 @@ Resources:
           Value: "{{ tag.get("Value") }}"
 {% endfor %}
 
-  {% if PARTITION == "aws-us-gov" %}
-      ArtifactStore:
-        Type: S3
-        Location: !Sub "sc-factory-artifacts-${AWS::AccountId}-${AWS::Region}"
-  {% else %}
+  {% if CAN_USE_CODE_PIPELINE == "True" %}
       ArtifactStores:
   {% for region in ALL_REGIONS %}
         - Region: {{ region }}
           ArtifactStore:
             Type: S3
             Location: !Sub "sc-factory-artifacts-${AWS::AccountId}-{{ region }}"
+  {% else %}
+      ArtifactStore:
+        Type: S3
+        Location: !Sub "sc-factory-artifacts-${AWS::AccountId}-${AWS::Region}"
   {% endfor %}
 
   {% endif %}
