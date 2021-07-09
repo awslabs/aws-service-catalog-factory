@@ -590,7 +590,7 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
         )
         return rendered
 
-    def can_use_code_pipeline(product_ids_by_region):
+    def can_use_code_pipeline(self, product_ids_by_region):
         for region, details in product_ids_by_region.items():
             if region not in constants.CODEPIPELINE_SUPPORTED_REGIONS:
                 return False
@@ -630,7 +630,7 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
                     self.product.get("BuildSpec", constants.PACKAGE_BUILD_SPEC_DEFAULT),
                 ),
             )
-        can_use_code_pipeline = self.can_use_code_pipeline(product_ids_by_region)
+        can_use_code_pipeline = str(self.can_use_code_pipeline(product_ids_by_region))
 
         rendered = template.render(
             friendly_uid=f"{friendly_uid}-{self.version.get('Name')}",
