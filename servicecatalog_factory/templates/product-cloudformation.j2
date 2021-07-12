@@ -55,11 +55,11 @@ Resources:
           ArtifactStore:
             Type: S3
             Location: !Sub "sc-factory-artifacts-${AWS::AccountId}-{{ region }}"
+  {% endfor %}
   {% else %}
       ArtifactStore:
         Type: S3
         Location: !Sub "sc-factory-artifacts-${AWS::AccountId}-${AWS::Region}"
-  {% endfor %}
 
   {% endif %}
       RestartExecutionOnUpdate: false
