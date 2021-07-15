@@ -91,6 +91,11 @@ def get_resources() -> list:
                         Value=t.Sub("${AWS::AccountId}"),
                     ),
                     codebuild.EnvironmentVariable(
+                        Type="PLAINTEXT",
+                        Name="REGION",
+                        Value=t.Sub("${AWS::Region}"),
+                    ),
+                    codebuild.EnvironmentVariable(
                         Name="PIPELINE_NAME", Type="PLAINTEXT", Value="CHANGE_ME"
                     ),
                     codebuild.EnvironmentVariable(
