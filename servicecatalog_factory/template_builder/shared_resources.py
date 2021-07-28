@@ -43,7 +43,9 @@ def get_resources() -> list:
                 Type=constants.ENVIRONMENT_TYPE_DEFAULT,
                 EnvironmentVariables=[
                     codebuild.EnvironmentVariable(
-                        Name="TEMPLATE_FORMAT", Type="PLAINTEXT", Value="yaml",
+                        Name="TEMPLATE_FORMAT",
+                        Type="PLAINTEXT",
+                        Value="yaml",
                     )
                 ],
             ),
@@ -62,7 +64,8 @@ def get_resources() -> list:
                                 },
                             ),
                             artifacts=dict(
-                                name=VALIDATE_OUTPUT_ARTIFACT, files=["*", "**/*"],
+                                name=VALIDATE_OUTPUT_ARTIFACT,
+                                files=["*", "**/*"],
                             ),
                         )
                     )

@@ -19,7 +19,8 @@ def read_from_site_packages(what):
 TEMPLATE_DIR = resolve_from_site_packages("templates")
 
 ENV = jinja2.Environment(
-    loader=jinja2.FileSystemLoader(TEMPLATE_DIR), extensions=["jinja2.ext.do"],
+    loader=jinja2.FileSystemLoader(TEMPLATE_DIR),
+    extensions=["jinja2.ext.do"],
 )
 
 

@@ -129,7 +129,9 @@ def get_resources() -> list:
                             version=0.2,
                             phases=dict(
                                 install={
-                                    "runtime-versions": dict(python="3.7",),
+                                    "runtime-versions": dict(
+                                        python="3.7",
+                                    ),
                                     "commands": [
                                         f"pip install {constants.VERSION}"
                                         if "http" in constants.VERSION

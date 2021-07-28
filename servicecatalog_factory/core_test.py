@@ -7,6 +7,10 @@ from nose2.tools import such, params
 
 from unittest import mock as mocker
 
+import commands.bootstrap
+import commands.portfolios
+import utilities.assets
+
 
 def fake_version():
     return {
@@ -32,7 +36,12 @@ def fake_component():
         "SupportDescription": "Contact us on Chime for help #central-it-team",
         "SupportEmail": "central-it-team@customer.com",
         "SupportUrl": "https://wiki.customer.com/central-it-team/self-service/account-iam",
-        "Tags": [{"Key": "product-type", "Value": "iam",}],
+        "Tags": [
+            {
+                "Key": "product-type",
+                "Value": "iam",
+            }
+        ],
         "Versions": [fake_version()],
     }
 
@@ -42,8 +51,13 @@ def fake_portfolio():
         "DisplayName": "central-it-team-portfolio",
         "Description": "A place for self service products ready for your account",
         "ProviderName": "central-it-team",
-        "Associations": ["arn:aws:iam::${AWS::AccountId}:role/Admin",],
-        "Tags": [{"Key": "provider"}, {"Value": "central-it-team"},],
+        "Associations": [
+            "arn:aws:iam::${AWS::AccountId}:role/Admin",
+        ],
+        "Tags": [
+            {"Key": "provider"},
+            {"Value": "central-it-team"},
+        ],
         "Components": [fake_component()],
     }
 
@@ -58,7 +72,7 @@ def test_resolve_from_site_packages(abspath_mocked):
     expected_result = os.path.sep.join([site_path, what])
 
     # execute
-    actual_result = sut.resolve_from_site_packages(what)
+    actual_result = utilities.assets.resolve_from_site_packages(what)
 
     # verify
     assert expected_result == actual_result
@@ -75,7 +89,7 @@ def test_read_from_site_packages(mocked_open):
     mocker.patch.object(sut, "resolve_from_site_packages", return_value="ignored")
 
     # execute
-    actual_result = sut.read_from_site_packages(what)
+    actual_result = utilities.assets.read_from_site_packages(what)
 
     # verify
     assert expected_result == actual_result
@@ -96,7 +110,7 @@ def test_get_regions(mocked_betterboto_client):
     mocked_betterboto_client().__enter__().get_parameter.return_value = mocked_response
 
     # execute
-    actual_result = sut.get_regions()
+    actual_result = commands.portfolios.get_regions()
 
     # verify
     assert actual_result == expected_result
@@ -236,7 +250,7 @@ def test_bootstrap_branch(bootstrap_mocked):
         None,
     )
     # exercise
-    sut.bootstrap_branch(
+    commands.bootstrap.bootstrap_branch(
         branch_to_bootstrap,
         source_provider,
         owner,

@@ -1,7 +1,8 @@
 # Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
-
-from servicecatalog_factory import core
+from servicecatalog_factory.commands import bootstrap
+from servicecatalog_factory.commands import configuration_management
+from servicecatalog_factory.commands import portfolios
 import logging
 
 logger = logging.getLogger()
@@ -17,7 +18,9 @@ def add_product_to_portfolio(portfolio_file_name, portfolio_display_name, produc
     :param portfolio_display_name: The value of the portfolio DisplayName the product should be added to.
     :param product: a dict of the product that you want to add to the portfolio
     """
-    core.add_product_to_portfolio(portfolio_file_name, portfolio_display_name, product)
+    portfolios.add_product_to_portfolio(
+        portfolio_file_name, portfolio_display_name, product
+    )
 
 
 def remove_product_from_portfolio(
@@ -30,7 +33,7 @@ def remove_product_from_portfolio(
     :param portfolio_display_name: The value of the portfolio DisplayName where the product exists.
     :param product_name: The name of the product you want to remove
     """
-    core.remove_product_from_portfolio(
+    portfolios.remove_product_from_portfolio(
         portfolio_file_name, portfolio_display_name, product_name
     )
 
@@ -48,7 +51,7 @@ def add_version_to_product(
     :param product_name: The value of the product Name the version should be added to.
     :param version: a dict of the version that you want to add to the portfolio
     """
-    core.add_version_to_product(
+    portfolios.add_version_to_product(
         portfolio_file_name, portfolio_display_name, product_name, version
     )
 
@@ -64,7 +67,7 @@ def remove_version_from_product(
     :param product_name: The value of the product Name the version should be removed from.
     :param version_name: The name of the version you want to remove
     """
-    core.remove_version_from_product(
+    portfolios.remove_version_from_product(
         portfolio_file_name, portfolio_display_name, product_name, version_name
     )
 
@@ -81,7 +84,7 @@ def upload_config(config):
 
     :param config: The dict containing the configuration used for factory
     """
-    core.upload_config(config)
+    configuration_management.upload_config(config)
 
 
 def bootstrap():
@@ -90,7 +93,7 @@ def bootstrap():
     AWS CodePipeline that will run the solution.
 
     """
-    core.bootstrap()
+    bootstrap.bootstrap()
 
 
 def set_regions(regions):
@@ -99,4 +102,4 @@ def set_regions(regions):
 
     :param regions: The list of AWS regions
     """
-    core.set_regions(regions)
+    configuration_management.set_regions(regions)
