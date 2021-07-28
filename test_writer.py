@@ -6,6 +6,8 @@ import glob
 from parso.python import tree
 
 ignored = [
+    "factory_account_id",
+    "resources",
     "section_name",
     "get_klass_for_provisioning",
     "get_sharing_policies",
@@ -22,20 +24,23 @@ ignored = [
     "priority",
     "output",
     "output_location",
+    "delete_pipelines",
     "get_current_version",
     "write_result",
     "generate_tasks",
     "generate_provisions",
     "get_launch_tasks_defs",
     "get_task_defs",
+    "factory_region",
 ]
 
 HEADER = """from unittest import skip
-from servicecatalog_puppet.workflow import tasks_unit_tests_helper
+from servicecatalog_factory.workflow import tasks_unit_tests_helper
 
 """
 
-global_params = dict(
+global_params = dict()
+global_params2 = dict(
     account_parameters=dict(),
     associations=list(),
     depends_on=list(),
@@ -62,9 +67,25 @@ global_params = dict(
     assertion_name="assertion_name",
     expected=dict(),
     actual=dict(),
+    template=dict(),
 
     code_build_run_name="code_build_run_name",
+    factory_account_id = "factory_account_id",
     account_id="account_id",
+    portfolio_group_name="portfolio_group_name",
+    uid="uid",
+    display_name="display_name",
+    provider_name="provider_name",
+    pipeline_mode="pipeline_mode",
+    owner="owner",
+    description="description",
+
+    provisioner="provisioner",
+    repository_name="repository_name",
+    portfolio_args=dict(),
+    products_args_by_region=dict(),
+    product_args=dict(),
+    all_regions=list(),
     cache_invalidator="cache_invalidator",
     execution="execution",
     execution_mode="execution_mode",
@@ -185,7 +206,8 @@ def handle(c, output, mod, classes):
         elif name in ignored:
             pass
         else:
-            raise Exception(f"unhandled: {name}")
+            pass
+            # raise Exception(f"unhandled: {name}")
 
 
 def handle_function(f, output, mod, classes):
@@ -264,9 +286,9 @@ def get_initial_args_for(c):
     return dict()
 
 
-package = "spoke_local_portfolios"
+package = "portfolios"
 
-for input in glob.glob("servicecatalog_puppet/workflow/**/*.py", recursive=True):
+for input in glob.glob("servicecatalog_factory/workflow/**/*.py", recursive=True):
     print(input)
     if input.endswith("_tests.py") or input.endswith("_test.py") or input.endswith(
             "tasks_unit_tests_helper.py") or input.endswith("__init__.py"):
@@ -296,7 +318,7 @@ for input in glob.glob("servicecatalog_puppet/workflow/**/*.py", recursive=True)
         #     continue
 
         open(output, "a+").write(f"""
-class {c.name.value}Test(tasks_unit_tests_helper.PuppetTaskUnitTest):
+class {c.name.value}Test(tasks_unit_tests_helper.FactoryTaskUnitTest):
 """)
         suite = c.children[-1]
         params = get_initial_args_for(c)
@@ -327,7 +349,19 @@ class {c.name.value}Test(tasks_unit_tests_helper.PuppetTaskUnitTest):
                         elif isinstance(parameter_value, tree.PythonNode):  # everything else
                             if parameter_value.type == "atom_expr":
                                 parameter_type = parameter_value.children[1].children[1].value
-                                parameter_value = global_params[parameter_name]
+                                print(parameter_type)
+                                if global_params.get(parameter_name):
+                                    parameter_value = global_params[parameter_name]
+                                else:
+                                    if parameter_type == "Parameter":
+                                        parameter_value = parameter_name
+                                    elif parameter_type == "ListParameter":
+                                        parameter_value = list()
+                                    elif parameter_type == "DictParameter":
+                                        parameter_value = dict()
+                                    else:
+                                        raise Exception("unhandlered parameter type:"+parameter_type)
+
                                 params[parameter_name] = parameter_value
                                 # if parameter_type == "Parameter":
                                 #     open(output, "a+").write(f"    {parameter_name} = \"{parameter_value}\"\n")
@@ -351,7 +385,7 @@ class {c.name.value}Test(tasks_unit_tests_helper.PuppetTaskUnitTest):
 
         open(output, "a+").write(f"""
     def setUp(self) -> None:
-        from servicecatalog_puppet.workflow.{package} import {mod}
+        from servicecatalog_factory.workflow.{package} import {mod}
         self.module = {mod}
         
         self.sut = self.module.{c.name.value}(
