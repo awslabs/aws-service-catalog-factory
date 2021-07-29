@@ -29,13 +29,6 @@ logger.setLevel(logging.INFO)
 
 
 def generate_via_luigi(p):
-    # factory_version = (
-    #     constants.VERSION
-    #     if branch_override is None
-    #     else "https://github.com/awslabs/aws-service-catalog-factory/archive/{}.zip".format(
-    #         branch_override
-    #     )
-    # )
     factory_version = constants.VERSION
     logger.info("Generating")
     all_tasks = {}
