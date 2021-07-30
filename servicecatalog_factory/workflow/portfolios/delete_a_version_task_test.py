@@ -8,13 +8,14 @@ class DeleteAVersionTaskTest(tasks_unit_tests_helper.FactoryTaskUnitTest):
 
     def setUp(self) -> None:
         from servicecatalog_factory.workflow.portfolios import delete_a_version_task
+
         self.module = delete_a_version_task
-        
+
         self.sut = self.module.DeleteAVersionTask(
-            product_args=self.product_args, version=self.version        
+            product_args=self.product_args, version=self.version
         )
-        
-        self.wire_up_mocks()    
+
+        self.wire_up_mocks()
 
     def test_params_for_results_display(self):
         # setup
@@ -23,14 +24,14 @@ class DeleteAVersionTaskTest(tasks_unit_tests_helper.FactoryTaskUnitTest):
             "region": self.product_args.get("region"),
             "name": self.product_args.get("name"),
             "version": self.version,
-        }        
-    
+        }
+
         # exercise
         actual_result = self.sut.params_for_results_display()
-        
+
         # verify
         self.assertEqual(expected_result, actual_result)
-    
+
     @skip
     def test_requires(self):
         # setup
@@ -39,7 +40,7 @@ class DeleteAVersionTaskTest(tasks_unit_tests_helper.FactoryTaskUnitTest):
 
         # verify
         raise NotImplementedError()
-    
+
     @skip
     def test_run(self):
         # setup
@@ -48,4 +49,3 @@ class DeleteAVersionTaskTest(tasks_unit_tests_helper.FactoryTaskUnitTest):
 
         # verify
         raise NotImplementedError()
-    

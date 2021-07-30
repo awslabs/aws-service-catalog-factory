@@ -3,7 +3,9 @@
 import luigi
 from betterboto import client as betterboto_client
 
-from servicecatalog_factory.workflow.portfolios.create_product_task import CreateProductTask
+from servicecatalog_factory.workflow.portfolios.create_product_task import (
+    CreateProductTask,
+)
 from servicecatalog_factory.workflow.tasks import FactoryTask
 
 

@@ -14,16 +14,24 @@ from deepmerge import always_merger
 from jinja2 import Template
 
 from servicecatalog_factory.workflow.codecommit import create_code_repo_task
-from servicecatalog_factory.workflow.portfolios import associate_product_with_portfolio_task
-from servicecatalog_factory.workflow.portfolios import create_combined_product_pipeline_task
+from servicecatalog_factory.workflow.portfolios import (
+    associate_product_with_portfolio_task,
+)
+from servicecatalog_factory.workflow.portfolios import (
+    create_combined_product_pipeline_task,
+)
 from servicecatalog_factory.workflow.portfolios import create_portfolio_association_task
 from servicecatalog_factory.workflow.portfolios import create_portfolio_task
 from servicecatalog_factory.workflow.portfolios import create_product_task
 from servicecatalog_factory.workflow.portfolios import create_version_pipeline_task
-from servicecatalog_factory.workflow.portfolios import create_version_pipeline_template_task
+from servicecatalog_factory.workflow.portfolios import (
+    create_version_pipeline_template_task,
+)
 from servicecatalog_factory.workflow.portfolios import delete_a_version_task
 from servicecatalog_factory.workflow.portfolios import delete_product_task
-from servicecatalog_factory.workflow.portfolios import ensure_product_version_details_correct_task
+from servicecatalog_factory.workflow.portfolios import (
+    ensure_product_version_details_correct_task,
+)
 from servicecatalog_factory import aws
 from servicecatalog_factory import config
 from servicecatalog_factory import constants
@@ -116,9 +124,7 @@ def generate_for_portfolios_versions(
 
             for region, product_args in products_by_region.get(product_name).items():
                 task_id = f"pipeline_template_{product_name}-{version_details.get('Name')}-{region}"
-                all_tasks[
-                    task_id
-                ] = delete_a_version_task.DeleteAVersionTask(
+                all_tasks[task_id] = delete_a_version_task.DeleteAVersionTask(
                     product_args=product_args,
                     version=version_details.get("Name"),
                 )
@@ -214,9 +220,7 @@ def generate_for_products_versions(
                         product_name
                     ).items():
                         task_id = f"pipeline_template_{product_name}-{version.get('version').get('Name')}-{region}"
-                        all_tasks[
-                            task_id
-                        ] = delete_a_version_task.DeleteAVersionTask(
+                        all_tasks[task_id] = delete_a_version_task.DeleteAVersionTask(
                             product_args=product_args,
                             version=version.get("version").get("Name"),
                         )
@@ -330,9 +334,7 @@ def generate_for_portfolios(
         }
         all_tasks[
             f"portfolio_{p_name}_{portfolio.get('DisplayName')}-{region}"
-        ] = create_portfolio_task.CreatePortfolioTask(
-            **create_portfolio_task_args
-        )
+        ] = create_portfolio_task.CreatePortfolioTask(**create_portfolio_task_args)
         all_tasks[
             f"portfolio_associations_{p_name}_{portfolio.get('DisplayName')}-{region}"
         ] = create_portfolio_association_task.CreatePortfolioAssociationTask(
@@ -386,19 +388,19 @@ def generate_for_portfolios(
             }
             products_by_region[product_uid][region] = create_product_task_args
 
-            create_product_task = (
-                create_product_task.CreateProductTask(
-                    **create_product_task_args
-                )
+            create_product_task = create_product_task.CreateProductTask(
+                **create_product_task_args
             )
             all_tasks[
                 f"product_{p_name}_{portfolio.get('DisplayName')}_{product.get('Name')}-{region}"
             ] = create_product_task
 
-            associate_product_with_portfolio_task = associate_product_with_portfolio_task.AssociateProductWithPortfolioTask(
-                region=region,
-                portfolio_args=create_portfolio_task_args,
-                product_args=create_product_task_args,
+            associate_product_with_portfolio_task = (
+                associate_product_with_portfolio_task.AssociateProductWithPortfolioTask(
+                    region=region,
+                    portfolio_args=create_portfolio_task_args,
+                    product_args=create_product_task_args,
+                )
             )
             all_tasks[
                 f"association_{p_name}_{portfolio.get('DisplayName')}_{product.get('Name')}-{region}"
@@ -1100,3 +1102,55 @@ def generate_template(
                 p,
             ).to_yaml(clean_up=True)
         raise Exception(f"Unknown {provisioner_name} and {provisioner_version}")
+
+
+def generate(portfolios_path, factory_version):
+    all_tasks = {}
+    all_regions = config.get_regions()
+    products_by_region = {}
+    pipeline_versions = list()
+    products_versions = dict()
+
+    for portfolio_file_name in os.listdir(portfolios_path):
+        if ".yaml" in portfolio_file_name:
+            p_name = portfolio_file_name.split(".")[0]
+            portfolios_file_path = os.path.sep.join(
+                [portfolios_path, portfolio_file_name]
+            )
+            portfolios = generate_portfolios(portfolios_file_path)
+            for region in all_regions:
+                generate_for_portfolios(
+                    all_tasks,
+                    factory_version,
+                    p_name,
+                    portfolios,
+                    products_by_region,
+                    region,
+                    pipeline_versions,
+                )
+                generate_for_products(
+                    all_tasks,
+                    p_name,
+                    portfolios,
+                    products_by_region,
+                    region,
+                    products_versions,
+                )
+
+    logger.info("Going to create pipeline tasks")
+    generate_for_portfolios_versions(
+        all_regions,
+        all_tasks,
+        factory_version,
+        pipeline_versions,
+        products_by_region,
+    )
+    generate_for_products_versions(
+        all_regions,
+        all_tasks,
+        factory_version,
+        products_versions,
+        products_by_region,
+    )
+
+    return list(all_tasks.values())

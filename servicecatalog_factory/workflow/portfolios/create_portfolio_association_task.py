@@ -6,7 +6,9 @@ import luigi
 
 from servicecatalog_factory import constants
 from servicecatalog_factory import utils
-from servicecatalog_factory.workflow.portfolios.create_portfolio_task import CreatePortfolioTask
+from servicecatalog_factory.workflow.portfolios.create_portfolio_task import (
+    CreatePortfolioTask,
+)
 from servicecatalog_factory.workflow.tasks import FactoryTask
 
 

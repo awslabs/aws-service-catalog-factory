@@ -2,10 +2,10 @@
 # SPDX-License-Identifier: Apache-2.0
 import yaml
 
-from servicecatalog_factory.commands import bootstrap
+from servicecatalog_factory.commands import bootstrap as bootstrap_commands
 from servicecatalog_factory.commands import configuration_management
 from servicecatalog_factory.commands import fix_issues
-from servicecatalog_factory.commands import generate
+from servicecatalog_factory.commands import generate as generate_commands
 from servicecatalog_factory.commands import list_resources
 from servicecatalog_factory.commands import portfolios
 from servicecatalog_factory.commands import seed
@@ -46,8 +46,8 @@ def validate(p):
 
 @cli.command()
 @click.argument("p", type=click.Path(exists=True))
-def generate_via_luigi(p):
-    generate.generate_via_luigi(p)
+def generate(p):
+    generate_commands.generate(p)
 
 
 @cli.command()
@@ -55,13 +55,6 @@ def generate_via_luigi(p):
 @click.option("--format", "-f", type=click.Choice(["table", "json"]), default="table")
 def show_pipelines(p, format):
     show_pipelines.show_pipelines(p, format)
-
-
-# TODO - IS THIS USED EPF
-@cli.command()
-@click.argument("p", type=click.Path(exists=True))
-def deploy(p):
-    deploy.deploy(p)
 
 
 @cli.command()
@@ -169,7 +162,7 @@ def bootstrap_branch(
     else:
         raise Exception(f"Unsupported source provider: {source_provider}")
 
-    bootstrap.bootstrap_branch(**args)
+    bootstrap_commands.bootstrap_branch(**args)
 
 
 @cli.command()
@@ -274,7 +267,7 @@ def bootstrap(
     else:
         raise Exception(f"Unsupported source provider: {source_provider}")
 
-    bootstrap.bootstrap(**args)
+    bootstrap_commands.bootstrap(**args)
 
 
 @cli.command()

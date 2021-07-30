@@ -6,8 +6,13 @@ package_dir = \
 
 packages = \
 ['servicecatalog_factory',
+ 'servicecatalog_factory.commands',
  'servicecatalog_factory.template_builder',
- 'servicecatalog_factory.template_builder.cdk']
+ 'servicecatalog_factory.template_builder.cdk',
+ 'servicecatalog_factory.utilities',
+ 'servicecatalog_factory.workflow',
+ 'servicecatalog_factory.workflow.codecommit',
+ 'servicecatalog_factory.workflow.portfolios']
 
 package_data = \
 {'': ['*'],

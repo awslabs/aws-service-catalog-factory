@@ -1,6 +1,7 @@
 # Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 # SPDX-License-Identifier: Apache-2.0
 
+
 def test_bootstrap_stack_name():
     # setup
     from servicecatalog_factory import constants as sut

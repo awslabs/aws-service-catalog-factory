@@ -8,7 +8,9 @@ import luigi
 from servicecatalog_factory import constants
 from servicecatalog_factory import utils
 from servicecatalog_factory.template_builder import product_template_factory
-from servicecatalog_factory.workflow.portfolios.create_product_task import CreateProductTask
+from servicecatalog_factory.workflow.portfolios.create_product_task import (
+    CreateProductTask,
+)
 from servicecatalog_factory.workflow.tasks import FactoryTask, logger
 
 

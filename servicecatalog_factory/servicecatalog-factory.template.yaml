@@ -137,7 +137,7 @@ Resources:
   {% endif %}
             build:
               commands:
-                - servicecatalog-factory --info generate-via-luigi portfolios/
+                - servicecatalog-factory --info generate .
           artifacts:
             files:
               - results/*/*

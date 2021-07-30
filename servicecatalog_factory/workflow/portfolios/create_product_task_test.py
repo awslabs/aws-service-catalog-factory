@@ -16,13 +16,23 @@ class CreateProductTaskTest(tasks_unit_tests_helper.FactoryTaskUnitTest):
 
     def setUp(self) -> None:
         from servicecatalog_factory.workflow.portfolios import create_product_task
+
         self.module = create_product_task
-        
+
         self.sut = self.module.CreateProductTask(
-            uid=self.uid, region=self.region, name=self.name, owner=self.owner, description=self.description, distributor=self.distributor, support_description=self.support_description, support_email=self.support_email, support_url=self.support_url, tags=self.tags        
+            uid=self.uid,
+            region=self.region,
+            name=self.name,
+            owner=self.owner,
+            description=self.description,
+            distributor=self.distributor,
+            support_description=self.support_description,
+            support_email=self.support_email,
+            support_url=self.support_url,
+            tags=self.tags,
         )
-        
-        self.wire_up_mocks()    
+
+        self.wire_up_mocks()
 
     def test_params_for_results_display(self):
         # setup
@@ -30,14 +40,14 @@ class CreateProductTaskTest(tasks_unit_tests_helper.FactoryTaskUnitTest):
             "region": self.region,
             "uid": self.uid,
             "name": self.name,
-        }        
-    
+        }
+
         # exercise
         actual_result = self.sut.params_for_results_display()
-        
+
         # verify
         self.assertEqual(expected_result, actual_result)
-    
+
     @skip
     def test_requires(self):
         # setup
@@ -46,7 +56,7 @@ class CreateProductTaskTest(tasks_unit_tests_helper.FactoryTaskUnitTest):
 
         # verify
         raise NotImplementedError()
-    
+
     @skip
     def test_run(self):
         # setup
@@ -55,4 +65,3 @@ class CreateProductTaskTest(tasks_unit_tests_helper.FactoryTaskUnitTest):
 
         # verify
         raise NotImplementedError()
-    

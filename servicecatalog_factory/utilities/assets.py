@@ -5,7 +5,7 @@ import os
 
 
 def resolve_from_site_packages(what):
-    return os.path.sep.join([os.path.dirname(os.path.abspath(__file__)), what])
+    return os.path.sep.join([os.path.dirname(os.path.abspath(os.path.sep.join([__file__, ".."]))), what])
 
 
 def read_from_site_packages(what):

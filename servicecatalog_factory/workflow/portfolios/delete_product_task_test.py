@@ -10,13 +10,17 @@ class DeleteProductTaskTest(tasks_unit_tests_helper.FactoryTaskUnitTest):
 
     def setUp(self) -> None:
         from servicecatalog_factory.workflow.portfolios import delete_product_task
+
         self.module = delete_product_task
-        
+
         self.sut = self.module.DeleteProductTask(
-            uid=self.uid, region=self.region, name=self.name, pipeline_mode=self.pipeline_mode        
+            uid=self.uid,
+            region=self.region,
+            name=self.name,
+            pipeline_mode=self.pipeline_mode,
         )
-        
-        self.wire_up_mocks()    
+
+        self.wire_up_mocks()
 
     def test_params_for_results_display(self):
         # setup
@@ -25,14 +29,14 @@ class DeleteProductTaskTest(tasks_unit_tests_helper.FactoryTaskUnitTest):
             "uid": self.uid,
             "name": self.name,
             "pipeline_mode": self.pipeline_mode,
-        }        
-    
+        }
+
         # exercise
         actual_result = self.sut.params_for_results_display()
-        
+
         # verify
         self.assertEqual(expected_result, actual_result)
-    
+
     @skip
     def test_run(self):
         # setup
@@ -41,4 +45,3 @@ class DeleteProductTaskTest(tasks_unit_tests_helper.FactoryTaskUnitTest):
 
         # verify
         raise NotImplementedError()
-    

@@ -4,6 +4,7 @@
 import os
 from unittest import mock as mocker
 
+
 @mocker.patch("os.path.abspath", return_value="some/path/asset.py")
 def test_resolve_from_site_packages(abspath_mocked):
     # setup

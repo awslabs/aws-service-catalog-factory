@@ -4,7 +4,9 @@ import json
 
 import luigi
 
-from servicecatalog_factory.workflow.portfolios.create_product_task import CreateProductTask
+from servicecatalog_factory.workflow.portfolios.create_product_task import (
+    CreateProductTask,
+)
 from servicecatalog_factory.workflow.tasks import FactoryTask, logger
 
 

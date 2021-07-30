@@ -13,69 +13,25 @@ import terminaltables
 import yaml
 from luigi import LuigiStatusCode
 
+from servicecatalog_factory.commands import portfolios as portfolios_commands
+from servicecatalog_factory.commands import stacks as stacks_commands
 from servicecatalog_factory import constants
-from servicecatalog_factory.commands.portfolios import (
-    get_regions,
-    generate_portfolios,
-    generate_for_portfolios,
-    generate_for_products,
-    generate_for_portfolios_versions,
-    generate_for_products_versions,
-)
+
 import logging
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
 
 
-def generate_via_luigi(p):
+def generate(p):
     factory_version = constants.VERSION
     logger.info("Generating")
-    all_tasks = {}
-    all_regions = get_regions()
-    products_by_region = {}
-    pipeline_versions = list()
-    products_versions = dict()
+    portfolios_path = os.path.sep.join([p, "portfolios"])
+    stacks_path = os.path.sep.join([p, "stacks"])
 
-    for portfolio_file_name in os.listdir(p):
-        if ".yaml" in portfolio_file_name:
-            p_name = portfolio_file_name.split(".")[0]
-            portfolios_file_path = os.path.sep.join([p, portfolio_file_name])
-            portfolios = generate_portfolios(portfolios_file_path)
-            for region in all_regions:
-                generate_for_portfolios(
-                    all_tasks,
-                    factory_version,
-                    p_name,
-                    portfolios,
-                    products_by_region,
-                    region,
-                    pipeline_versions,
-                )
-                generate_for_products(
-                    all_tasks,
-                    p_name,
-                    portfolios,
-                    products_by_region,
-                    region,
-                    products_versions,
-                )
-
-    logger.info("Going to create pipeline tasks")
-    generate_for_portfolios_versions(
-        all_regions,
-        all_tasks,
-        factory_version,
-        pipeline_versions,
-        products_by_region,
-    )
-    generate_for_products_versions(
-        all_regions,
-        all_tasks,
-        factory_version,
-        products_versions,
-        products_by_region,
-    )
+    tasks = []
+    # tasks += portfolios_commands.generate(portfolios_path, factory_version)
+    tasks += stacks_commands.generate(stacks_path, factory_version)
 
     for type in [
         "failure",
@@ -88,7 +44,7 @@ def generate_via_luigi(p):
         os.makedirs(Path(constants.RESULTS_DIRECTORY) / type)
 
     run_result = luigi.build(
-        all_tasks.values(),
+        tasks,
         local_scheduler=True,
         detailed_summary=True,
         workers=10,

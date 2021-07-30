@@ -2,20 +2,25 @@ from unittest import skip
 from servicecatalog_factory.workflow import tasks_unit_tests_helper
 
 
-class EnsureProductVersionDetailsCorrectTest(tasks_unit_tests_helper.FactoryTaskUnitTest):
+class EnsureProductVersionDetailsCorrectTest(
+    tasks_unit_tests_helper.FactoryTaskUnitTest
+):
     region = "region"
     version = {}
     product_args = {}
 
     def setUp(self) -> None:
-        from servicecatalog_factory.workflow.portfolios import ensure_product_version_details_correct_task
-        self.module = ensure_product_version_details_correct_task
-        
-        self.sut = self.module.EnsureProductVersionDetailsCorrect(
-            region=self.region, version=self.version, product_args=self.product_args        
+        from servicecatalog_factory.workflow.portfolios import (
+            ensure_product_version_details_correct_task,
         )
-        
-        self.wire_up_mocks()    
+
+        self.module = ensure_product_version_details_correct_task
+
+        self.sut = self.module.EnsureProductVersionDetailsCorrect(
+            region=self.region, version=self.version, product_args=self.product_args
+        )
+
+        self.wire_up_mocks()
 
     def test_params_for_results_display(self):
         # setup
@@ -23,14 +28,14 @@ class EnsureProductVersionDetailsCorrectTest(tasks_unit_tests_helper.FactoryTask
             "region": self.region,
             "version": self.version.get("Name"),
             "product": self.product_args.get("name"),
-        }        
-    
+        }
+
         # exercise
         actual_result = self.sut.params_for_results_display()
-        
+
         # verify
         self.assertEqual(expected_result, actual_result)
-    
+
     @skip
     def test_requires(self):
         # setup
@@ -39,7 +44,7 @@ class EnsureProductVersionDetailsCorrectTest(tasks_unit_tests_helper.FactoryTask
 
         # verify
         raise NotImplementedError()
-    
+
     @skip
     def test_run(self):
         # setup
@@ -48,4 +53,3 @@ class EnsureProductVersionDetailsCorrectTest(tasks_unit_tests_helper.FactoryTask
 
         # verify
         raise NotImplementedError()
-    
