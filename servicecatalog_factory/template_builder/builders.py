@@ -443,7 +443,6 @@ class StackTemplateBuilder:
             )
 
         package_project_name = t.Sub("${AWS::StackName}-PackageProject")
-        deploy_project_name = t.Sub("${AWS::StackName}-DeployProject")
         tpl.add_resource(
             codebuild.Project(
                 "PackageProject",
@@ -535,6 +534,7 @@ class StackTemplateBuilder:
             )
         )
 
+        deploy_project_name = t.Sub("${AWS::StackName}-DeployProject")
         tpl.add_resource(
             codebuild.Project(
                 "DeployProject",
