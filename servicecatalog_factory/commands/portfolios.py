@@ -1111,46 +1111,47 @@ def generate(portfolios_path, factory_version):
     pipeline_versions = list()
     products_versions = dict()
 
-    for portfolio_file_name in os.listdir(portfolios_path):
-        if ".yaml" in portfolio_file_name:
-            p_name = portfolio_file_name.split(".")[0]
-            portfolios_file_path = os.path.sep.join(
-                [portfolios_path, portfolio_file_name]
-            )
-            portfolios = generate_portfolios(portfolios_file_path)
-            for region in all_regions:
-                generate_for_portfolios(
-                    all_tasks,
-                    factory_version,
-                    p_name,
-                    portfolios,
-                    products_by_region,
-                    region,
-                    pipeline_versions,
+    if os.path.exists(portfolios_path):
+        for portfolio_file_name in os.listdir(portfolios_path):
+            if ".yaml" in portfolio_file_name:
+                p_name = portfolio_file_name.split(".")[0]
+                portfolios_file_path = os.path.sep.join(
+                    [portfolios_path, portfolio_file_name]
                 )
-                generate_for_products(
-                    all_tasks,
-                    p_name,
-                    portfolios,
-                    products_by_region,
-                    region,
-                    products_versions,
-                )
+                portfolios = generate_portfolios(portfolios_file_path)
+                for region in all_regions:
+                    generate_for_portfolios(
+                        all_tasks,
+                        factory_version,
+                        p_name,
+                        portfolios,
+                        products_by_region,
+                        region,
+                        pipeline_versions,
+                    )
+                    generate_for_products(
+                        all_tasks,
+                        p_name,
+                        portfolios,
+                        products_by_region,
+                        region,
+                        products_versions,
+                    )
 
-    logger.info("Going to create pipeline tasks")
-    generate_for_portfolios_versions(
-        all_regions,
-        all_tasks,
-        factory_version,
-        pipeline_versions,
-        products_by_region,
-    )
-    generate_for_products_versions(
-        all_regions,
-        all_tasks,
-        factory_version,
-        products_versions,
-        products_by_region,
-    )
+        logger.info("Going to create pipeline tasks")
+        generate_for_portfolios_versions(
+            all_regions,
+            all_tasks,
+            factory_version,
+            pipeline_versions,
+            products_by_region,
+        )
+        generate_for_products_versions(
+            all_regions,
+            all_tasks,
+            factory_version,
+            products_versions,
+            products_by_region,
+        )
 
     return list(all_tasks.values())
