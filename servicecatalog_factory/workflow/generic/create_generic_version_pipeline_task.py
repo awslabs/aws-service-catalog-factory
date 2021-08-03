@@ -4,7 +4,8 @@ import luigi
 from luigi.util import inherits
 
 
-class CreateStackVersionPipelineTemplateTask(tasks.FactoryTask):
+class CreateGenericVersionPipelineTemplateTask(tasks.FactoryTask):
+    category = luigi.Parameter()
     name = luigi.Parameter()
     version = luigi.Parameter()
     source = luigi.DictParameter()
@@ -13,6 +14,7 @@ class CreateStackVersionPipelineTemplateTask(tasks.FactoryTask):
 
     def params_for_results_display(self):
         return {
+            "category": self.category,
             "name": self.name,
             "version": self.version,
         }
@@ -24,26 +26,33 @@ class CreateStackVersionPipelineTemplateTask(tasks.FactoryTask):
         )
 
     def run(self):
-        template = product_template_factory.get_v2("stack")
+        template = product_template_factory.get_v2(self.category)
         builder = template.build(self.name, self.version, self.source, self.options, self.stages)
         self.write_output_raw(builder.to_yaml(clean_up=True, long_form=True))
 
 
-@inherits(CreateStackVersionPipelineTemplateTask)
-class CreateStackVersionPipelineTask(tasks.FactoryTask):
+@inherits(CreateGenericVersionPipelineTemplateTask)
+class CreateGenericVersionPipelineTask(tasks.FactoryTask):
+    category = luigi.Parameter()
+    name = luigi.Parameter()
+    version = luigi.Parameter()
+    source = luigi.DictParameter()
+    options = luigi.DictParameter()
+    stages = luigi.DictParameter()
 
     def params_for_results_display(self):
         return {
+            "category": self.category,
             "name": self.name,
             "version": self.version,
         }
 
     def requires(self):
-        return self.clone(CreateStackVersionPipelineTemplateTask)
+        return self.clone(CreateGenericVersionPipelineTemplateTask)
 
     def run(self):
         template = self.input().open().read()
-        friendly_uid = f"stack--{self.name}-{self.version}"
+        friendly_uid = f"{self.category}--{self.name}-{self.version}"
         with self.client("cloudformation") as cloudformation:
             cloudformation.create_or_update(
                 StackName=friendly_uid,

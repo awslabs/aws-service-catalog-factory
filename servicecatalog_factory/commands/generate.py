@@ -14,7 +14,7 @@ import yaml
 from luigi import LuigiStatusCode
 
 from servicecatalog_factory.commands import portfolios as portfolios_commands
-from servicecatalog_factory.commands import stacks as stacks_commands
+from servicecatalog_factory.commands import generic as generic_commands
 from servicecatalog_factory import constants
 
 import logging
@@ -26,12 +26,19 @@ logger.setLevel(logging.INFO)
 def generate(p):
     factory_version = constants.VERSION
     logger.info("Generating")
-    portfolios_path = os.path.sep.join([p, "portfolios"])
-    stacks_path = os.path.sep.join([p, "stacks"])
-
     tasks = []
-    # tasks += portfolios_commands.generate(portfolios_path, factory_version)
-    tasks += stacks_commands.generate(stacks_path, factory_version)
+
+    portfolios_path = os.path.sep.join([p, "portfolios"])
+    tasks += portfolios_commands.generate(portfolios_path, factory_version)
+
+    stacks_path = os.path.sep.join([p, "stacks"])
+    tasks += generic_commands.generate(stacks_path, 'Stacks', 'stack', factory_version)
+
+    workspaces_path = os.path.sep.join([p, "workspaces"])
+    tasks += generic_commands.generate(workspaces_path, 'Workspaces', 'workspace', factory_version)
+
+    workspaces_path = os.path.sep.join([p, "apps"])
+    tasks += generic_commands.generate(workspaces_path, 'Apps', 'app', factory_version)
 
     for type in [
         "failure",

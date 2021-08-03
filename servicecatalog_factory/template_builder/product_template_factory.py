@@ -13,3 +13,9 @@ def get(name, version):
 def get_v2(name):
     if name == "stack":
         return builders.StackTemplateBuilder()
+    elif name == "workspace":
+        return builders.TerraformTemplateBuilder()
+    elif name == "app":
+        return builders.CDKAppTemplateBuilder()
+    else:
+        raise Exception(f"Unsupported: {name}")

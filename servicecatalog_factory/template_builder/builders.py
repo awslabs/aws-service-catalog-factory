@@ -3,6 +3,7 @@ import json
 import troposphere as t
 import yaml
 
+from servicecatalog_factory import utils
 from servicecatalog_factory import config
 from servicecatalog_factory import constants
 from troposphere import codepipeline
@@ -11,117 +12,124 @@ from servicecatalog_factory.template_builder import base_template
 from servicecatalog_factory.template_builder import shared_resources
 
 
-class StackTemplateBuilder:
-
-    def build_source_action(self, source):
-        return dict(
-            codecommit=codepipeline.Actions(
-                RunOrder=1,
-                RoleArn=t.Sub(
-                    "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/SourceRole"
-                ),
-                ActionTypeId=codepipeline.ActionTypeId(
-                    Category="Source",
-                    Owner="AWS",
-                    Version="1",
-                    Provider="CodeCommit",
-                ),
-                OutputArtifacts=[
-                    codepipeline.OutputArtifacts(Name=base_template.SOURCE_OUTPUT_ARTIFACT)
-                ],
-                Configuration={
-                    "RepositoryName": source.get("Configuration").get(
-                        "RepositoryName"
-                    ),
-                    "BranchName": source.get("Configuration").get("BranchName"),
-                    "PollForSourceChanges": source.get("Configuration").get(
-                        "PollForSourceChanges", True
-                    ),
-                },
+class BaseTemplateBuilder:
+    def build_source_stage(self, stages, source):
+        stages.append(
+            codepipeline.Stages(
                 Name="Source",
-            ),
-            github=codepipeline.Actions(
-                RunOrder=1,
-                ActionTypeId=codepipeline.ActionTypeId(
-                    Category="Source",
-                    Owner="ThirdParty",
-                    Version="1",
-                    Provider="GitHub",
-                ),
-                OutputArtifacts=[
-                    codepipeline.OutputArtifacts(Name=base_template.SOURCE_OUTPUT_ARTIFACT)
-                ],
-                Configuration={
-                    "Owner": source.get("Configuration").get("Owner"),
-                    "Repo": source.get("Configuration").get("Repo"),
-                    "Branch": source.get("Configuration").get("Branch"),
-                    "OAuthToken": t.Join(
-                        "",
-                        [
-                            "{{resolve:secretsmanager:",
-                            source.get("Configuration").get(
-                                "SecretsManagerSecret"
-                            ),
-                            ":SecretString:OAuthToken}}",
+                Actions=[dict(
+                    codecommit=codepipeline.Actions(
+                        RunOrder=1,
+                        RoleArn=t.Sub(
+                            "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/SourceRole"
+                        ),
+                        ActionTypeId=codepipeline.ActionTypeId(
+                            Category="Source",
+                            Owner="AWS",
+                            Version="1",
+                            Provider="CodeCommit",
+                        ),
+                        OutputArtifacts=[
+                            codepipeline.OutputArtifacts(Name=base_template.SOURCE_OUTPUT_ARTIFACT)
                         ],
+                        Configuration={
+                            "RepositoryName": source.get("Configuration").get(
+                                "RepositoryName"
+                            ),
+                            "BranchName": source.get("Configuration").get("BranchName"),
+                            "PollForSourceChanges": source.get("Configuration").get(
+                                "PollForSourceChanges", True
+                            ),
+                        },
+                        Name="Source",
                     ),
-                    "PollForSourceChanges": source.get("Configuration").get(
-                        "PollForSourceChanges"
+                    github=codepipeline.Actions(
+                        RunOrder=1,
+                        ActionTypeId=codepipeline.ActionTypeId(
+                            Category="Source",
+                            Owner="ThirdParty",
+                            Version="1",
+                            Provider="GitHub",
+                        ),
+                        OutputArtifacts=[
+                            codepipeline.OutputArtifacts(Name=base_template.SOURCE_OUTPUT_ARTIFACT)
+                        ],
+                        Configuration={
+                            "Owner": source.get("Configuration").get("Owner"),
+                            "Repo": source.get("Configuration").get("Repo"),
+                            "Branch": source.get("Configuration").get("Branch"),
+                            "OAuthToken": t.Join(
+                                "",
+                                [
+                                    "{{resolve:secretsmanager:",
+                                    source.get("Configuration").get(
+                                        "SecretsManagerSecret"
+                                    ),
+                                    ":SecretString:OAuthToken}}",
+                                ],
+                            ),
+                            "PollForSourceChanges": source.get("Configuration").get(
+                                "PollForSourceChanges"
+                            ),
+                        },
+                        Name="Source",
                     ),
-                },
-                Name="Source",
+                    codestarsourceconnection=codepipeline.Actions(
+                        RunOrder=1,
+                        RoleArn=t.Sub(
+                            "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/SourceRole"
+                        ),
+                        ActionTypeId=codepipeline.ActionTypeId(
+                            Category="Source",
+                            Owner="AWS",
+                            Version="1",
+                            Provider="CodeStarSourceConnection",
+                        ),
+                        OutputArtifacts=[
+                            codepipeline.OutputArtifacts(Name=base_template.SOURCE_OUTPUT_ARTIFACT)
+                        ],
+                        Configuration={
+                            "ConnectionArn": source.get("Configuration").get(
+                                "ConnectionArn"
+                            ),
+                            "FullRepositoryId": source.get("Configuration").get(
+                                "FullRepositoryId"
+                            ),
+                            "BranchName": source.get("Configuration").get("BranchName"),
+                            "OutputArtifactFormat": source.get("Configuration").get(
+                                "OutputArtifactFormat"
+                            ),
+                        },
+                        Name="Source",
+                    ),
+                    s3=codepipeline.Actions(
+                        RunOrder=1,
+                        ActionTypeId=codepipeline.ActionTypeId(
+                            Category="Source",
+                            Owner="AWS",
+                            Version="1",
+                            Provider="S3",
+                        ),
+                        OutputArtifacts=[
+                            codepipeline.OutputArtifacts(Name=base_template.SOURCE_OUTPUT_ARTIFACT)
+                        ],
+                        Configuration={
+                            "S3Bucket": source.get("Configuration").get("S3Bucket"),
+                            "S3ObjectKey": source.get("Configuration").get(
+                                "S3ObjectKey"
+                            ),
+                            "PollForSourceChanges": source.get("Configuration").get(
+                                "PollForSourceChanges"
+                            ),
+                        },
+                        Name="Source",
+                    ),
+                ).get(source.get("Provider", "").lower())]
             ),
-            codestarsourceconnection=codepipeline.Actions(
-                RunOrder=1,
-                RoleArn=t.Sub(
-                    "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/SourceRole"
-                ),
-                ActionTypeId=codepipeline.ActionTypeId(
-                    Category="Source",
-                    Owner="AWS",
-                    Version="1",
-                    Provider="CodeStarSourceConnection",
-                ),
-                OutputArtifacts=[
-                    codepipeline.OutputArtifacts(Name=base_template.SOURCE_OUTPUT_ARTIFACT)
-                ],
-                Configuration={
-                    "ConnectionArn": source.get("Configuration").get(
-                        "ConnectionArn"
-                    ),
-                    "FullRepositoryId": source.get("Configuration").get(
-                        "FullRepositoryId"
-                    ),
-                    "BranchName": source.get("Configuration").get("BranchName"),
-                    "OutputArtifactFormat": source.get("Configuration").get(
-                        "OutputArtifactFormat"
-                    ),
-                },
-                Name="Source",
-            ),
-            s3=codepipeline.Actions(
-                RunOrder=1,
-                ActionTypeId=codepipeline.ActionTypeId(
-                    Category="Source",
-                    Owner="AWS",
-                    Version="1",
-                    Provider="S3",
-                ),
-                OutputArtifacts=[
-                    codepipeline.OutputArtifacts(Name=base_template.SOURCE_OUTPUT_ARTIFACT)
-                ],
-                Configuration={
-                    "S3Bucket": source.get("Configuration").get("S3Bucket"),
-                    "S3ObjectKey": source.get("Configuration").get(
-                        "S3ObjectKey"
-                    ),
-                    "PollForSourceChanges": source.get("Configuration").get(
-                        "PollForSourceChanges"
-                    ),
-                },
-                Name="Source",
-            ),
-        ).get(source.get("Provider", "").lower())
+        )
+
+
+class StackTemplateBuilder(BaseTemplateBuilder):
 
     def build_test_stage(self, test_input_artifact_name, options):
         actions = [
@@ -277,12 +285,12 @@ class StackTemplateBuilder:
             test_input_artifact_name = base_template.BUILD_OUTPUT_ARTIFACT
             package_input_artifact_name = base_template.BUILD_OUTPUT_ARTIFACT
 
+        deploy_input_artifact_name = "Package"
+
         pipeline_stages = [
-            codepipeline.Stages(
-                Name="Source",
-                Actions=[self.build_source_action(source)]
-            )
         ]
+
+        self.build_source_stage(pipeline_stages, source)
 
         if options.get("ShouldParseAsJinja2Template"):
             pipeline_stages.append(
@@ -392,7 +400,7 @@ class StackTemplateBuilder:
                             ],
                             Configuration={
                                 "ProjectName": t.Sub("${AWS::StackName}-BuildProject"),
-                                "PrimarySource": base_template.SOURCE_OUTPUT_ARTIFACT,
+                                "PrimarySource": build_input_artifact_name,
                                 "EnvironmentVariables": t.Sub(
                                     json.dumps(
                                         [
@@ -428,7 +436,7 @@ class StackTemplateBuilder:
                     "version": "0.2",
                     "phases": {
                         "install": {
-                            "runtime-version": {
+                            "runtime-versions": {
                                 "python": "3.8"
                             }
                         },
@@ -438,7 +446,10 @@ class StackTemplateBuilder:
                                 for region in all_regions
                             ],
                         }
-                    }
+                    },
+                    "artifacts": {
+                        "files": ["*", "**/*"],
+                    },
                 }
             )
 
@@ -511,7 +522,6 @@ class StackTemplateBuilder:
                         ],
                         Configuration={
                             "ProjectName": package_project_name,
-                            "PrimarySource": package_input_artifact_name,
                             "EnvironmentVariables": t.Sub(
                                 json.dumps(
                                     [
@@ -572,17 +582,131 @@ class StackTemplateBuilder:
                         {
                             "version": "0.2",
                             "phases": {
-                                "install": {
-                                    "runtime-version": {
-                                        "python": "3.8"
-                                    }
-                                },
                                 "build": {
                                     "commands": [
-                                        f"aws s3 cp $CATEGORY.template.$TEMPLATE_FORMAT s3://sc-puppet-stacks-repository-$ACCOUNT_ID/{name}/{version}/$CATEGORY.template.$TEMPLATE_FORMAT"
+                                        f"aws s3 cp $CATEGORY.template.$TEMPLATE_FORMAT s3://sc-puppet-stacks-repository-$ACCOUNT_ID/$CATEGORY/{name}/{version}/$CATEGORY.template.$TEMPLATE_FORMAT"
                                     ],
                                 }
-                            }
+                            },
+                            "artifacts": {
+                                "files": ["*", "**/*"],
+                            },
+                        }
+                    ),
+                    Type="CODEPIPELINE",
+                ),
+                Description=t.Sub("deploy project"),
+            )
+        )
+
+        pipeline_stages.append(
+            codepipeline.Stages(
+                Name="Deploy",
+                Actions=[
+                    codepipeline.Actions(
+                        Name="Deploy",
+                        RunOrder=1,
+                        RoleArn=t.Sub(
+                            "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/SourceRole"
+                        ),
+                        InputArtifacts=[
+                            codepipeline.InputArtifacts(Name=deploy_input_artifact_name),
+                        ],
+                        ActionTypeId=codepipeline.ActionTypeId(
+                            Category="Build",
+                            Owner="AWS",
+                            Version="1",
+                            Provider="CodeBuild",
+                        ),
+                        OutputArtifacts=[
+                            codepipeline.OutputArtifacts(Name=base_template.DEPLOY_OUTPUT_ARTIFACT)
+                        ],
+                        Configuration={
+                            "ProjectName": deploy_project_name,
+                            "EnvironmentVariables": t.Sub(
+                                json.dumps(
+                                    [
+                                        dict(
+                                            name="TEMPLATE_FORMAT",
+                                            value="yaml",
+                                            type="PLAINTEXT",
+                                        ),
+                                        dict(
+                                            name="CATEGORY",
+                                            value="stack",
+                                            type="PLAINTEXT",
+                                        ),
+                                    ]
+                                )
+                            ),
+                        },
+                    )
+                ]
+            )
+        )
+
+        tpl.add_resource(
+            codepipeline.Pipeline(
+                "Pipeline",
+                RoleArn=t.Sub(
+                    "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/CodePipelineRole"
+                ),
+                Stages=pipeline_stages,
+                Name=t.Sub("${AWS::StackName}-pipeline"),
+                ArtifactStore=codepipeline.ArtifactStore(
+                    Type="S3",
+                    Location=t.Sub(
+                        "sc-factory-artifacts-${AWS::AccountId}-${AWS::Region}"
+                    ),
+                ),
+                RestartExecutionOnUpdate=False,
+            ),
+        )
+
+        return tpl
+
+
+class NonCFNTemplateBuilder(BaseTemplateBuilder):
+    def build_package_stage(self, pipeline_stages, tpl, stages, options, category):
+        package_input_artifact_name = base_template.SOURCE_OUTPUT_ARTIFACT
+        package_project_name = t.Sub("${AWS::StackName}-PackageProject")
+        tpl.add_resource(
+            codebuild.Project(
+                "PackageProject",
+                Name=package_project_name,
+                ServiceRole=t.Sub(
+                    "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodeRole"
+                ),
+                Tags=t.Tags.from_dict(**{"ServiceCatalogPuppet:Actor": "Framework"}),
+                Artifacts=codebuild.Artifacts(Type="CODEPIPELINE"),
+                TimeoutInMinutes=60,
+                Environment=codebuild.Environment(
+                    ComputeType=constants.ENVIRONMENT_COMPUTE_TYPE_DEFAULT,
+                    Image=stages.get("Build", {}).get("BuildSpecImage", constants.ENVIRONMENT_IMAGE_DEFAULT),
+                    Type=constants.ENVIRONMENT_TYPE_DEFAULT,
+                    EnvironmentVariables=[
+                        codebuild.EnvironmentVariable(
+                            Name="CATEGORY",
+                            Type="PLAINTEXT",
+                            Value=category,
+                        )
+                    ]
+                ),
+                Source=codebuild.Source(
+                    BuildSpec=yaml.safe_dump(
+                        {
+                            "version": "0.2",
+                            "phases": {
+                                "build": {
+                                    "commands": [
+                                        f"echo '{json.dumps(utils.unwrap(options))}' > options.json",
+                                        f"zip -r $CATEGORY.zip .",
+                                    ],
+                                }
+                            },
+                            "artifacts": {
+                                "files": ["*.zip"],
+                            },
                         }
                     ),
                     Type="CODEPIPELINE",
@@ -590,6 +714,92 @@ class StackTemplateBuilder:
                 Description=t.Sub("build project"),
             )
         )
+        pipeline_stages.append(
+            codepipeline.Stages(
+                Name="Package",
+                Actions=[
+                    codepipeline.Actions(
+                        Name="Package",
+                        RunOrder=1,
+                        RoleArn=t.Sub(
+                            "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/SourceRole"
+                        ),
+                        InputArtifacts=[
+                            codepipeline.InputArtifacts(Name=package_input_artifact_name),
+                        ],
+                        ActionTypeId=codepipeline.ActionTypeId(
+                            Category="Build",
+                            Owner="AWS",
+                            Version="1",
+                            Provider="CodeBuild",
+                        ),
+                        OutputArtifacts=[
+                            codepipeline.OutputArtifacts(Name=base_template.PACKAGE_OUTPUT_ARTIFACT)
+                        ],
+                        Configuration={
+                            "ProjectName": package_project_name,
+                        },
+                    )
+                ]
+            )
+        )
+
+    def build_deploy_stage(self, pipeline_stages, tpl, name, version, category):
+        deploy_project_name = t.Sub("${AWS::StackName}-DeployProject")
+        tpl.add_resource(
+            codebuild.Project(
+                "DeployProject",
+                Name=deploy_project_name,
+                ServiceRole=t.Sub(
+                    "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodeRole"
+                ),
+                Tags=t.Tags.from_dict(**{"ServiceCatalogPuppet:Actor": "Framework"}),
+                Artifacts=codebuild.Artifacts(Type="CODEPIPELINE"),
+                TimeoutInMinutes=60,
+                Environment=codebuild.Environment(
+                    ComputeType=constants.ENVIRONMENT_COMPUTE_TYPE_DEFAULT,
+                    Image=constants.ENVIRONMENT_IMAGE_DEFAULT,
+                    Type=constants.ENVIRONMENT_TYPE_DEFAULT,
+                    EnvironmentVariables=[
+                        codebuild.EnvironmentVariable(
+                            Name="TEMPLATE_FORMAT",
+                            Type="PLAINTEXT",
+                            Value="yaml",
+                        ),
+                        codebuild.EnvironmentVariable(
+                            Name="CATEGORY",
+                            Type="PLAINTEXT",
+                            Value=category,
+                        ),
+                        codebuild.EnvironmentVariable(
+                            Name="ACCOUNT_ID",
+                            Type="PLAINTEXT",
+                            Value=t.Sub("${AWS::AccountId}"),
+                        ),
+                    ],
+                ),
+                Source=codebuild.Source(
+                    BuildSpec=yaml.safe_dump(
+                        {
+                            "version": "0.2",
+                            "phases": {
+                                "build": {
+                                    "commands": [
+                                        f"aws s3 cp $CATEGORY.zip s3://sc-puppet-stacks-repository-$ACCOUNT_ID/$CATEGORY/{name}/{version}/$CATEGORY.zip"
+                                    ],
+                                }
+                            },
+                            "artifacts": {
+                                "files": ["*", "**/*"],
+                            },
+                        }
+                    ),
+                    Type="CODEPIPELINE",
+                ),
+                Description=t.Sub("deploy project"),
+            )
+        )
+
         pipeline_stages.append(
             codepipeline.Stages(
                 Name="Deploy",
@@ -614,12 +824,73 @@ class StackTemplateBuilder:
                         ],
                         Configuration={
                             "ProjectName": deploy_project_name,
-                            "PrimarySource": base_template.DEPLOY_OUTPUT_ARTIFACT,
+                            "EnvironmentVariables": t.Sub(
+                                json.dumps(
+                                    [
+                                        dict(
+                                            name="TEMPLATE_FORMAT",
+                                            value="yaml",
+                                            type="PLAINTEXT",
+                                        ),
+                                        dict(
+                                            name="CATEGORY",
+                                            value="stack",
+                                            type="PLAINTEXT",
+                                        ),
+                                    ]
+                                )
+                            ),
                         },
                     )
                 ]
             )
         )
+
+
+class TerraformTemplateBuilder(NonCFNTemplateBuilder):
+    def build(self, name, version, source, options, stages):
+        factory_version = constants.VERSION
+        template_description = f'{{"version": "{factory_version}", "framework": "servicecatalog-factory", "role": "product-pipeline", "type": "cloudformation", "category": "workspace"}}'
+        tpl = t.Template(Description=template_description)
+
+        pipeline_stages = []
+
+        self.build_source_stage(pipeline_stages, source)
+        self.build_package_stage(pipeline_stages, tpl, stages, options, 'workspace')
+        self.build_deploy_stage(pipeline_stages, tpl, name, version, 'workspace')
+
+        tpl.add_resource(
+            codepipeline.Pipeline(
+                "Pipeline",
+                RoleArn=t.Sub(
+                    "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/CodePipelineRole"
+                ),
+                Stages=pipeline_stages,
+                Name=t.Sub("${AWS::StackName}-pipeline"),
+                ArtifactStore=codepipeline.ArtifactStore(
+                    Type="S3",
+                    Location=t.Sub(
+                        "sc-factory-artifacts-${AWS::AccountId}-${AWS::Region}"
+                    ),
+                ),
+                RestartExecutionOnUpdate=False,
+            ),
+        )
+
+        return tpl
+
+
+class CDKAppTemplateBuilder(NonCFNTemplateBuilder):
+    def build(self, name, version, source, options, stages):
+        factory_version = constants.VERSION
+        template_description = f'{{"version": "{factory_version}", "framework": "servicecatalog-factory", "role": "product-pipeline", "type": "cloudformation", "category": "app"}}'
+        tpl = t.Template(Description=template_description)
+
+        pipeline_stages = []
+
+        self.build_source_stage(pipeline_stages, source)
+        self.build_package_stage(pipeline_stages, tpl, stages, options, "app")
+        self.build_deploy_stage(pipeline_stages, tpl, name, version, "app")
 
         tpl.add_resource(
             codepipeline.Pipeline(
