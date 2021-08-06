@@ -312,7 +312,6 @@ def get_resources() -> list:
                                 },
                                 "build": {
                                     "commands": [
-                                        # TODO - test may not work as is
                                         """
                                         python -c "from jinja2 import Template;print(Template(open('$CATEGORY.template.$TEMPLATE_FORMAT', 'r').read()).render())" > product.template.$TEMPLATE_FORMAT
                                         """

@@ -431,7 +431,6 @@ class StackTemplateBuilder(BaseTemplateBuilder):
         )
 
         if stages.get("Package", {}).get("BuildSpec"):
-            # TODO - need to jinja render it
             package_build_spec = stages.get("Package", {}).get("BuildSpec")
         else:
             package_build_spec = yaml.safe_dump(
