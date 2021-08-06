@@ -1,7 +1,6 @@
-# Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-# SPDX-License-Identifier: Apache-2.0
+#  Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#  SPDX-License-Identifier: Apache-2.0
 import logging
-import time
 
 from betterboto import client as betterboto_client
 
@@ -47,14 +46,17 @@ def ensure_portfolio_association_for_product(portfolio_id, product_id, service_c
     if not found:
         logger.info(f"Creating an association between {portfolio_id} and {product_id}")
         service_catalog.associate_product_with_portfolio(
-            ProductId=product_id, PortfolioId=portfolio_id,
+            ProductId=product_id,
+            PortfolioId=portfolio_id,
         )
 
 
 def get_product(service_catalog, product_name):
     logger.info(f"Looking for product: {product_name}")
-    search_products_as_admin_response = service_catalog.search_products_as_admin_single_page(
-        Filters={"FullTextSearch": [product_name]}
+    search_products_as_admin_response = (
+        service_catalog.search_products_as_admin_single_page(
+            Filters={"FullTextSearch": [product_name]}
+        )
     )
     for product_view_details in search_products_as_admin_response.get(
         "ProductViewDetails"

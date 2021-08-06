@@ -21,6 +21,6 @@ bootstrap-branch:
 upload-config:
 	poetry run servicecatalog-factory upload-config servicecatalog_factory/example-config-small.yaml
 
-## @factory_commands Runs servicecatalog-factory --info generate-via-luigi for the local checkout branch
-generate-via-luigi:
-	REGION=$(REGION) ACCOUNT_ID=$(ACCOUNT_ID) poetry run servicecatalog-factory --info generate-via-luigi ignored/src/ServiceCatalogFactory/portfolios/
+## @factory_commands Runs servicecatalog-factory --info generate for the local checkout branch
+generate:
+	REGION=$(REGION) ACCOUNT_ID=$(ACCOUNT_ID) poetry run servicecatalog-factory --info generate ignored/src/ServiceCatalogFactory

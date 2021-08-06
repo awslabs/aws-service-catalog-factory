@@ -1,5 +1,5 @@
-# Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-# SPDX-License-Identifier: Apache-2.0
+#  Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#  SPDX-License-Identifier: Apache-2.0
 import troposphere as t
 from troposphere import codebuild
 import yaml
@@ -129,7 +129,9 @@ def get_resources() -> list:
                             version=0.2,
                             phases=dict(
                                 install={
-                                    "runtime-versions": dict(python="3.7",),
+                                    "runtime-versions": dict(
+                                        python="3.7",
+                                    ),
                                     "commands": [
                                         f"pip install {constants.VERSION}"
                                         if "http" in constants.VERSION

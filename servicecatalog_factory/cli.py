@@ -1,7 +1,19 @@
-# Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-# SPDX-License-Identifier: Apache-2.0
+#  Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#  SPDX-License-Identifier: Apache-2.0
 import yaml
-from servicecatalog_factory import core, cloudformation_servicecatalog_deploy_action
+
+from servicecatalog_factory.commands import bootstrap as bootstrap_commands
+from servicecatalog_factory.commands import configuration_management
+from servicecatalog_factory.commands import fix_issues
+from servicecatalog_factory.commands import generate as generate_commands
+from servicecatalog_factory.commands import list_resources
+from servicecatalog_factory.commands import portfolios
+from servicecatalog_factory.commands import seed
+from servicecatalog_factory.commands import show_pipelines
+from servicecatalog_factory.commands import stacks
+from servicecatalog_factory.commands import validate
+from servicecatalog_factory.commands import version
+from servicecatalog_factory import cloudformation_servicecatalog_deploy_action
 import logging
 import click
 
@@ -29,26 +41,20 @@ def cli(info, info_line_numbers):
 @cli.command()
 @click.argument("p", type=click.Path(exists=True))
 def validate(p):
-    core.validate(p)
+    validate.validate(p)
 
 
 @cli.command()
 @click.argument("p", type=click.Path(exists=True))
-def generate_via_luigi(p):
-    core.generate_via_luigi(p)
+def generate(p):
+    generate_commands.generate(p)
 
 
 @cli.command()
 @click.argument("p", type=click.Path(exists=True))
 @click.option("--format", "-f", type=click.Choice(["table", "json"]), default="table")
 def show_pipelines(p, format):
-    core.show_pipelines(p, format)
-
-
-@cli.command()
-@click.argument("p", type=click.Path(exists=True))
-def deploy(p):
-    core.deploy(p)
+    show_pipelines.show_pipelines(p, format)
 
 
 @cli.command()
@@ -56,7 +62,7 @@ def deploy(p):
 @click.argument("product")
 @click.argument("version")
 def nuke_product_version(portfolio_name, product, version):
-    core.nuke_product_version(portfolio_name, product, version)
+    portfolios.nuke_product_version(portfolio_name, product, version)
 
 
 @cli.command()
@@ -148,12 +154,15 @@ def bootstrap_branch(
         )
     elif source_provider == "S3":
         args.update(
-            dict(scm_bucket_name=scm_bucket_name, scm_object_key=scm_object_key,)
+            dict(
+                scm_bucket_name=scm_bucket_name,
+                scm_object_key=scm_object_key,
+            )
         )
     else:
         raise Exception(f"Unsupported source provider: {source_provider}")
 
-    core.bootstrap_branch(**args)
+    bootstrap_commands.bootstrap_branch(**args)
 
 
 @cli.command()
@@ -161,7 +170,7 @@ def bootstrap_branch(
 @click.argument("oauth-token")
 @click.argument("secret-token", default=False)
 def add_secret(secret_name, oauth_token, secret_token):
-    core.add_secret(secret_name, oauth_token, secret_token)
+    configuration_management.add_secret(secret_name, oauth_token, secret_token)
 
 
 @cli.command()
@@ -250,24 +259,27 @@ def bootstrap(
         )
     elif source_provider == "S3":
         args.update(
-            dict(scm_bucket_name=scm_bucket_name, scm_object_key=scm_object_key,)
+            dict(
+                scm_bucket_name=scm_bucket_name,
+                scm_object_key=scm_object_key,
+            )
         )
     else:
         raise Exception(f"Unsupported source provider: {source_provider}")
 
-    core.bootstrap(**args)
+    bootstrap_commands.bootstrap(**args)
 
 
 @cli.command()
 @click.argument("complexity", default="simple")
 @click.argument("p", type=click.Path(exists=True))
 def seed(complexity, p):
-    core.seed(complexity, p)
+    seed.seed(complexity, p)
 
 
 @cli.command()
 def version():
-    core.version()
+    version.version()
 
 
 @cli.command()
@@ -275,24 +287,24 @@ def version():
 def upload_config(p):
     content = open(p, "r").read()
     config = yaml.safe_load(content)
-    core.upload_config(config)
+    configuration_management.upload_config(config)
 
 
 @cli.command()
 @click.argument("p", type=click.Path(exists=True))
 def fix_issues(p):
-    core.fix_issues(p)
+    fix_issues.fix_issues(p)
 
 
 @cli.command()
 @click.argument("stack-name")
 def delete_stack_from_all_regions(stack_name):
-    core.delete_stack_from_all_regions(stack_name)
+    stacks.delete_stack_from_all_regions(stack_name)
 
 
 @cli.command()
 def list_resources():
-    core.list_resources()
+    list_resources.list_resources()
 
 
 @cli.command()
@@ -300,7 +312,7 @@ def list_resources():
 @click.argument("name")
 @click.argument("portfolio_name", default=None)
 def import_product_set(f, name, portfolio_name):
-    core.import_product_set(f, name, portfolio_name)
+    portfolios.import_product_set(f, name, portfolio_name)
 
 
 @cli.command()
@@ -310,7 +322,7 @@ def import_product_set(f, name, portfolio_name):
 def add_product_to_portfolio(
     portfolio_file_name, portfolio_display_name, product_definition
 ):
-    core.add_product_to_portfolio(
+    portfolios.add_product_to_portfolio(
         portfolio_file_name,
         portfolio_display_name,
         yaml.safe_load(product_definition.read()),
@@ -324,7 +336,7 @@ def add_product_to_portfolio(
 def remove_product_from_portfolio(
     portfolio_file_name, portfolio_display_name, product_name
 ):
-    core.remove_product_from_portfolio(
+    portfolios.remove_product_from_portfolio(
         portfolio_file_name, portfolio_display_name, product_name
     )
 
@@ -337,7 +349,7 @@ def remove_product_from_portfolio(
 def add_version_to_product(
     portfolio_file_name, portfolio_display_name, product_name, version_definition
 ):
-    core.add_version_to_product(
+    portfolios.add_version_to_product(
         portfolio_file_name,
         portfolio_display_name,
         product_name,
@@ -353,7 +365,7 @@ def add_version_to_product(
 def remove_version_from_product(
     portfolio_file_name, portfolio_display_name, product_name, version_name
 ):
-    core.remove_version_from_product(
+    portfolios.remove_version_from_product(
         portfolio_file_name, portfolio_display_name, product_name, version_name
     )
 
@@ -363,25 +375,25 @@ def remove_version_from_product(
 @click.argument("terraform_version")
 @click.argument("tf_vars", nargs=-1)
 def generate_terraform_template(uid, terraform_version, tf_vars):
-    click.echo(core.generate_terraform_template(uid, terraform_version, tf_vars))
+    click.echo(portfolios.generate_terraform_template(uid, terraform_version, tf_vars))
 
 
 @cli.command()
 @click.argument("regions", nargs=-1)
 def set_regions(regions):
-    core.set_regions(regions)
+    configuration_management.set_regions(regions)
 
 
 @cli.command()
 @click.argument("p", type=click.Path(exists=True))
 def generate_launch_constraints(p):
-    core.generate_launch_constraints(p)
+    portfolios.generate_launch_constraints(p)
 
 
 @cli.command()
 @click.option("--partition", envvar="PARTITION")
 def deploy_launch_constraints(partition):
-    core.deploy_launch_constraints(partition)
+    portfolios.deploy_launch_constraints(partition)
 
 
 @cli.command()
@@ -389,7 +401,7 @@ def deploy_launch_constraints(partition):
 @click.argument("execution-id")
 @click.argument("artifact")
 def print_source_directory(pipeline_name, execution_id, artifact):
-    core.print_source_directory(pipeline_name, execution_id, artifact)
+    portfolios.print_source_directory(pipeline_name, execution_id, artifact)
 
 
 @cli.command()
@@ -399,7 +411,9 @@ def print_source_directory(pipeline_name, execution_id, artifact):
 @click.argument("description")
 @click.argument("template-url")
 def update_provisioned_product(region, name, product_id, description, template_url):
-    core.update_provisioned_product(region, name, product_id, description, template_url)
+    portfolios.update_provisioned_product(
+        region, name, product_id, description, template_url
+    )
 
 
 @cli.command()
@@ -412,7 +426,7 @@ def generate_template(
     provisioner_name, provisioner_version, product_name, product_version, p
 ):
     click.echo(
-        core.generate_template(
+        portfolios.generate_template(
             provisioner_name, provisioner_version, product_name, product_version, p
         )
     )

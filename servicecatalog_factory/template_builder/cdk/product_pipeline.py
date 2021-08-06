@@ -1,5 +1,5 @@
-# Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-# SPDX-License-Identifier: Apache-2.0
+#  Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#  SPDX-License-Identifier: Apache-2.0
 import troposphere as t
 import yaml
 
@@ -132,7 +132,10 @@ class CDK100Template(BaseTemplate):
                     s3=codepipeline.Actions(
                         RunOrder=1,
                         ActionTypeId=codepipeline.ActionTypeId(
-                            Category="Source", Owner="AWS", Version="1", Provider="S3",
+                            Category="Source",
+                            Owner="AWS",
+                            Version="1",
+                            Provider="S3",
                         ),
                         OutputArtifacts=[
                             codepipeline.OutputArtifacts(Name=SOURCE_OUTPUT_ARTIFACT)
@@ -182,9 +185,21 @@ class CDK100Template(BaseTemplate):
                             "Name": "ACCOUNT_ID",
                             "Value": "CHANGE_ME",
                         },
-                        {"Type": "PLAINTEXT", "Name": "REGION", "Value": "CHANGE_ME",},
-                        {"Type": "PLAINTEXT", "Name": "NAME", "Value": "CHANGE_ME",},
-                        {"Type": "PLAINTEXT", "Name": "VERSION", "Value": "CHANGE_ME",},
+                        {
+                            "Type": "PLAINTEXT",
+                            "Name": "REGION",
+                            "Value": "CHANGE_ME",
+                        },
+                        {
+                            "Type": "PLAINTEXT",
+                            "Name": "NAME",
+                            "Value": "CHANGE_ME",
+                        },
+                        {
+                            "Type": "PLAINTEXT",
+                            "Name": "VERSION",
+                            "Value": "CHANGE_ME",
+                        },
                         {
                             "Type": "PLAINTEXT",
                             "Name": "PROVISIONER_NAME",
@@ -303,7 +318,10 @@ class CDK100Template(BaseTemplate):
                     ],
                     Name="Validate",
                     ActionTypeId=codepipeline.ActionTypeId(
-                        Category="Test", Owner="AWS", Version="1", Provider="CodeBuild",
+                        Category="Test",
+                        Owner="AWS",
+                        Version="1",
+                        Provider="CodeBuild",
                     ),
                     OutputArtifacts=[
                         codepipeline.OutputArtifacts(Name=VALIDATE_OUTPUT_ARTIFACT)
