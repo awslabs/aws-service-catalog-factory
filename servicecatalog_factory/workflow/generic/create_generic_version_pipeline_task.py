@@ -22,7 +22,7 @@ class CreateGenericVersionPipelineTemplateTask(tasks.FactoryTask):
     def output(self):
         return luigi.LocalTarget(
             f"output/{self.__class__.__name__}/"
-            f"{self.name}-{self.version}.template.yaml"
+            f"{self.category}-{self.name}-{self.version}.template.yaml"
         )
 
     def run(self):

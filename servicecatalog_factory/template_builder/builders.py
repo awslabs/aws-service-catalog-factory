@@ -824,22 +824,6 @@ class NonCFNTemplateBuilder(BaseTemplateBuilder):
                         ],
                         Configuration={
                             "ProjectName": deploy_project_name,
-                            "EnvironmentVariables": t.Sub(
-                                json.dumps(
-                                    [
-                                        dict(
-                                            name="TEMPLATE_FORMAT",
-                                            value="yaml",
-                                            type="PLAINTEXT",
-                                        ),
-                                        dict(
-                                            name="CATEGORY",
-                                            value="stack",
-                                            type="PLAINTEXT",
-                                        ),
-                                    ]
-                                )
-                            ),
                         },
                     )
                 ]
