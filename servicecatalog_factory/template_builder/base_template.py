@@ -1,5 +1,5 @@
-# Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-# SPDX-License-Identifier: Apache-2.0
+#  Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#  SPDX-License-Identifier: Apache-2.0
 SOURCE_OUTPUT_ARTIFACT = "Source"
 PARSE_OUTPUT_ARTIFACT = "Source"
 BUILD_OUTPUT_ARTIFACT = "Build"

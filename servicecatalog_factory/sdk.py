@@ -1,5 +1,5 @@
-# Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
-# SPDX-License-Identifier: Apache-2.0
+#  Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+#  SPDX-License-Identifier: Apache-2.0
 from servicecatalog_factory.commands import bootstrap
 from servicecatalog_factory.commands import configuration_management
 from servicecatalog_factory.commands import portfolios
