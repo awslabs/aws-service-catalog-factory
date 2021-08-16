@@ -117,12 +117,12 @@ class BaseTemplateBuilder:
                             codepipeline.OutputArtifacts(Name=base_template.SOURCE_OUTPUT_ARTIFACT)
                         ],
                         Configuration={
-                            "S3Bucket": source.get("Configuration").get("S3Bucket"),
+                            "S3Bucket": source.get("Configuration").get("S3Bucket", source.get("Configuration").get("BucketName")),
                             "S3ObjectKey": source.get("Configuration").get(
                                 "S3ObjectKey"
                             ),
                             "PollForSourceChanges": source.get("Configuration").get(
-                                "PollForSourceChanges"
+                                "PollForSourceChanges", True
                             ),
                         },
                         Name="Source",
