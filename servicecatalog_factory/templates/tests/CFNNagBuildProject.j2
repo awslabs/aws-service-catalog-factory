@@ -22,7 +22,7 @@
                   - cfn_nag_rules # Show all cfn_nag_rules that will be used in the scan
               build:
                 commands:
-                  -
+                  - cfn_nag_scan --input-path ./product.template.{{ template_format }}
             artifacts:
               files: '**/*'
       TimeoutInMinutes: 20
