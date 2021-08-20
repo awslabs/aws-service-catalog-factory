@@ -792,14 +792,15 @@ def generate_launch_constraints(p):
         logger.info(
             f"About to write a template: output/constraints/launch-role/{region}.template.yaml"
         )
-        with open(f"output/constraints/launch-role/{region}.template.yaml", "w") as cfn:
-            main_template = Template(parent_template).render(
-                VERSION=constants.VERSION,
-                ALL_REGIONS=all_regions,
-                nested_templates=parent_template_context,
-            )
-            logger.info(main_template)
-            cfn.write(main_template)
+        if os.path.exists(f"output/constraints/launch-role/{region}.template.yaml"):
+            with open(f"output/constraints/launch-role/{region}.template.yaml", "w") as cfn:
+                main_template = Template(parent_template).render(
+                    VERSION=constants.VERSION,
+                    ALL_REGIONS=all_regions,
+                    nested_templates=parent_template_context,
+                )
+                logger.info(main_template)
+                cfn.write(main_template)
     logger.info("finished writing the template")
 
 
