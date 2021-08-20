@@ -1,5 +1,7 @@
 #  Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+import os
+
 import yaml
 
 from servicecatalog_factory.commands import bootstrap as bootstrap_commands
@@ -385,15 +387,17 @@ def set_regions(regions):
 
 
 @cli.command()
-@click.argument("p", type=click.Path(exists=True))
+@click.argument("p", type=click.Path())
 def generate_launch_constraints(p):
-    portfolios.generate_launch_constraints(p)
+    if os.path.exists(p):
+        portfolios.generate_launch_constraints(p)
 
 
 @cli.command()
 @click.option("--partition", envvar="PARTITION")
 def deploy_launch_constraints(partition):
-    portfolios.deploy_launch_constraints(partition)
+    if os.path.exists('output'):
+        portfolios.deploy_launch_constraints(partition)
 
 
 @cli.command()
