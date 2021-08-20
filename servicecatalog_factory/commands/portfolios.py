@@ -388,12 +388,11 @@ def generate_for_portfolios(
             }
             products_by_region[product_uid][region] = create_product_task_args
 
-            create_product_task = create_product_task.CreateProductTask(
-                **create_product_task_args
-            )
             all_tasks[
                 f"product_{p_name}_{portfolio.get('DisplayName')}_{product.get('Name')}-{region}"
-            ] = create_product_task
+            ] = create_product_task.CreateProductTask(
+                **create_product_task_args
+            )
 
             associate_product_with_portfolio_task = (
                 associate_product_with_portfolio_task.AssociateProductWithPortfolioTask(
