@@ -396,8 +396,7 @@ def generate_launch_constraints(p):
 @cli.command()
 @click.option("--partition", envvar="PARTITION")
 def deploy_launch_constraints(partition):
-    if os.path.exists('output'):
-        portfolios.deploy_launch_constraints(partition)
+    portfolios.deploy_launch_constraints(partition)
 
 
 @cli.command()
