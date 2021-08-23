@@ -394,22 +394,14 @@ def generate_for_portfolios(
                 **create_product_task_args
             )
 
-            associate_product_with_portfolio_task = (
-                associate_product_with_portfolio_task.AssociateProductWithPortfolioTask(
+            all_tasks[
+                f"association_{p_name}_{portfolio.get('DisplayName')}_{product.get('Name')}-{region}"
+            ] = associate_product_with_portfolio_task.AssociateProductWithPortfolioTask(
                     region=region,
                     portfolio_args=create_portfolio_task_args,
                     product_args=create_product_task_args,
                 )
-            )
-            all_tasks[
-                f"association_{p_name}_{portfolio.get('DisplayName')}_{product.get('Name')}-{region}"
-            ] = associate_product_with_portfolio_task
             for version in product.get("Versions", []):
-                ensure_product_version_details_correct_task = ensure_product_version_details_correct_task.EnsureProductVersionDetailsCorrect(
-                    region=region,
-                    version=version,
-                    product_args=create_product_task_args,
-                )
                 pipeline_versions.append(
                     {
                         "create_product_task_args": create_product_task_args,
@@ -419,7 +411,11 @@ def generate_for_portfolios(
                 )
                 all_tasks[
                     f"version_{p_name}_{portfolio.get('Name')}_{product.get('Name')}_{version.get('Name')}-{region}"
-                ] = ensure_product_version_details_correct_task
+                ] = ensure_product_version_details_correct_task.EnsureProductVersionDetailsCorrect(
+                    region=region,
+                    version=version,
+                    product_args=create_product_task_args,
+                )
 
 
 def get_portfolios_by_file_name(portfolio_file_name):
