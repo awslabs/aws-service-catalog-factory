@@ -336,8 +336,8 @@ Resources:
                 Provider: S3
                 Version: '1'
               Configuration:
-                S3Bucket: {{ Source.Configuration.S3Bucket }}
-                S3ObjectKey: {{ Source.Configuration.S3ObjectKey }}
+                S3Bucket: !Sub "{{ Source.Configuration.S3Bucket }}"
+                S3ObjectKey: !Sub "{{ Source.Configuration.S3ObjectKey }}"
                 PollForSourceChanges: {{ Source.Configuration.PollForSourceChanges }}
               OutputArtifacts:
                 - Name: Source
