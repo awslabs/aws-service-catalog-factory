@@ -93,8 +93,8 @@ Resources:
                 Provider: S3
                 Version: '1'
               Configuration:
-                S3Bucket: {{ Source.Configuration.BucketName }}
-                S3ObjectKey: {{ Source.Configuration.S3ObjectKey }}
+                S3Bucket: !Sub "{{ Source.Configuration.BucketName }}"
+                S3ObjectKey: !Sub "{{ Source.Configuration.S3ObjectKey }}"
               OutputArtifacts:
                 - Name: Source
               RunOrder: '1'
