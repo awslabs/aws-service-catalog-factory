@@ -7,6 +7,16 @@ When you bootstrap the framework and upgrade it you use the cli tool to perform 
 
 There are other commands that you may find useful:
 
+validate
+--------
+
+You can use the ``servicecatalog-factory`` cli to validate your portfolio yaml files:
+
+.. code-block:: bash
+
+    servicecatalog-factory validate portfolios/
+
+
 add-secret
 ----------
 
