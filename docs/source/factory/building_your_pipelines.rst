@@ -11,88 +11,30 @@ Source
 ------
 The source for your pipeline can be a CodeCommit repo or a GitHub repo.  
 
-Using CodeCommit
-++++++++++++++++
 
-To use CodeCommit you can use the following
-configuration:
+Using AWS CodeCommit
+++++++++++++++++++++
 
-.. code-block:: yaml
+See https://service-catalog-tools-workshop.com/every-day-use/100-creating-a-product/300-add-the-source-code.html
 
-    Source:
-        Provider: CodeCommit
-        Configuration:
-            RepositoryName: account-iam
-            BranchName: v1
+
+Using Amazon S3
++++++++++++++++
+
+See https://service-catalog-tools-workshop.com/every-day-use/100-creating-a-product/310-creating-s3-pipelines.html
 
 
 Using GitHub
 ++++++++++++
 
-To use GitHub you can use the following
-configuration:
-
-.. code-block:: yaml
-
-    Source:
-        Provider: GitHub
-        Configuration:
-            Owner: your-github-user-or-org
-            Repo: your-github-repo
-            Branch: v1
-            PollForSourceChanges: True
-            SecretsManagerSecret: my-github-secret
-
-Your pipeline will expect a JSON secret in AWS Secrets Manager of the name:
-```<portfolio_file_name>-<portfolio_display_name>-<product_name>_<product_version_name>```
-
-For example if you have the following in a file named example-simple.yaml:
-
-.. code-block:: yaml
-
-    Portfolios:
-      - DisplayName: central-it-team-portfolio
-        Products:
-          - Name: account-iam
-            Versions:
-              - Name: v1
-                Source:
-                  Provider: Github
-                  Configuration:
-                    Owner: eamonnfaherty
-                    Repo: account-iam
-                    Branch: v1
-                    PollForSourceChanges: True
-                    SecretsManagerSecret: my-github-secret
-
-.. note::
-
-    Setting SecretsManagerSecret was added in version 0.16.0.  Prior to this the name <portfolio_name>-<product_name>-<version>
-
-.. note::
-
-    Since version 0.17.0 you can set your secret using the cli command ``servicecatalog-factory add-secret <name of
-    secret> <value>``.  This will set up the AWS Secrets Manager secret correctly for you otherwise you have to set the
-    secret up yourself.  The secret must have secret keys for ```SecretToken``` and ```OAuthToken``` and it must be in
-    the same region as the AWS CodePipeline.
+See https://service-catalog-tools-workshop.com/every-day-use/100-creating-a-product/305-creating-codestar-pipelines.html
 
 
 Using CodeStarSourceConnection (Bitbucket / Github.com / Github Enterprise)
 +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
-To use CodeStarSourceConnection you can use the following configuration:
+See https://service-catalog-tools-workshop.com/every-day-use/100-creating-a-product/305-creating-codestar-pipelines.html
 
-.. code-block:: yaml
-
-    Source:
-      Provider: "CodeStarSourceConnection"
-      Configuration:
-        BranchName: "main2"
-        ConnectionArn: "arn:aws:codestar-connections:eu-west-1:0123456789010:connection/abcdergh-abcd-4c19-9fe2-5dc0522dc6a6"
-        FullRepositoryId: "exampleorg/my-wonderful-product"
-
-
-For more details check the reference guide: https://docs.aws.amazon.com/codepipeline/latest/userguide/action-reference-CodestarConnectionSource.html
 
 Preprocessing templates (using Jinja2)
 --------------------------------------
