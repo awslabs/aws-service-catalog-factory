@@ -13,7 +13,7 @@ from servicecatalog_factory.commands import portfolios
 from servicecatalog_factory.commands import seed
 from servicecatalog_factory.commands import show_pipelines
 from servicecatalog_factory.commands import stacks
-from servicecatalog_factory.commands import validate
+from servicecatalog_factory.commands import validate as validate_commands
 from servicecatalog_factory.commands import version
 from servicecatalog_factory import cloudformation_servicecatalog_deploy_action
 import logging
@@ -43,7 +43,7 @@ def cli(info, info_line_numbers):
 @cli.command()
 @click.argument("p", type=click.Path(exists=True))
 def validate(p):
-    validate.validate(p)
+    validate_commands.validate(p)
 
 
 @cli.command()

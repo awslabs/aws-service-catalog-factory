@@ -1,0 +1,61 @@
+Schema: enum("factory-2019-04-01", required=False)
+schema: enum("factory-2019-04-01", required=False)
+
+Portfolios: list(include('portfolio'), required=False)
+Products: list(include('product'), required=False)
+Componets: list(include('product'), required=False)
+
+---
+portfolio:
+  DisplayName: str()
+  Description: str()
+  ProviderName: str()
+  Associations: list(str())
+  Tags: list(include('tag'))
+  Components: list(include('product', required=False))
+  Products: list(include('product', required=False))
+
+tag:
+  Key: str()
+  Value: str()
+
+options:
+  ShouldCFNNag: bool(required=False)
+  ShouldCloudformationRSpec: bool(required=False)
+
+
+configuration:
+  RepositoryName: str()
+  BranchName: str()
+  Branch: str()
+  Owner: str()
+  Repo: str()
+
+source:
+  Provider: str()
+  Configuration: include('configuration')
+
+version:
+  Name: str()
+  Description: str()
+  Tags: list(include('tag'))
+  Active: bool()
+  Options: include('options')
+  BuildSpecImage: str()
+  BuildSpec: str()
+  Source: include('source')
+
+product:
+  Name: str()
+  Owner: str()
+  Description: str()
+  Distributor: str()
+  SupportDescription: str()
+  SupportEmail: regex(r'^.+@.+$')
+  SupportUrl: regex(r'^https?://(?:[-\w.]|(?:%[\da-fA-F]{2}))+$')
+  BuildSpecImage: str()
+  BuildSpec: str()
+  Source: include('source')
+  Options: map(include('options'), required=False)
+  Tags: list(include('tag'))
+  Versions: map(include('version'))
