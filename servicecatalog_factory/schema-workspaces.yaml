@@ -1,27 +1,14 @@
 Schema: enum("factory-2019-04-01", required=False)
 schema: enum("factory-2019-04-01", required=False)
 
-Portfolios: list(include('portfolio'), required=False)
-Products: list(include('product'), required=False)
-Componets: list(include('product'), required=False)
+Workspaces: list(include('workspace'))
 
 ---
-portfolio:
-  DisplayName: str()
-  Description: str()
-  ProviderName: str()
-  Associations: list(str(), required=False)
-  Tags: list(include('tag'), required=False)
-  Components: list(include('product'), required=False)
-  Products: list(include('product'), required=False)
-
-tag:
-  Key: str()
-  Value: str()
+options_terraform:
+  Version: str()
 
 options:
-  ShouldCFNNag: bool(required=False)
-  ShouldCloudformationRSpec: bool(required=False)
+  Terraform: include("options_terraform", required=False)
 
 configuration_codecommit:
   RepositoryName: str()
@@ -44,7 +31,6 @@ source_github:
 
 version:
   Name: str()
-  Description: str()
   Tags: list(include('tag'), required=False)
   Active: bool(required=False)
   Options: include('options', required=False)
@@ -54,7 +40,6 @@ version:
 
 version_with_source:
   Name: str()
-  Description: str()
   Tags: list(include('tag'), required=False)
   Active: bool(required=False)
   Options: include('options', required=False)
@@ -62,44 +47,22 @@ version_with_source:
   BuildSpec: str(required=False)
   Source: include('source')
 
+workspace: any(include("workspace_without_source"), include("workspace_with_source"))
 
-template:
-  Name: enum("CDK")
-  Version: enum("1.0.0")
-  Configuration: map(required=False)
-
-product: any(include("product_without_source"), include("product_with_source"))
-
-product_without_source:
+workspace_without_source:
   Name: str()
-  Owner: str()
-  Description: str()
-  Distributor: str()
-  SupportDescription: str()
-  SupportEmail: str()
-  SupportUrl: str()
-  Template: include("template", required=False)
   BuildSpecImage: str(required=False)
   BuildSpec: str(required=False)
   Source: include('source', required=False)
   Options: include('options', required=False)
   Tags: list(include('tag'), required=False)
   Versions: list(include('version_with_source'), required=False)
-  Portfolios: list()
 
-product_with_source:
+workspace_with_source:
   Name: str()
-  Owner: str()
-  Description: str()
-  Distributor: str()
-  SupportDescription: str()
-  SupportEmail: str()
-  SupportUrl: str()
-  Template: include("template", required=False)
   BuildSpecImage: str(required=False)
   BuildSpec: str(required=False)
   Source: include('source')
   Options: include('options', required=False)
   Tags: list(include('tag'), required=False)
   Versions: list(include('version'), required=False)
-  Portfolios: list()
