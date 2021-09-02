@@ -50,8 +50,8 @@ version:
   Options: include('options', required=False)
   BuildSpecImage: str(required=False)
   BuildSpec: str(required=False)
-  Stages: include('stage', required=False)
   Source: include('source', required=False)
+  Stages: include('stage', required=False)
 
 version_with_source:
   Name: str()
@@ -61,8 +61,8 @@ version_with_source:
   Options: include('options', required=False)
   BuildSpecImage: str(required=False)
   BuildSpec: str(required=False)
-  Stages: include('stage', required=False)
   Source: include('source')
+  Stages: include('stage', required=False)
 
 
 template:
@@ -72,7 +72,7 @@ template:
 
 product: any(include("product_without_source"), include("product_with_source"))
 
-stage: any(include('stage_build'),include('stage_package'))
+stage: any(include('stage_build'),include('stage_package'),include('stage_test'))
 
 build_build_spec_image:
   BuildSpecImage: str()
@@ -84,14 +84,24 @@ build_build_spec:
 
 build: any(include('build_build_spec_image'),include('build_build_spec'))
 package: any(include('build_build_spec_image'),include('build_build_spec'))
+test: include('test_def')
+
+test_def: any(include('build_build_spec_image'),include('build_build_spec'))
 
 stage_build:
   Build: include('build')
   Package: include('package', required=False)
+  Tests: map(include('test'), required=False)
 
 stage_package:
   Build: include('build', required=False)
   Package: include('package')
+  Tests: map(include('test'), required=False)
+
+stage_test:
+  Build: include('build', required=False)
+  Package: include('package', required=False)
+  Tests: map(include('test'))
 
 product_without_source:
   Name: str()

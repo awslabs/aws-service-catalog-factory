@@ -50,7 +50,7 @@ version_with_source:
 
 stack: any(include("stack_without_source"), include("stack_with_source"))
 
-stage: any(include('stage_build'),include('stage_package'))
+stage: any(include('stage_build'),include('stage_package'),include('stage_test'))
 
 build_build_spec_image:
   BuildSpecImage: str()
@@ -62,14 +62,24 @@ build_build_spec:
 
 build: any(include('build_build_spec_image'),include('build_build_spec'))
 package: any(include('build_build_spec_image'),include('build_build_spec'))
+test: include('test_def')
+
+test_def: any(include('build_build_spec_image'),include('build_build_spec'))
 
 stage_build:
   Build: include('build')
   Package: include('package', required=False)
+  Tests: map(include('test'), required=False)
 
 stage_package:
   Build: include('build', required=False)
   Package: include('package')
+  Tests: map(include('test'), required=False)
+
+stage_test:
+  Build: include('build', required=False)
+  Package: include('package', required=False)
+  Tests: map(include('test'))
 
 stack_without_source:
   Name: str()
