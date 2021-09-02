@@ -51,6 +51,7 @@ version:
   BuildSpecImage: str(required=False)
   BuildSpec: str(required=False)
   Source: include('source', required=False)
+  Stages: include('stage', required=False)
 
 version_with_source:
   Name: str()
@@ -60,14 +61,34 @@ version_with_source:
   BuildSpecImage: str(required=False)
   BuildSpec: str(required=False)
   Source: include('source')
+  Stages: include('stage', required=False)
 
 workspace: any(include("workspace_without_source"), include("workspace_with_source"))
+
+stage: include('stage_test')
+
+build_build_spec_image:
+  BuildSpecImage: str()
+  BuildSpec: str(required=False)
+
+build_build_spec:
+  BuildSpecImage: str(required=False)
+  BuildSpec: str()
+
+test: include('test_def')
+
+test_def: any(include('build_build_spec_image'),include('build_build_spec'))
+
+
+stage_test:
+  Tests: map(include('test'), required=False)
 
 workspace_without_source:
   Name: str()
   BuildSpecImage: str(required=False)
   BuildSpec: str(required=False)
   Source: include('source', required=False)
+  Stages: include('stage', required=False)
   Options: include('options', required=False)
   Tags: list(include('tag'), required=False)
   Versions: list(include('version_with_source'), required=False)
@@ -77,6 +98,7 @@ workspace_with_source:
   BuildSpecImage: str(required=False)
   BuildSpec: str(required=False)
   Source: include('source')
+  Stages: include('stage', required=False)
   Options: include('options', required=False)
   Tags: list(include('tag'), required=False)
   Versions: list(include('version'), required=False)
