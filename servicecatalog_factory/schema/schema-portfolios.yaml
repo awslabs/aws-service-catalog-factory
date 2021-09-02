@@ -50,6 +50,7 @@ version:
   Options: include('options', required=False)
   BuildSpecImage: str(required=False)
   BuildSpec: str(required=False)
+  Stages: include('stage', required=False)
   Source: include('source', required=False)
 
 version_with_source:
@@ -60,6 +61,7 @@ version_with_source:
   Options: include('options', required=False)
   BuildSpecImage: str(required=False)
   BuildSpec: str(required=False)
+  Stages: include('stage', required=False)
   Source: include('source')
 
 
@@ -69,6 +71,27 @@ template:
   Configuration: map(required=False)
 
 product: any(include("product_without_source"), include("product_with_source"))
+
+stage: any(include('stage_build'),include('stage_package'))
+
+build_build_spec_image:
+  BuildSpecImage: str()
+  BuildSpec: str(required=False)
+
+build_build_spec:
+  BuildSpecImage: str(required=False)
+  BuildSpec: str()
+
+build: any(include('build_build_spec_image'),include('build_build_spec'))
+package: any(include('build_build_spec_image'),include('build_build_spec'))
+
+stage_build:
+  Build: include('build')
+  Package: include('package', required=False)
+
+stage_package:
+  Build: include('build', required=False)
+  Package: include('package')
 
 product_without_source:
   Name: str()
@@ -82,6 +105,7 @@ product_without_source:
   BuildSpecImage: str(required=False)
   BuildSpec: str(required=False)
   Source: include('source', required=False)
+  Stages: include('stage', required=False)
   Options: include('options', required=False)
   Tags: list(include('tag'), required=False)
   Versions: list(include('version_with_source'), required=False)
@@ -99,6 +123,7 @@ product_with_source:
   BuildSpecImage: str(required=False)
   BuildSpec: str(required=False)
   Source: include('source')
+  Stages: include('stage', required=False)
   Options: include('options', required=False)
   Tags: list(include('tag'), required=False)
   Versions: list(include('version'), required=False)

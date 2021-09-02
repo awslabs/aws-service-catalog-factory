@@ -36,6 +36,7 @@ version:
   BuildSpecImage: str(required=False)
   BuildSpec: str(required=False)
   Source: include('source', required=False)
+  Stages: include('stage', required=False)
 
 version_with_source:
   Name: str()
@@ -45,14 +46,37 @@ version_with_source:
   BuildSpecImage: str(required=False)
   BuildSpec: str(required=False)
   Source: include('source')
+  Stages: include('stage', required=False)
 
 stack: any(include("stack_without_source"), include("stack_with_source"))
+
+stage: any(include('stage_build'),include('stage_package'))
+
+build_build_spec_image:
+  BuildSpecImage: str()
+  BuildSpec: str(required=False)
+
+build_build_spec:
+  BuildSpecImage: str(required=False)
+  BuildSpec: str()
+
+build: any(include('build_build_spec_image'),include('build_build_spec'))
+package: any(include('build_build_spec_image'),include('build_build_spec'))
+
+stage_build:
+  Build: include('build')
+  Package: include('package', required=False)
+
+stage_package:
+  Build: include('build', required=False)
+  Package: include('package')
 
 stack_without_source:
   Name: str()
   BuildSpecImage: str(required=False)
   BuildSpec: str(required=False)
   Source: include('source', required=False)
+  Stages: include('stage', required=False)
   Options: include('options', required=False)
   Tags: list(include('tag'), required=False)
   Versions: list(include('version_with_source'), required=False)
@@ -62,6 +86,7 @@ stack_with_source:
   BuildSpecImage: str(required=False)
   BuildSpec: str(required=False)
   Source: include('source')
+  Stages: include('stage', required=False)
   Options: include('options', required=False)
   Tags: list(include('tag'), required=False)
   Versions: list(include('version'), required=False)
