@@ -186,7 +186,21 @@ Resources:
                 - Name: Test{{ action }}
 {% if Options.ShouldCFNNag %}{% with action="CFNNag", ShouldParseAsJinja2Template=Options.ShouldParseAsJinja2Template %}{% include 'test-action.j2' %}{% endwith %}{% endif %}
 {% if Options.ShouldCloudformationRSpec %}{% with action="CloudformationRSpec", ShouldParseAsJinja2Template=Options.ShouldParseAsJinja2Template %}{% include 'test-action.j2' %}{% endwith %}{% endif %}
-
+{% for test_name, test_details in Stages.get("Tests", {}).items() %}
+            - Name: {{ test_name }}
+              ActionTypeId:
+                Category: Test
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref TestProject{{ test_name }}
+              RunOrder: 1
+              InputArtifacts:
+                - Name: Source
+              OutputArtifacts:
+                - Name: {{ test_name }}
+{% endfor %}
         - Name: Package
           Actions:
             - Name: Package
@@ -351,6 +365,39 @@ Resources:
 {{ Stages.get("Build", {}).get("BuildSpec")|indent(12,true) }}
       TimeoutInMinutes: 20
   {% endif %}
+
+  {% for test_name, test_details in Stages.get("Tests", {}).items() %}
+  TestProject{{ test_name }}:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: !Sub "${AWS::StackName}-{{ test_name }}"
+      ServiceRole: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodeRole"
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Generated"
+          {% for tag in tags %}
+        - Key: "{{ tag.get("Key") }}"
+          Value: "{{ tag.get("Value") }}"
+          {% endfor %}
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: linuxContainer
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: {{ test_details.get("BuildSpecImage", "aws/codebuild/standard:4.0") }}
+        EnvironmentVariables:
+          - Name: STACK_NAME
+            Type: PLAINTEXT
+            Value: !Sub "${AWS::StackName}"
+          - Name: ACCOUNT_ID
+            Type: PLAINTEXT
+            Value: !Sub "${AWS::AccountId}"
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: |
+{{ test_details.get("BuildSpec")|indent(12,true) }}
+      TimeoutInMinutes: 480
+  {% endfor %}
 
 
 {% if Options.ShouldParseAsJinja2Template %}

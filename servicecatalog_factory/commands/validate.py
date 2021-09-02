@@ -3,10 +3,10 @@
 import os
 
 import click
-from pykwalify.core import Core
 
 from servicecatalog_factory.utilities.assets import resolve_from_site_packages
 
+import yamale
 import logging
 
 logger = logging.getLogger()
@@ -14,13 +14,16 @@ logger.setLevel(logging.INFO)
 
 
 def validate(p):
-    for portfolio_file_name in os.listdir(p):
-        portfolios_file_path = os.path.sep.join([p, portfolio_file_name])
-        logger.info("Validating {}".format(portfolios_file_path))
-        core = Core(
-            source_file=portfolios_file_path,
-            schema_files=[resolve_from_site_packages("schema.yaml")],
-        )
-        core.validate(raise_exception=True)
-        click.echo("Finished validating: {}".format(portfolios_file_path))
-    click.echo("Finished validating: OK")
+    types_of_file = ["apps", "portfolios", "stacks", "workspaces"]
+
+    for type_of_file in types_of_file:
+        target_dir = os.path.sep.join([p, type_of_file])
+        if os.path.exists(target_dir):
+            logger.info("Validating dir: {}".format(target_dir))
+            schema = yamale.make_schema(resolve_from_site_packages(os.path.sep.join(["schema", f"schema-{type_of_file}.yaml"])))
+            for portfolio_file_name in os.listdir(target_dir):
+                logger.info("Validating file: {}".format(portfolio_file_name))
+                data = yamale.make_data(content=open(os.path.sep.join([target_dir, portfolio_file_name]), 'r').read())
+                yamale.validate(schema, data, strict=False)
+                click.echo("Finished validating: {}".format(portfolio_file_name))
+        click.echo("Finished validating: OK")

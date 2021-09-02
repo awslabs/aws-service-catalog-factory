@@ -140,10 +140,58 @@ Resources:
                 - servicecatalog-factory --info generate .
           artifacts:
             files:
-              - results/*/*
-              - output/*/*
-              - portfolios/*
+              - '*'
+              - '**/*'
             name: BuildOutput
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Framework"
+      TimeoutInMinutes: 480
+
+  ValidateProject:
+    Type: AWS::CodeBuild::Project
+    Properties:
+      Name: servicecatalog-product-factory-validate
+      Description: "Validates the portfolio yaml files"
+      ServiceRole: !GetAtt BuildRole.Arn
+      Artifacts:
+        Type: CODEPIPELINE
+      Environment:
+        Type: linuxContainer
+        ComputeType: BUILD_GENERAL1_SMALL
+        Image: aws/codebuild/standard:4.0
+        EnvironmentVariables:
+          - Name: PARTITION
+            Type: PLAINTEXT
+            Value: !Sub "${AWS::Partition}"
+          - Name: ACCOUNT_ID
+            Type: PLAINTEXT
+            Value: !Sub "${AWS::AccountId}"
+          - Name: REGION
+            Type: PLAINTEXT
+            Value: !Sub "${AWS::Region}"
+      Source:
+        Type: CODEPIPELINE
+        BuildSpec: |
+          version: 0.2
+          phases:
+            install:
+              runtime-versions:
+                python: 3.7
+              commands:
+  {% if 'http' in VERSION %}
+                - pip install {{ VERSION }}
+  {% else %}
+                - pip install aws-service-catalog-factory=={{ VERSION }}
+  {% endif %}
+            build:
+              commands:
+                - servicecatalog-factory --info validate .
+          artifacts:
+            files:
+              - '*'
+              - '**/*'
+            name: ValidateOutput
       Tags:
         - Key: "ServiceCatalogFactory:Actor"
           Value: "Framework"
@@ -371,6 +419,23 @@ Resources:
               {% if Source.Provider.lower() == 'codecommit' %}RoleArn: !GetAtt SourceRole.Arn{% endif %}
 
             {% endif %}
+        {% if should_validate %}
+        - Name: Validate
+          Actions:
+            - Name: Validate
+              ActionTypeId:
+                Category: Test
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: !Ref ValidateProject
+              RunOrder: 1
+              InputArtifacts:
+                - Name: Source
+              OutputArtifacts:
+                - Name: ValidateOutput
+        {% endif %}
 
         - Name: Build
           Actions:

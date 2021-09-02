@@ -1,0 +1,62 @@
+Schema: enum("factory-2019-04-01", required=False)
+schema: enum("factory-2019-04-01", required=False)
+
+Apps: list(include('app'))
+
+---
+configuration_codecommit:
+  RepositoryName: str()
+  BranchName: str()
+
+configuration_github:
+  Branch: str()
+  Owner: str()
+  Repo: str()
+
+source: any(include("source_codecommit"), include("source_github"))
+
+source_codecommit:
+  Provider: enum("CodeCommit")
+  Configuration: include('configuration_codecommit')
+
+source_github:
+  Provider: enum("Github")
+  Configuration: include('configuration_github')
+
+version:
+  Name: str()
+  Tags: list(include('tag'), required=False)
+  Active: bool(required=False)
+  Options: include('options', required=False)
+  BuildSpecImage: str(required=False)
+  BuildSpec: str(required=False)
+  Source: include('source', required=False)
+
+version_with_source:
+  Name: str()
+  Tags: list(include('tag'), required=False)
+  Active: bool(required=False)
+  Options: include('options', required=False)
+  BuildSpecImage: str(required=False)
+  BuildSpec: str(required=False)
+  Source: include('source')
+
+app: any(include("app_without_source"), include("app_with_source"))
+
+app_without_source:
+  Name: str()
+  BuildSpecImage: str(required=False)
+  BuildSpec: str(required=False)
+  Source: include('source', required=False)
+  Options: include('options', required=False)
+  Tags: list(include('tag'), required=False)
+  Versions: list(include('version_with_source'), required=False)
+
+app_with_source:
+  Name: str()
+  BuildSpecImage: str(required=False)
+  BuildSpec: str(required=False)
+  Source: include('source')
+  Options: include('options', required=False)
+  Tags: list(include('tag'), required=False)
+  Versions: list(include('version'), required=False)

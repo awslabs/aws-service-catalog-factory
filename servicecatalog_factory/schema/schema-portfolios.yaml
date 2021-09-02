@@ -1,0 +1,140 @@
+Schema: enum("factory-2019-04-01", required=False)
+schema: enum("factory-2019-04-01", required=False)
+
+Portfolios: list(include('portfolio'), required=False)
+Products: list(include('product'), required=False)
+Componets: list(include('product'), required=False)
+
+---
+portfolio:
+  DisplayName: str()
+  Description: str()
+  ProviderName: str()
+  Associations: list(str(), required=False)
+  Tags: list(include('tag'), required=False)
+  Components: list(include('product'), required=False)
+  Products: list(include('product'), required=False)
+
+tag:
+  Key: str()
+  Value: str()
+
+options:
+  ShouldCFNNag: bool(required=False)
+  ShouldCloudformationRSpec: bool(required=False)
+
+configuration_codecommit:
+  RepositoryName: str()
+  BranchName: str()
+
+configuration_github:
+  Branch: str()
+  Owner: str()
+  Repo: str()
+
+source: any(include("source_codecommit"), include("source_github"))
+
+source_codecommit:
+  Provider: enum("CodeCommit")
+  Configuration: include('configuration_codecommit')
+
+source_github:
+  Provider: enum("Github")
+  Configuration: include('configuration_github')
+
+version:
+  Name: str()
+  Description: str()
+  Tags: list(include('tag'), required=False)
+  Active: bool(required=False)
+  Options: include('options', required=False)
+  BuildSpecImage: str(required=False)
+  BuildSpec: str(required=False)
+  Source: include('source', required=False)
+  Stages: include('stage', required=False)
+
+version_with_source:
+  Name: str()
+  Description: str()
+  Tags: list(include('tag'), required=False)
+  Active: bool(required=False)
+  Options: include('options', required=False)
+  BuildSpecImage: str(required=False)
+  BuildSpec: str(required=False)
+  Source: include('source')
+  Stages: include('stage', required=False)
+
+
+template:
+  Name: enum("CDK")
+  Version: enum("1.0.0")
+  Configuration: map(required=False)
+
+product: any(include("product_without_source"), include("product_with_source"))
+
+stage: any(include('stage_build'),include('stage_package'),include('stage_test'))
+
+build_build_spec_image:
+  BuildSpecImage: str()
+  BuildSpec: str(required=False)
+
+build_build_spec:
+  BuildSpecImage: str(required=False)
+  BuildSpec: str()
+
+build: any(include('build_build_spec_image'),include('build_build_spec'))
+package: any(include('build_build_spec_image'),include('build_build_spec'))
+test: include('test_def')
+
+test_def: any(include('build_build_spec_image'),include('build_build_spec'))
+
+stage_build:
+  Build: include('build')
+  Package: include('package', required=False)
+  Tests: map(include('test'), required=False)
+
+stage_package:
+  Build: include('build', required=False)
+  Package: include('package')
+  Tests: map(include('test'), required=False)
+
+stage_test:
+  Build: include('build', required=False)
+  Package: include('package', required=False)
+  Tests: map(include('test'))
+
+product_without_source:
+  Name: str()
+  Owner: str()
+  Description: str()
+  Distributor: str()
+  SupportDescription: str()
+  SupportEmail: str()
+  SupportUrl: str()
+  Template: include("template", required=False)
+  BuildSpecImage: str(required=False)
+  BuildSpec: str(required=False)
+  Source: include('source', required=False)
+  Stages: include('stage', required=False)
+  Options: include('options', required=False)
+  Tags: list(include('tag'), required=False)
+  Versions: list(include('version_with_source'), required=False)
+  Portfolios: list()
+
+product_with_source:
+  Name: str()
+  Owner: str()
+  Description: str()
+  Distributor: str()
+  SupportDescription: str()
+  SupportEmail: str()
+  SupportUrl: str()
+  Template: include("template", required=False)
+  BuildSpecImage: str(required=False)
+  BuildSpec: str(required=False)
+  Source: include('source')
+  Stages: include('stage', required=False)
+  Options: include('options', required=False)
+  Tags: list(include('tag'), required=False)
+  Versions: list(include('version'), required=False)
+  Portfolios: list()
