@@ -134,7 +134,7 @@ class BaseTemplateBuilder:
 
 class StackTemplateBuilder(BaseTemplateBuilder):
 
-    def build_test_stage(self, test_input_artifact_name, options):
+    def build_test_stage(self, test_input_artifact_name, options, tpl, stages):
         actions = [
             codepipeline.Actions(
                 RunOrder=1,
@@ -145,7 +145,7 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                     codepipeline.InputArtifacts(Name=test_input_artifact_name),
                 ],
                 ActionTypeId=codepipeline.ActionTypeId(
-                    Category="Build",
+                    Category="Test",
                     Owner="AWS",
                     Version="1",
                     Provider="CodeBuild",
@@ -188,7 +188,7 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                         codepipeline.InputArtifacts(Name=test_input_artifact_name),
                     ],
                     ActionTypeId=codepipeline.ActionTypeId(
-                        Category="Build",
+                        Category="Test",
                         Owner="AWS",
                         Version="1",
                         Provider="CodeBuild",
@@ -231,7 +231,7 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                         codepipeline.InputArtifacts(Name=test_input_artifact_name),
                     ],
                     ActionTypeId=codepipeline.ActionTypeId(
-                        Category="Build",
+                        Category="Test",
                         Owner="AWS",
                         Version="1",
                         Provider="CodeBuild",
@@ -262,6 +262,85 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                     Name="CloudFormationRSpec",
                 )
             )
+
+        for test_action_name, test_action_details in stages.get("Tests", {}).items():
+            project = tpl.add_resource(
+                codebuild.Project(
+                    test_action_name,
+                    Name=t.Sub("${AWS::StackName}-" + test_action_name),
+                    ServiceRole=t.Sub(
+                        "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodeRole"
+                    ),
+                    Tags=t.Tags.from_dict(**{"ServiceCatalogPuppet:Actor": "Framework"}),
+                    Artifacts=codebuild.Artifacts(Type="CODEPIPELINE"),
+                    TimeoutInMinutes=60,
+                    Environment=codebuild.Environment(
+                        ComputeType=constants.ENVIRONMENT_COMPUTE_TYPE_DEFAULT,
+                        Image=test_action_details.get("BuildSpecImage", constants.ENVIRONMENT_IMAGE_DEFAULT),
+                        Type=constants.ENVIRONMENT_TYPE_DEFAULT,
+                        EnvironmentVariables=[
+                            codebuild.EnvironmentVariable(
+                                Name="TEMPLATE_FORMAT",
+                                Type="PLAINTEXT",
+                                Value="yaml",
+                            ),
+                            codebuild.EnvironmentVariable(
+                                Name="CATEGORY",
+                                Type="PLAINTEXT",
+                                Value="stack",
+                            ),
+                        ],
+                    ),
+                    Source=codebuild.Source(
+                        BuildSpec=test_action_details.get("BuildSpec"),
+                        Type="CODEPIPELINE",
+                    ),
+                    Description=t.Sub(test_action_name+" for ${AWS::StackName}")
+                )
+            )
+
+            actions.append(
+                codepipeline.Actions(
+                    RunOrder=1,
+                    RoleArn=t.Sub(
+                        "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/SourceRole"
+                    ),
+                    InputArtifacts=[
+                        codepipeline.InputArtifacts(Name=test_input_artifact_name),
+                    ],
+                    ActionTypeId=codepipeline.ActionTypeId(
+                        Category="Test",
+                        Owner="AWS",
+                        Version="1",
+                        Provider="CodeBuild",
+                    ),
+                    OutputArtifacts=[
+                        codepipeline.OutputArtifacts(Name=test_action_name)
+                    ],
+                    Configuration={
+                        "ProjectName": t.Ref(project),
+                        "PrimarySource": test_input_artifact_name,
+                        "EnvironmentVariables": t.Sub(
+                            json.dumps(
+                                [
+                                    dict(
+                                        name="TEMPLATE_FORMAT",
+                                        value="yaml",
+                                        type="PLAINTEXT",
+                                    ),
+                                    dict(
+                                        name="CATEGORY",
+                                        value="stack",
+                                        type="PLAINTEXT",
+                                    ),
+                                ]
+                            )
+                        ),
+                    },
+                    Name=test_action_name,
+                )
+            )
+
         stage = codepipeline.Stages(
             Name="Tests",
             Actions=actions
@@ -427,7 +506,7 @@ class StackTemplateBuilder(BaseTemplateBuilder):
             )
 
         pipeline_stages.append(
-            self.build_test_stage(test_input_artifact_name, options)
+            self.build_test_stage(test_input_artifact_name, options, tpl, stages)
         )
 
         if stages.get("Package", {}).get("BuildSpec"):
