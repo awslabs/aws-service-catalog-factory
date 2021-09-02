@@ -10,9 +10,23 @@ options_terraform:
 options:
   Terraform: include("options_terraform", required=False)
 
+code_s3_bucket:
+  Bucket: str()
+  Key: str(required=False)
+
+code_s3_key:
+  Bucket: str(required=False)
+  Key: str()
+
+code_s3: any(include('code_s3_bucket'), include('code_s3_key'))
+
+code:
+  S3: include('code_s3')
+
 configuration_codecommit:
   RepositoryName: str()
   BranchName: str()
+  Code: include('code', required=False)
 
 configuration_github:
   Branch: str()
