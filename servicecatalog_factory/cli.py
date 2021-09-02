@@ -6,15 +6,15 @@ import yaml
 
 from servicecatalog_factory.commands import bootstrap as bootstrap_commands
 from servicecatalog_factory.commands import configuration_management
-from servicecatalog_factory.commands import fix_issues
+from servicecatalog_factory.commands import fix_issues as fix_issues_commands
 from servicecatalog_factory.commands import generate as generate_commands
-from servicecatalog_factory.commands import list_resources
+from servicecatalog_factory.commands import list_resources as list_resources_commands
 from servicecatalog_factory.commands import portfolios
-from servicecatalog_factory.commands import seed
-from servicecatalog_factory.commands import show_pipelines
+from servicecatalog_factory.commands import seed as seed_commands
+from servicecatalog_factory.commands import show_pipelines as show_pipelines_commands
 from servicecatalog_factory.commands import stacks
 from servicecatalog_factory.commands import validate as validate_commands
-from servicecatalog_factory.commands import version
+from servicecatalog_factory.commands import version as version_commands
 from servicecatalog_factory import cloudformation_servicecatalog_deploy_action
 import logging
 import click
@@ -56,7 +56,7 @@ def generate(p):
 @click.argument("p", type=click.Path(exists=True))
 @click.option("--format", "-f", type=click.Choice(["table", "json"]), default="table")
 def show_pipelines(p, format):
-    show_pipelines.show_pipelines(p, format)
+    show_pipelines_commands.show_pipelines(p, format)
 
 
 @cli.command()
@@ -284,12 +284,12 @@ def bootstrap(
 @click.argument("complexity", default="simple")
 @click.argument("p", type=click.Path(exists=True))
 def seed(complexity, p):
-    seed.seed(complexity, p)
+    seed_commands.seed(complexity, p)
 
 
 @cli.command()
 def version():
-    version.version()
+    version_commands.version()
 
 
 @cli.command()
@@ -303,7 +303,7 @@ def upload_config(p):
 @cli.command()
 @click.argument("p", type=click.Path(exists=True))
 def fix_issues(p):
-    fix_issues.fix_issues(p)
+    fix_issues_commands.fix_issues(p)
 
 
 @cli.command()
@@ -314,7 +314,7 @@ def delete_stack_from_all_regions(stack_name):
 
 @cli.command()
 def list_resources():
-    list_resources.list_resources()
+    list_resources_commands.list_resources()
 
 
 @cli.command()
