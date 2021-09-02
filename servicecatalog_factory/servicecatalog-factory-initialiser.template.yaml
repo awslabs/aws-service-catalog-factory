@@ -4,7 +4,7 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: |
   Initialiser template used to bring up the install ServiceCatalog-Factory
-  {"version": "0.57.2", "framework": "servicecatalog-factory", "role": "initialiser"}
+  {"version": "0.65.0", "framework": "servicecatalog-factory", "role": "initialiser"}
 
 
 Metadata:
@@ -14,6 +14,10 @@ Metadata:
           default: "General"
         Parameters:
           - EnabledRegions
+      - Label:
+          default: "Options"
+        Parameters:
+          - ShouldValidate
       - Label:
           default: "Source Code Management - choose which one of the following sources you will use:"
         Parameters:
@@ -45,6 +49,13 @@ Parameters:
     Type: String
     Description: |
       Space or comma seperated list of AWS Regions for which your Factory should operate in
+  ShouldValidate:
+    Type: String
+    AllowedValues:
+      - "true"
+      - "false"
+    Default: "true"
+    Description: "Setting this to true adds a validate stage to the pipeline where the manifest file validated before the deploy occurs."
   SCMSourceProvider:
     Type: String
     AllowedValues:
@@ -159,6 +170,9 @@ Resources:
           - Name: VERSION
             Type: PLAINTEXT
             Value: !Ref Version
+          - Name: SCT_SHOULD_VALIDATE
+            Type: PLAINTEXT
+            Value: !Ref ShouldValidate
 
       Source:
         Type: NO_SOURCE
@@ -295,6 +309,7 @@ Resources:
           - !Ref SCMObjectKey
           - !GetAtt InitialiserVersionParam.Value
           - !Ref Version
+          - !Ref ShouldValidate
 
 Outputs:
   ServiceCatalogFactoryRepoConsoleURL:

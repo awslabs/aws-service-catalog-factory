@@ -70,6 +70,7 @@ def bootstrap(
     scm_bucket_name,
     scm_object_key,
     create_repo,
+    should_validate,
 ):
     click.echo("Starting bootstrap")
     click.echo("Starting regional deployments")
@@ -169,12 +170,14 @@ def bootstrap(
         ALL_REGIONS=all_regions,
         Source=source_args,
         create_repo=create_repo,
+        should_validate=should_validate,
     )
     template = Template(template).render(
         VERSION=constants.VERSION,
         ALL_REGIONS=all_regions,
         Source=source_args,
         create_repo=create_repo,
+        should_validate=should_validate,
     )
     args = {
         "StackName": constants.BOOTSTRAP_STACK_NAME,

@@ -199,6 +199,12 @@ def add_secret(secret_name, oauth_token, secret_token):
 )
 @click.option(
     "--create-repo/--no-create-repo", default=False, envvar="SCM_SHOULD_CREATE_REPO"
+
+)
+@click.option(
+    "--should-validate/--no-should-validate",
+    default=False,
+    envvar="SCT_SHOULD_VALIDATE",
 )
 def bootstrap(
     source_provider,
@@ -215,6 +221,7 @@ def bootstrap(
     scm_bucket_name,
     scm_object_key,
     create_repo,
+    should_validate,
 ):
     args = dict(
         source_provider=source_provider,
@@ -229,6 +236,7 @@ def bootstrap(
         scm_bucket_name=None,
         scm_object_key=None,
         create_repo=create_repo,
+        should_validate=should_validate,
     )
 
     if source_provider == "CodeCommit":
