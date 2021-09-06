@@ -21,6 +21,7 @@ def validate(p):
         if os.path.exists(target_dir):
             logger.info("Validating dir: {}".format(target_dir))
             schema = yamale.make_schema(resolve_from_site_packages(os.path.sep.join(["schema", f"schema-{type_of_file}.yaml"])))
+
             for portfolio_file_name in os.listdir(target_dir):
                 logger.info("Validating file: {}".format(portfolio_file_name))
                 data = yamale.make_data(content=open(os.path.sep.join([target_dir, portfolio_file_name]), 'r').read())

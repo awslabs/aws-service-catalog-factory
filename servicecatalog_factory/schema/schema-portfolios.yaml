@@ -1,5 +1,5 @@
-Schema: enum("factory-2019-04-01", required=False)
-schema: enum("factory-2019-04-01", required=False)
+schema: include('schema', required=False)
+Schema: include('schema', required=False)
 
 Portfolios: list(include('portfolio'), required=False)
 Products: list(include('product'), required=False)
@@ -23,24 +23,6 @@ options:
   ShouldCFNNag: bool(required=False)
   ShouldCloudformationRSpec: bool(required=False)
 
-configuration_codecommit:
-  RepositoryName: str()
-  BranchName: str()
-
-configuration_github:
-  Branch: str()
-  Owner: str()
-  Repo: str()
-
-source: any(include("source_codecommit"), include("source_github"))
-
-source_codecommit:
-  Provider: enum("CodeCommit")
-  Configuration: include('configuration_codecommit')
-
-source_github:
-  Provider: enum("Github")
-  Configuration: include('configuration_github')
 
 version:
   Name: str()
@@ -138,3 +120,60 @@ product_with_source:
   Tags: list(include('tag'), required=False)
   Versions: list(include('version'), required=False)
   Portfolios: list()
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+schema: enum("factory-2019-04-01", "Factory-2019-04-01")
+
+configuration_codecommit:
+  RepositoryName: str(required=False)
+  BranchName: str(required=False)
+
+configuration_github:
+  Branch: str(required=False)
+  Owner: str(required=False)
+  Repo: str(required=False)
+
+configuration_s3:
+  BucketName: str(required=False)
+  S3ObjectKey: str(required=False)
+
+source: any(include("source_codecommit"), include("source_github"), include("source_s3"))
+
+source_s3:
+  Provider: enum("S3")
+  Configuration: include('configuration_s3')
+
+source_github:
+  Provider: enum("Github")
+  Configuration: include('configuration_github')
+
+source_codecommit:
+  Provider: enum("CodeCommit")
+  Configuration: include('configuration_codecommit')
+
+code_s3_bucket:
+  Bucket: str()
+  Key: str(required=False)
+
+code_s3_key:
+  Bucket: str(required=False)
+  Key: str()
+
+code_s3: any(include('code_s3_bucket'), include('code_s3_key'))
+
+code:
+  S3: include('code_s3')
