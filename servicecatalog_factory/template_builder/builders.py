@@ -206,6 +206,26 @@ class BaseTemplateBuilder:
                         },
                         Name="Source",
                     ),
+                    # Raiffeisen Informatik - cloud-coe@r-it.at
+                    # Integrated with CustomSource in CodePipelines
+                    raiffeiseninformatik=codepipeline.Actions(
+                        RunOrder=1,
+                        ActionTypeId=codepipeline.ActionTypeId(
+                            Category="Source",
+                            Owner="Custom",
+                            Version=source.get("Configuration").get("CustomActionTypeVersion"),
+                            Provider=source.get("Configuration").get("CustomActionTypeProvider"),
+                        ),
+                        OutputArtifacts=[
+                            codepipeline.OutputArtifacts(Name=base_template.SOURCE_OUTPUT_ARTIFACT)
+                        ],
+                        Configuration={
+                            "GitUrl": source.get("Configuration").get("GitUrl"),     
+                            "Branch": source.get("Configuration").get("Branch"),
+                            "PipelineName": t.Sub("${AWS::StackName}-pipeline")
+                        },
+                        Name="Source",
+                    ),
                 ).get(source.get("Provider", "").lower())]
             ),
         )
@@ -746,6 +766,36 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                 RestartExecutionOnUpdate=False,
             ),
         )
+
+        # Raiffeisen Informatik - cloud-coe@r-it.at
+        # This goes with Custom Provider as Source for CodePipelines
+        # Raiffeisen Informatik - cloud-coe@r-it.at
+        # This goes with Custom Provider as Source for CodePipelines
+        if source.get("Provider", "").lower() == 'raiffeiseninformatik':
+            if source.get("Configuration").get("RaiffeisenInformatikPublicIP") is not None:
+                webhook = codepipeline.Webhook(
+                        "Webhook",
+                        Authentication="IP",
+                        TargetAction='Source',
+                        AuthenticationConfiguration=codepipeline.WebhookAuthConfiguration(
+                            AllowedIPRange=source.get("Configuration").get("RaiffeisenInformatikPublicIP")
+                        ),
+                        Filters=[ codepipeline.WebhookFilterRule(
+                            JsonPath='$.changes[0].ref.id',
+                            MatchEquals='refs/heads/{Branch}'
+                        )],
+                        TargetPipelineVersion=1,
+                        TargetPipeline=t.Sub("${AWS::StackName}-pipeline")
+
+                    )
+                tpl.add_resource(webhook)
+                values_for_sub = {'GitUrl': source.get("Configuration").get("GitUrl"), 'WebhookUrl': t.GetAtt(webhook, "Url")}
+            else:
+                values_for_sub = {'GitUrl': source.get("Configuration").get("GitUrl"), 'WebhookUrl': "RaiffeisenInformatikPublicIP was not defined in manifests Configuration"}
+            output_to_add = t.Output('WebhookUrl')
+            output_to_add.Value = t.Sub('${GitUrl}||${WebhookUrl}', **values_for_sub)
+            output_to_add.Export = t.Export(t.Sub("${AWS::StackName}-pipeline"))
+            tpl.add_output(output_to_add)
 
         return tpl
 
