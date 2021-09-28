@@ -391,7 +391,7 @@ Resources:
                 - Name: Source
               RunOrder: '1'
             
-            {% elif Source.Provider.lower() == 'raiffeiseninformatik' %}
+            {% elif Source.Provider.lower() == 'custom' %}
               
             - Name: Source
               ActionTypeId:
@@ -505,13 +505,13 @@ Resources:
       RegisterWithThirdParty: 'true'
   {% endif %}
 
-  {% if Source.Provider.lower() == 'raiffeiseninformatik' %}
+  {% if Source.Provider.lower() == 'custom' and Source.Configuration.GitWebHookIpAddress is defined %}
   Webhook:
     Type: "AWS::CodePipeline::Webhook"
     Properties:
       Authentication: IP
       AuthenticationConfiguration:
-        AllowedIPRange: {{ Source['Configuration']['RaiffeisenInformatikPublicIP'] }}
+        AllowedIPRange: {{ Source['Configuration']['GitWebHookIpAddress'] }}
       Filters:
         - JsonPath: '$.changes[0].ref.id'
           MatchEquals: 'refs/heads/{Branch}'     
@@ -597,7 +597,7 @@ Outputs:
   Version:
     Value: !GetAtt Param.Value
 
-  {% if Source.Provider.lower() == 'raiffeiseninformatik' %}
+  {% if Source.Provider.lower() == 'custom' and Source.Configuration.GitWebHookIpAddress is defined %}
   WebhookUrl:
     Export:
       Name:

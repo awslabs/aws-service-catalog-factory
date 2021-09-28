@@ -199,16 +199,31 @@ def add_secret(secret_name, oauth_token, secret_token):
 )
 @click.option(
     "--create-repo/--no-create-repo", default=False, envvar="SCM_SHOULD_CREATE_REPO"
-
 )
 @click.option(
     "--should-validate/--no-should-validate",
     default=False,
     envvar="SCT_SHOULD_VALIDATE",
 )
-@click.option("--raiffeisen-informatik-public-ip", default="0.0.0.0/0", envvar="RAIFFEISEN_INFORMATIK_PUBLIC_IP")
-@click.option("--raiffeisen-informatik-custom-action-type-version", default="OnPrem_v2", envvar="RAIFFEISEN_INFORMATIK_CUSTOM_ACTION_TYPE_VERSION")
-@click.option("--raiffeisen-informatik-custom-action-type-provider", default="BitBucketServer", envvar="RAIFFEISEN_INFORMATIK_CUSTOM_ACTION_TYPE_PROVIDER")
+@click.option(
+    "--custom-source-action-git-url",
+    envvar="SCM_CUSTOM_SOURCE_ACTION_GIT_URL",
+)
+@click.option(
+    "--custom-source-action-git-web-hook-ip-address",
+    default="0.0.0.0/0",
+    envvar="SCM_CUSTOM_SOURCE_ACTION_GIT_WEB_HOOK_IP_ADDRESS",
+)
+@click.option(
+    "--custom-source-action-custom-action-type-version",
+    default="CustomVersion1",
+    envvar="SCM_CUSTOM_SOURCE_ACTION_CUSTOM_ACTION_TYPE_VERSION",
+)
+@click.option(
+    "--custom-source-action-custom-action-type-provider",
+    default="CustomProvider1",
+    envvar="SCM_CUSTOM_SOURCE_ACTION_CUSTOM_ACTION_TYPE_PROVIDER",
+)
 def bootstrap(
     source_provider,
     repository_name,
@@ -225,9 +240,10 @@ def bootstrap(
     scm_object_key,
     create_repo,
     should_validate,
-    raiffeisen_informatik_public_ip,
-    raiffeisen_informatik_custom_action_type_version,
-    raiffeisen_informatik_custom_action_type_provider,
+    custom_source_action_git_url,
+    custom_source_action_git_web_hook_ip_address,
+    custom_source_action_custom_action_type_version,
+    custom_source_action_custom_action_type_provider,
 ):
     args = dict(
         source_provider=source_provider,
@@ -243,9 +259,10 @@ def bootstrap(
         scm_object_key=None,
         create_repo=create_repo,
         should_validate=should_validate,
-        raiffeisen_informatik_public_ip=raiffeisen_informatik_public_ip,
-        raiffeisen_informatik_custom_action_type_version=raiffeisen_informatik_custom_action_type_version,
-        raiffeisen_informatik_custom_action_type_provider=raiffeisen_informatik_custom_action_type_provider,
+        custom_source_action_git_url=custom_source_action_git_url,
+        custom_source_action_git_web_hook_ip_address=custom_source_action_git_web_hook_ip_address,
+        custom_source_action_custom_action_type_version=custom_source_action_custom_action_type_version,
+        custom_source_action_custom_action_type_provider=custom_source_action_custom_action_type_provider,
     )
 
     if source_provider == "CodeCommit":
@@ -283,15 +300,14 @@ def bootstrap(
                 scm_object_key=scm_object_key,
             )
         )
-    elif source_provider == "RaiffeisenInformatik":
+    elif source_provider == "Custom":
         args.update(
             dict(
-
-                repo=repository_name,
+                custom_source_action_git_url=custom_source_action_git_url,
                 branch=branch_name,
-                raiffeisen_informatik_public_ip=raiffeisen_informatik_public_ip,
-                raiffeisen_informatik_custom_action_type_version=raiffeisen_informatik_custom_action_type_version,
-                raiffeisen_informatik_custom_action_type_provider=raiffeisen_informatik_custom_action_type_provider,
+                custom_source_action_git_web_hook_ip_address=custom_source_action_git_web_hook_ip_address,
+                custom_source_action_custom_action_type_version=custom_source_action_custom_action_type_version,
+                custom_source_action_custom_action_type_provider=custom_source_action_custom_action_type_provider,
             )
         )
     else:

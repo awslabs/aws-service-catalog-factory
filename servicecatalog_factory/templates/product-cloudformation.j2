@@ -99,7 +99,7 @@ Resources:
                 - Name: Source
               RunOrder: '1'
 
-            {% elif Source.Provider.lower() == 'raiffeiseninformatik' %}
+            {% elif Source.Provider.lower() == 'custom' %}
               
             - Name: Source
               ActionTypeId:
@@ -293,12 +293,13 @@ Resources:
       RegisterWithThirdParty: 'true'
 {% endif %}
 
-  {% if Source.Provider.lower() == 'raiffeiseninformatik' %}Webhook:
+  {% if Source.Provider.lower() == 'custom' and Source.Configuration.GitWebHookIpAddress is defined %}
+  Webhook:
     Type: "AWS::CodePipeline::Webhook"
     Properties:
       Authentication: IP
       AuthenticationConfiguration:
-        AllowedIPRange: {{ Source.Configuration.RaiffeisenInformatikPublicIP }}
+        AllowedIPRange: {{ Source.Configuration.GitWebHookIpAddress }}
       Filters:
         - JsonPath: '$.changes[0].ref.id'
           MatchEquals: 'refs/heads/{Branch}'     
@@ -488,13 +489,14 @@ Resources:
       TimeoutInMinutes: 20
 {% endif %}
 
-{% if Source.Provider.lower() == 'raiffeiseninformatik' %}Outputs:
+{% if Source.Provider.lower() == 'custom' %}
+Outputs:
   WebhookUrl:
     Export:
       Name:
         !Sub "${AWS::StackName}-pipeline"
     Value:
-{% if Source.Configuration.RaiffeisenInformatikPublicIP is defined %}
+{% if Source.Configuration.GitWebHookIpAddress is defined %}
       Fn::Sub:
         - ${GitUrl}||${WebhookUrl}
         - GitUrl:
@@ -504,6 +506,6 @@ Resources:
               - Webhook
               - Url
 {% else %}
-      RaiffeisenInformatikPublicIP was not defined in manifests Configuration
+      GitWebHookIpAddress was not defined in manifests Configuration
 {% endif %}
 {% endif %}

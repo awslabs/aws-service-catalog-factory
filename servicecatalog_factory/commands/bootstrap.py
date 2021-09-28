@@ -71,9 +71,10 @@ def bootstrap(
     scm_object_key,
     create_repo,
     should_validate,
-    raiffeisen_informatik_public_ip,
-    raiffeisen_informatik_custom_action_type_version,
-    raiffeisen_informatik_custom_action_type_provider,
+    custom_source_action_git_url,
+    custom_source_action_git_web_hook_ip_address,
+    custom_source_action_custom_action_type_version,
+    custom_source_action_custom_action_type_provider,
 ):
     click.echo("Starting bootstrap")
     click.echo("Starting regional deployments")
@@ -168,16 +169,16 @@ def bootstrap(
                 },
             }
         )
-    elif source_provider == "RaiffeisenInformatik":
+    elif source_provider == "Custom":
         source_args.update(
             {
                 "Configuration": {
-                    "Owner": 'Custom',
-                    "GitUrl": repo,
+                    "Owner": "Custom",
+                    "GitUrl": custom_source_action_git_url,
                     "Branch": branch,
-                    "RaiffeisenInformatikPublicIP": raiffeisen_informatik_public_ip,
-                    "CustomActionTypeVersion": raiffeisen_informatik_custom_action_type_version,
-                    "CustomActionTypeProvider": raiffeisen_informatik_custom_action_type_provider,
+                    "GitWebHookIpAddress": custom_source_action_git_web_hook_ip_address,
+                    "CustomActionTypeVersion": custom_source_action_custom_action_type_version,
+                    "CustomActionTypeProvider": custom_source_action_custom_action_type_provider,
                 },
             }
         )
