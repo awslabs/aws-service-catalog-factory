@@ -40,6 +40,14 @@ Metadata:
           - SCMObjectKey
           - SCMShouldCreateRepo
       - Label:
+          default: "SCM Option 4: Custom"
+        Parameters:
+          - SCMBranchName
+          - SCMCustomSourceActionGitUrl
+          - SCMCustomSourceActionGitWebHookIPAddress
+          - SCMCustomSourceActionCustomActionTypeVersion
+          - SCMCustomSourceActionCustomActionTypeProvider
+      - Label:
           default: "Advanced (Do not change unless told to do so)"
         Parameters:
           - Version
@@ -81,6 +89,16 @@ Parameters:
     Type: String
   SCMObjectKey:
     Type: String
+  SCMCustomSourceActionGitUrl:
+    Type: String
+  SCMCustomSourceActionGitWebHookIPAddress:
+    Type: String
+  SCMCustomSourceActionCustomActionTypeVersion:
+    Type: String
+    Default: CustomVersion1
+  SCMCustomSourceActionCustomActionTypeProvider:
+    Type: String
+    Default: CustomProvider1
   SCMShouldCreateRepo:
     Type: String
     Description: "Setting this to True means the tool creates the repo and manages it. Changing from True to False will cause already created repos to be deleted."
@@ -164,6 +182,18 @@ Resources:
           - Name: SCM_OBJECT_KEY
             Type: PLAINTEXT
             Value: !Ref SCMObjectKey
+          - Name: SCM_CUSTOM_SOURCE_ACTION_GIT_URL
+            Type: PLAINTEXT
+            Value: !Ref SCMCustomSourceActionGitUrl
+          - Name: SCM_CUSTOM_SOURCE_ACTION_GIT_WEB_HOOK_IP_ADDRESS
+            Type: PLAINTEXT
+            Value: !Ref SCMCustomSourceActionGitWebHookIPAddress
+          - Name: SCM_CUSTOM_SOURCE_ACTION_CUSTOM_ACTION_TYPE_VERSION
+            Type: PLAINTEXT
+            Value: !Ref SCMCustomSourceActionCustomActionTypeVersion
+          - Name: SCM_CUSTOM_SOURCE_ACTION_CUSTOM_ACTION_TYPE_PROVIDER
+            Type: PLAINTEXT
+            Value: !Ref SCMCustomSourceActionCustomActionTypeProvider
           - Name: SCM_SHOULD_CREATE_REPO
             Type: PLAINTEXT
             Value: !Ref SCMShouldCreateRepo
@@ -309,6 +339,10 @@ Resources:
           - !Ref SCMObjectKey
           - !GetAtt InitialiserVersionParam.Value
           - !Ref Version
+          - !Ref SCMCustomSourceActionGitUrl
+          - !Ref SCMCustomSourceActionGitWebHookIPAddress
+          - !Ref SCMCustomSourceActionCustomActionTypeVersion
+          - !Ref SCMCustomSourceActionCustomActionTypeProvider
           - !Ref ShouldValidate
 
 Outputs:
