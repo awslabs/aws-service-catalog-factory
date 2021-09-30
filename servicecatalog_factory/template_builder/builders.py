@@ -228,9 +228,6 @@ class BaseTemplateBuilder:
                             },
                             Name="Source",
                         ),
-                        # Inspiration picked up from https://github.com/aws-samples/aws-codepipeline-third-party-git-repositories
-                        # Custom Source Action Type retrieves also PipelineName parameter, which is used for Pooling
-                        # https://github.com/aws-samples/aws-codepipeline-third-party-git-repositories/blob/main/cfn/third_party_git_custom_action.yaml#L227-L233
                         custom=codepipeline.Actions(
                             RunOrder=1,
                             ActionTypeId=codepipeline.ActionTypeId(
@@ -818,8 +815,6 @@ class StackTemplateBuilder(BaseTemplateBuilder):
             ),
         )
 
-        # Raiffeisen Informatik - cloud-coe@r-it.at
-        # This goes with Custom Provider as Source for CodePipelines
         if source.get("Provider", "").lower() == "custom":
             if source.get("Configuration").get("GitWebHookIpAddress") is not None:
                 webhook = codepipeline.Webhook(
