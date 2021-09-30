@@ -99,6 +99,22 @@ Resources:
                 - Name: Source
               RunOrder: '1'
 
+            {% elif Source.Provider.lower() == 'custom' %}
+              
+            - Name: Source
+              ActionTypeId:
+                Category: Source
+                Owner: Custom
+                Version: {{ Source.Configuration.CustomActionTypeVersion }}
+                Provider: {{ Source.Configuration.CustomActionTypeProvider }}
+              Configuration:
+                GitUrl: {{ Source.Configuration.GitUrl }}
+                Branch: {{ Source.Configuration.Branch }}
+                PipelineName: !Sub "${AWS::StackName}-pipeline"
+              OutputArtifacts:
+                - Name: Source
+              RunOrder: 1
+
               {% else %}
 
             - Name: Source
@@ -277,6 +293,24 @@ Resources:
       RegisterWithThirdParty: 'true'
 {% endif %}
 
+  {% if Source.Provider.lower() == 'custom' and Source.Configuration.GitWebHookIpAddress is defined %}
+  Webhook:
+    Type: "AWS::CodePipeline::Webhook"
+    Properties:
+      Authentication: IP
+      AuthenticationConfiguration:
+        AllowedIPRange: {{ Source.Configuration.GitWebHookIpAddress }}
+      Filters:
+        - JsonPath: '$.changes[0].ref.id'
+          MatchEquals: 'refs/heads/{Branch}'     
+      TargetPipeline: !Ref Pipeline
+      TargetPipelineVersion: !GetAtt Pipeline.Version
+      TargetAction: Source
+      Name: !Sub "${AWS::StackName}-webhook"
+      RegisterWithThirdParty: false
+{% endif %}
+
+
   PackageProject:
     Type: AWS::CodeBuild::Project
     Properties:
@@ -453,4 +487,25 @@ Resources:
                 - '**/*'
 
       TimeoutInMinutes: 20
+{% endif %}
+
+{% if Source.Provider.lower() == 'custom' %}
+Outputs:
+  WebhookUrl:
+    Export:
+      Name:
+        !Sub "${AWS::StackName}-pipeline"
+    Value:
+{% if Source.Configuration.GitWebHookIpAddress is defined %}
+      Fn::Sub:
+        - ${GitUrl}||${WebhookUrl}
+        - GitUrl:
+            {{ Source.Configuration.GitUrl }}
+          WebhookUrl:
+            Fn::GetAtt:
+              - Webhook
+              - Url
+{% else %}
+      GitWebHookIpAddress was not defined in manifests Configuration
+{% endif %}
 {% endif %}
