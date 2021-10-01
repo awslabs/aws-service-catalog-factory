@@ -99,7 +99,42 @@ class BaseTemplateBuilder:
                 )
             )
 
-    def build_source_stage(self, stages, source):
+    def build_source_stage(self, tpl, stages, source):
+        if source.get("Provider", "").lower() == "custom":
+            if source.get("Configuration").get("GitWebHookIpAddress") is not None:
+                webhook = codepipeline.Webhook(
+                    "Webhook",
+                    Authentication="IP",
+                    TargetAction="Source",
+                    AuthenticationConfiguration=codepipeline.WebhookAuthConfiguration(
+                        AllowedIPRange=source.get("Configuration").get(
+                            "GitWebHookIpAddress"
+                        )
+                    ),
+                    Filters=[
+                        codepipeline.WebhookFilterRule(
+                            JsonPath="$.changes[0].ref.id",
+                            MatchEquals="refs/heads/{Branch}",
+                        )
+                    ],
+                    TargetPipelineVersion=1,
+                    TargetPipeline=t.Sub("${AWS::StackName}-pipeline"),
+                )
+                tpl.add_resource(webhook)
+                values_for_sub = {
+                    "GitUrl": source.get("Configuration").get("GitUrl"),
+                    "WebhookUrl": t.GetAtt(webhook, "Url"),
+                }
+            else:
+                values_for_sub = {
+                    "GitUrl": source.get("Configuration").get("GitUrl"),
+                    "WebhookUrl": "GitWebHookIpAddress was not defined in manifests Configuration",
+                }
+            output_to_add = t.Output("WebhookUrl")
+            output_to_add.Value = t.Sub("${GitUrl}||${WebhookUrl}", **values_for_sub)
+            output_to_add.Export = t.Export(t.Sub("${AWS::StackName}-pipeline"))
+            tpl.add_output(output_to_add)
+
         stages.append(
             codepipeline.Stages(
                 Name="Source",
@@ -423,7 +458,7 @@ class StackTemplateBuilder(BaseTemplateBuilder):
 
         pipeline_stages = []
 
-        self.build_source_stage(pipeline_stages, source)
+        self.build_source_stage(tpl, pipeline_stages, source)
 
         if options.get("ShouldParseAsJinja2Template"):
             pipeline_stages.append(
@@ -815,41 +850,6 @@ class StackTemplateBuilder(BaseTemplateBuilder):
             ),
         )
 
-        if source.get("Provider", "").lower() == "custom":
-            if source.get("Configuration").get("GitWebHookIpAddress") is not None:
-                webhook = codepipeline.Webhook(
-                    "Webhook",
-                    Authentication="IP",
-                    TargetAction="Source",
-                    AuthenticationConfiguration=codepipeline.WebhookAuthConfiguration(
-                        AllowedIPRange=source.get("Configuration").get(
-                            "GitWebHookIpAddress"
-                        )
-                    ),
-                    Filters=[
-                        codepipeline.WebhookFilterRule(
-                            JsonPath="$.changes[0].ref.id",
-                            MatchEquals="refs/heads/{Branch}",
-                        )
-                    ],
-                    TargetPipelineVersion=1,
-                    TargetPipeline=t.Sub("${AWS::StackName}-pipeline"),
-                )
-                tpl.add_resource(webhook)
-                values_for_sub = {
-                    "GitUrl": source.get("Configuration").get("GitUrl"),
-                    "WebhookUrl": t.GetAtt(webhook, "Url"),
-                }
-            else:
-                values_for_sub = {
-                    "GitUrl": source.get("Configuration").get("GitUrl"),
-                    "WebhookUrl": "GitWebHookIpAddress was not defined in manifests Configuration",
-                }
-            output_to_add = t.Output("WebhookUrl")
-            output_to_add.Value = t.Sub("${GitUrl}||${WebhookUrl}", **values_for_sub)
-            output_to_add.Export = t.Export(t.Sub("${AWS::StackName}-pipeline"))
-            tpl.add_output(output_to_add)
-
         return tpl
 
 
@@ -1036,7 +1036,7 @@ class TerraformTemplateBuilder(NonCFNTemplateBuilder):
 
         pipeline_stages = []
 
-        self.build_source_stage(pipeline_stages, source)
+        self.build_source_stage(tpl, pipeline_stages, source)
         if stages.get("Tests"):
             actions = []
             self.add_custom_tests(
@@ -1074,7 +1074,7 @@ class CDKAppTemplateBuilder(NonCFNTemplateBuilder):
 
         pipeline_stages = []
 
-        self.build_source_stage(pipeline_stages, source)
+        self.build_source_stage(tpl, pipeline_stages, source)
         if stages.get("Tests"):
             actions = []
             self.add_custom_tests(
