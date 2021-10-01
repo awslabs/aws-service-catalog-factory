@@ -7,7 +7,7 @@ Apps: list(include('app'))
 version:
   Name: str()
   Tags: list(include('tag'), required=False)
-  Active: bool(required=False)
+  Active: include('active', required=False)
   Options: include('options', required=False)
   BuildSpecImage: str(required=False)
   BuildSpec: str(required=False)
@@ -16,7 +16,7 @@ version:
 version_with_source:
   Name: str()
   Tags: list(include('tag'), required=False)
-  Active: bool(required=False)
+  Active: include('active', required=False)
   Options: include('options', required=False)
   BuildSpecImage: str(required=False)
   BuildSpec: str(required=False)
@@ -100,3 +100,5 @@ code_s3: any(include('code_s3_bucket'), include('code_s3_key'))
 
 code:
   S3: include('code_s3')
+
+active: any(bool(required=False), enum("terminated"))

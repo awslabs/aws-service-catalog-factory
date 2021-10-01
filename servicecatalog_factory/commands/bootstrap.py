@@ -71,6 +71,10 @@ def bootstrap(
     scm_object_key,
     create_repo,
     should_validate,
+    custom_source_action_git_url,
+    custom_source_action_git_web_hook_ip_address,
+    custom_source_action_custom_action_type_version,
+    custom_source_action_custom_action_type_provider,
 ):
     click.echo("Starting bootstrap")
     click.echo("Starting regional deployments")
@@ -162,6 +166,19 @@ def bootstrap(
                     "Branch": branch,
                     "PollForSourceChanges": poll_for_source_changes,
                     "SecretsManagerSecret": webhook_secret,
+                },
+            }
+        )
+    elif source_provider == "Custom":
+        source_args.update(
+            {
+                "Configuration": {
+                    "Owner": "Custom",
+                    "GitUrl": custom_source_action_git_url,
+                    "Branch": branch,
+                    "GitWebHookIpAddress": custom_source_action_git_web_hook_ip_address,
+                    "CustomActionTypeVersion": custom_source_action_custom_action_type_version,
+                    "CustomActionTypeProvider": custom_source_action_custom_action_type_provider,
                 },
             }
         )

@@ -23,3 +23,8 @@ upload-config:
 ## @factory_commands Runs servicecatalog-factory --info generate for the local checkout branch
 generate:
 	REGION=$(REGION) ACCOUNT_ID=$(ACCOUNT_ID) poetry run servicecatalog-factory --info generate ignored/src/ServiceCatalogFactory
+
+
+## @factory_commands Runs servicecatalog-factory --info validate for the local checkout branch
+validate:
+	poetry run servicecatalog-factory --info validate ignored/src/ServiceCatalogFactory
