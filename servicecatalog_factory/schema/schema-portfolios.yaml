@@ -101,7 +101,7 @@ product_without_source:
   Options: include('options', required=False)
   Tags: list(include('tag'), required=False)
   Versions: list(include('version_with_source'), required=False)
-  Portfolios: list()
+  Portfolios: list(required=False)
 
 product_with_source:
   Name: str()
@@ -119,7 +119,7 @@ product_with_source:
   Options: include('options', required=False)
   Tags: list(include('tag'), required=False)
   Versions: list(include('version'), required=False)
-  Portfolios: list()
+  Portfolios: list(required=False)
 
 
 
