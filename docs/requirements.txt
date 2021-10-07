@@ -1,3 +1,4 @@
 sphinx==2.0.0
 recommonmark==0.5.0
+pip install 'setuptools==57.5.0'
 aws-service-catalog-factory
