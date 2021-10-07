@@ -29,6 +29,7 @@ version:
   Description: str()
   Tags: list(include('tag'), required=False)
   Active: include('active', required=False)
+  Status: include('status', required=False)
   Options: include('options', required=False)
   BuildSpecImage: str(required=False)
   BuildSpec: str(required=False)
@@ -40,6 +41,7 @@ version_with_source:
   Description: str()
   Tags: list(include('tag'), required=False)
   Active: include('active', required=False)
+  Status: include('status', required=False)
   Options: include('options', required=False)
   BuildSpecImage: str(required=False)
   BuildSpec: str(required=False)
@@ -179,3 +181,4 @@ code:
   S3: include('code_s3')
 
 active: any(bool(required=False), enum("terminated"))
+status: enum("active", "terminated")
