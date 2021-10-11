@@ -515,7 +515,7 @@ class StackTemplateBuilder(BaseTemplateBuilder):
         if stages.get("Build", {}).get("BuildSpec"):
             tpl.add_resource(
                 codebuild.Project(
-                    "build_project",
+                    "BuildProject",
                     Name=t.Sub("${AWS::StackName}-BuildProject"),
                     ServiceRole=t.Sub(
                         "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodeRole"
