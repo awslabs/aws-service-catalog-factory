@@ -545,9 +545,7 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                         ],
                     ),
                     Source=codebuild.Source(
-                        BuildSpec=yaml.safe_dump(
-                            stages.get("Build", {}).get("BuildSpec")
-                        ),
+                        BuildSpec=stages.get("Build", {}).get("BuildSpec"),
                         Type="CODEPIPELINE",
                     ),
                     Description=t.Sub("build project"),
