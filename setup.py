@@ -25,7 +25,7 @@ package_data = \
 install_requires = \
 ['PyYAML==5.4',
  'awacs==2.0.2',
- 'better-boto>=0.36.0,<0.37.0',
+ 'better-boto==0.43.0',
  'boto3',
  'cfn-flip==1.2.1',
  'click==7.0',

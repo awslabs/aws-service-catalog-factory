@@ -47,7 +47,7 @@ typing-extensions = {version = ">=3.7.4.3", markers = "python_version < \"3.8\""
 
 [[package]]
 name = "better-boto"
-version = "0.36.0"
+version = "0.43.0"
 description = "Helpers to make using boto3 more enjoyable"
 category = "main"
 optional = false
@@ -499,7 +499,7 @@ pyyaml = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7"
-content-hash = "2844c1395d820904d1cf38e3d8c5f17b6e6506a61edec6ffff107c7a60b57cc9"
+content-hash = "381568bfe55aad08dc7e4c8ad50d564be40fc23f5f631b9a80a9906b8a70cd4e"
 
 [metadata.files]
 appdirs = [
@@ -519,8 +519,8 @@ awacs = [
     {file = "awacs-2.0.2.tar.gz", hash = "sha256:018138c10f82e11734aee7f9e7fff5dbfe1245ddaf15d5927f60f3b16e01ad7e"},
 ]
 better-boto = [
-    {file = "better-boto-0.36.0.tar.gz", hash = "sha256:b64833ba661e35cc79212d60f41190c18a7d4374f560960ecb1c0a2c4dc38268"},
-    {file = "better_boto-0.36.0-py3-none-any.whl", hash = "sha256:1d8baf99d2448a9eec023b93eedb4b9bb79bdfd605cc004d06e4d36917883552"},
+    {file = "better-boto-0.43.0.tar.gz", hash = "sha256:a52554e9d23d1a45f1d5bded4c0d230b9cd3c700104c84892c99285de6f2431e"},
+    {file = "better_boto-0.43.0-py3-none-any.whl", hash = "sha256:d8262d3a169d083005cc0f8ce0b461395715c6587d8342f4ea9ac7b2e9cf6555"},
 ]
 black = [
     {file = "black-19.10b0-py36-none-any.whl", hash = "sha256:1b30e59be925fafc1ee4565e5e08abef6b03fe455102883820fe5ee2e4734e0b"},
