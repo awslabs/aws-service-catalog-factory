@@ -35,6 +35,17 @@ docs = ["sphinx", "zope.interface"]
 tests = ["coverage", "hypothesis", "pympler", "pytest (>=4.3.0)", "six", "zope.interface"]
 
 [[package]]
+name = "awacs"
+version = "2.0.2"
+description = "AWS Access Policy Language creation library"
+category = "main"
+optional = false
+python-versions = ">=3.6.2"
+
+[package.dependencies]
+typing-extensions = {version = ">=3.7.4.3", markers = "python_version < \"3.8\""}
+
+[[package]]
 name = "better-boto"
 version = "0.36.0"
 description = "Helpers to make using boto3 more enjoyable"
@@ -425,22 +436,31 @@ python-versions = "*"
 
 [[package]]
 name = "troposphere"
-version = "2.6.4"
+version = "3.1.0"
 description = "AWS CloudFormation creation library"
 category = "main"
 optional = false
-python-versions = ">=2.7, !=3.0.*, !=3.1.*, !=3.2.*, !=3.3.*"
+python-versions = ">=3.6.2"
 
 [package.dependencies]
-cfn_flip = ">=1.0.2"
+cfn-flip = ">=1.0.2"
+typing-extensions = {version = ">=3.7.4.3", markers = "python_version < \"3.8\""}
 
 [package.extras]
-policy = ["awacs (>=0.8)"]
+policy = ["awacs (>=2.0.0)"]
 
 [[package]]
 name = "typed-ast"
 version = "1.4.1"
 description = "a fork of Python 2 and 3 ast modules with type comment support"
+category = "main"
+optional = false
+python-versions = "*"
+
+[[package]]
+name = "typing-extensions"
+version = "3.10.0.2"
+description = "Backported and Experimental Type Hints for Python 3.5+"
 category = "main"
 optional = false
 python-versions = "*"
@@ -479,7 +499,7 @@ pyyaml = "*"
 [metadata]
 lock-version = "1.1"
 python-versions = ">=3.7"
-content-hash = "93e2091149d9507a86f806d44ae5fca7454c44d07ff18b121e42f66ca00d98e7"
+content-hash = "2844c1395d820904d1cf38e3d8c5f17b6e6506a61edec6ffff107c7a60b57cc9"
 
 [metadata.files]
 appdirs = [
@@ -493,6 +513,10 @@ astroid = [
 attrs = [
     {file = "attrs-19.3.0-py2.py3-none-any.whl", hash = "sha256:08a96c641c3a74e44eb59afb61a24f2cb9f4d7188748e76ba4bb5edfa3cb7d1c"},
     {file = "attrs-19.3.0.tar.gz", hash = "sha256:f7b7ce16570fe9965acd6d30101a28f62fb4a7f9e926b3bbc9b61f8b04247e72"},
+]
+awacs = [
+    {file = "awacs-2.0.2-py3-none-any.whl", hash = "sha256:91b4e9039f6c84876b33fc8383e92e8cda4635792d238b70f14735a4ceb558fe"},
+    {file = "awacs-2.0.2.tar.gz", hash = "sha256:018138c10f82e11734aee7f9e7fff5dbfe1245ddaf15d5927f60f3b16e01ad7e"},
 ]
 better-boto = [
     {file = "better-boto-0.36.0.tar.gz", hash = "sha256:b64833ba661e35cc79212d60f41190c18a7d4374f560960ecb1c0a2c4dc38268"},
@@ -790,7 +814,8 @@ tornado = [
     {file = "tornado-4.5.3.tar.gz", hash = "sha256:6d14e47eab0e15799cf3cdcc86b0b98279da68522caace2bd7ce644287685f0a"},
 ]
 troposphere = [
-    {file = "troposphere-2.6.4.tar.gz", hash = "sha256:04b51b5ec9596a1c74c44cf21cf133ad3650461704ba893fca6e1b4e98627a0b"},
+    {file = "troposphere-3.1.0-py3-none-any.whl", hash = "sha256:ff9462897b7b59a4b7e7ea69d4572aa7afd8256e658daac6c4f0114c3c57e064"},
+    {file = "troposphere-3.1.0.tar.gz", hash = "sha256:45506ac737396d940c93eee68694a0f5cfeaba5c1fba2cd9d39335e713d0bacf"},
 ]
 typed-ast = [
     {file = "typed_ast-1.4.1-cp35-cp35m-manylinux1_i686.whl", hash = "sha256:73d785a950fc82dd2a25897d525d003f6378d1cb23ab305578394694202a58c3"},
@@ -823,6 +848,11 @@ typed-ast = [
     {file = "typed_ast-1.4.1-cp39-cp39-win32.whl", hash = "sha256:b52ccf7cfe4ce2a1064b18594381bccf4179c2ecf7f513134ec2f993dd4ab395"},
     {file = "typed_ast-1.4.1-cp39-cp39-win_amd64.whl", hash = "sha256:3742b32cf1c6ef124d57f95be609c473d7ec4c14d0090e5a5e05a15269fb4d0c"},
     {file = "typed_ast-1.4.1.tar.gz", hash = "sha256:8c8aaad94455178e3187ab22c8b01a3837f8ee50e09cf31f1ba129eb293ec30b"},
+]
+typing-extensions = [
+    {file = "typing_extensions-3.10.0.2-py2-none-any.whl", hash = "sha256:d8226d10bc02a29bcc81df19a26e56a9647f8b0a6d4a83924139f4a8b01f17b7"},
+    {file = "typing_extensions-3.10.0.2-py3-none-any.whl", hash = "sha256:f1d25edafde516b146ecd0613dabcc61409817af4766fbbcfb8d1ad4ec441a34"},
+    {file = "typing_extensions-3.10.0.2.tar.gz", hash = "sha256:49f75d16ff11f1cd258e1b988ccff82a3ca5570217d7ad8c5f48205dd99a677e"},
 ]
 urllib3 = [
     {file = "urllib3-1.22-py2.py3-none-any.whl", hash = "sha256:06330f386d6e4b195fbfc736b297f58c5a892e4440e54d294d7004e3a9bbea1b"},
