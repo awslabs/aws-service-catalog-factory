@@ -169,7 +169,7 @@ source_github:
   Configuration: include('configuration_github')
 
 source_codestarsourceconnection:
-  Provider: enum("CodeStarSourceConnection ")
+  Provider: enum("CodeStarSourceConnection")
   Configuration: include('configuration_codestarsourceconnection')
 
 source_codecommit:
