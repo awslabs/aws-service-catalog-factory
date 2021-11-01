@@ -87,7 +87,6 @@ workspace_with_source:
 
 
 
-
 schema: enum("factory-2019-04-01", "Factory-2019-04-01")
 
 configuration_codecommit:
@@ -99,11 +98,16 @@ configuration_github:
   Owner: str(required=False)
   Repo: str(required=False)
 
+configuration_codestarsourceconnection:
+  ConnectionArn: str(required=True)
+  BranchName: str(required=True)
+  FullRepositoryId: str(required=True)
+
 configuration_s3:
   BucketName: str(required=False)
   S3ObjectKey: str(required=False)
 
-source: any(include("source_codecommit"), include("source_github"), include("source_s3"))
+source: any(include("source_codecommit"), include("source_github"), include("source_s3"), include("source_codestarsourceconnection"))
 
 source_s3:
   Provider: enum("S3")
@@ -112,6 +116,10 @@ source_s3:
 source_github:
   Provider: enum("Github")
   Configuration: include('configuration_github')
+
+source_codestarsourceconnection:
+  Provider: enum("CodeStarSourceConnection")
+  Configuration: include('configuration_codestarsourceconnection')
 
 source_codecommit:
   Provider: enum("CodeCommit")
