@@ -28,3 +28,7 @@ generate:
 ## @factory_commands Runs servicecatalog-factory --info validate for the local checkout branch
 validate:
 	poetry run servicecatalog-factory --info validate ignored/src/ServiceCatalogFactory
+
+## @factory_commands Runs servicecatalog-factory --info show-pipelines
+show-pipelines:
+	poetry run servicecatalog-factory --info show-pipelines ignored/src/ServiceCatalogFactory/

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<title>{{title}}</title>
+<style>
+    table.pipes {
+        border: 1px solid #FFFFFF;
+        border-spacing: 0px;
+        width: 100%;
+        text-align: left;
+    }
+
+    table.pipes td, table.pipes th {
+        border: 0px solid #FFFFFF;
+        padding: 3px 2px;
+    }
+
+    table.pipes tbody td {
+        font-size: 16px;
+    }
+
+    table.pipes tr.red {
+        background: #ff0000;
+    }
+
+    table.pipes tr.amber {
+        background: #ff7701;
+    }
+
+    table.pipes tr.green {
+        background: #00a157;
+    }
+
+    table.pipes thead {
+        background: #0B6FA4;
+        border-bottom: 5px solid #FFFFFF;
+    }
+
+    table.pipes thead th {
+        font-size: 17px;
+        font-weight: bold;
+        color: #FFFFFF;
+        text-align: left;
+    }
+
+    table.pipes tfoot td {
+        font-size: 14px;
+    }
+</style>
+<body>
+{{content}}
+</body>
+</html>

@@ -102,3 +102,5 @@ CODEPIPELINE_SUPPORTED_REGIONS = [
     "sa-east-1",
     "us-gov-west-1",
 ]
+
+STATIC_HTML_PAGE = "static-html-page.html"

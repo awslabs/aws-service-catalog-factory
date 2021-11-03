@@ -54,7 +54,7 @@ def generate(p):
 
 @cli.command()
 @click.argument("p", type=click.Path(exists=True))
-@click.option("--format", "-f", type=click.Choice(["table", "json"]), default="table")
+@click.option("--format", "-f", type=click.Choice(["table", "json", "html"]), default="table")
 def show_pipelines(p, format):
     show_pipelines_commands.show_pipelines(p, format)
 

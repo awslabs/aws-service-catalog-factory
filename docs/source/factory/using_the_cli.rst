@@ -217,36 +217,47 @@ show-pipelines
 
 .. note::
 
-    This was added in version 0.5.0
+    This was changed in version 0.70.0
 
 You can use the ``servicecatalog-factory`` cli to list all the AWS CodePipelines in your factory along with their status
 
 .. code-block:: bash
 
-    servicecatalog-factory show-pipelines ServiceCatalogFactory/portfolios
+    servicecatalog-factory show-pipelines ServiceCatalogFactory
 
 
 Will return the following:
 
 .. code-block:: bash
 
-    ┌─────────────────────────────────────────────────────────────────────────┬───────────┬──────────────────────────────────────────┬─────────────────────┐
-    │ Pipeline                                                                │ Status    │ Last Commit Hash                         │ Last Commit Message │
-    ├─────────────────────────────────────────────────────────────────────────┼───────────┼──────────────────────────────────────────┼─────────────────────┤
-    │ servicecatalog-factory-pipeline                                         │ Succeeded │ 277c695b72d8d77ba0876e8bdf3ac2d48f2f5e15 │ fixing indent       │
-    │ example-simple-github-central-it-team-portfolio-account-iam-v1-pipeline │ Failed    │ N/A                                      │ N/A                 │
-    │ account-iam-soc-2-1-v1-pipeline                                         │ Failed    │ N/A                                      │ N/A                 │
-    └─────────────────────────────────────────────────────────────────────────┴───────────┴──────────────────────────────────────────┴─────────────────────┘
+    +------------+------------------------------------------------+--------------------------------------+----------------------------------+-----------+------------------------------------------+------------------------------------------------------------+----------------+-------------------------------------------------------+
+    | Type       | Name                                           | Execution Id                         | Start Time                       | Status    | Last Commit Id                           | Last Commit Message                                        | Duration       | Trend                                                 |
+    +------------+------------------------------------------------+--------------------------------------+----------------------------------+-----------+------------------------------------------+------------------------------------------------------------+----------------+-------------------------------------------------------+
+    | core       | servicecatalog-factory-pipeline                | d435a6b7-cc21-442f-ae47-e2947ae56ce3 | 2021-09-02 12:54:07.136000+01:00 | Failed    | c765347e01a36514a1e2f4cce691fc51964005d1 | sdfsdf                                                     | 0:01:06.964000 | Failed, Failed, Succeeded, Succeeded, Failed          |
+    | apps       | app--ssm-parameter-v2-pipeline                 | 6f556352-3354-4641-a78e-f95bfe262470 | 2021-08-03 14:38:44.429000+01:00 | Failed    | 95e272ad32858b2a2d263268dde8fc7ba0eb6cc1 | Added param.tf                                             | 0:01:10.692000 | Failed                                                |
+    | portfolios | bug-demo-portfolio-cdk-support-iam-v2-pipeline | N/A                                  | 2021-11-03 19:43:28.612484       | N/A       | N/A                                      | N/A                                                        | 0:00:00        |                                                       |
+    | portfolios | cdk-support-iam-v2-pipeline                    | 21cebf98-9dcb-4a10-85bd-d7e273f9eaf1 | 2021-09-02 12:34:28.904000+01:00 | Succeeded | 09705a6242cd67c6e46364a7e70ae3857a2e1c65 | sdsdsd                                                     | 0:01:48.474000 | Succeeded, Failed, Succeeded, Succeeded, Succeeded    |
+    | portfolios | cdk-support-bootstrap-v4-pipeline              | 3740315e-f317-4d5b-baa2-1a022f22f6f4 | 2021-04-09 19:51:09.178000+01:00 | Succeeded | b38fe7fea05002e1e3d1f86f9454d8a5a64bbceb | Edited handler.py                                          | 0:02:47.400000 | Succeeded, Succeeded, Succeeded, Superseded, Failed   |
+    | portfolios | cdk-ssm-parameter-single-stack-v1-pipeline     | c84c925a-ca04-4763-b430-8fa8c370e995 | 2021-04-09 19:24:09.927000+01:00 | Succeeded | aadb4ca8198c318f976c975df1c3d3ad62f1d84f | initial add                                                | 0:05:17.851000 | Succeeded, Succeeded, Failed, Failed, Failed          |
+    |            |                                                |                                      |                                  |           |                                          |                                                            |                |                                                       |
+    | portfolios | cdk-ssm-parameter-single-stack-v2-pipeline     | a9a289fe-55e5-44e1-8b5c-e73f003c0467 | 2021-05-07 16:34:45.587000+01:00 | Succeeded | 5509f682d2207e0439c16b7dc63deccdded86c44 | Edited cdk-ssm-parameter-single-stack-v1-pipeline-stack.ts | 0:05:17.644000 | Succeeded, Failed, Failed, Failed, Failed             |
+    | portfolios | cdk-ssm-parameter-two-stacks-v1-pipeline       | ddd83a86-c10f-4031-b4bd-4c17e266561f | 2021-03-25 18:34:53.223000+00:00 | Failed    | N/A                                      | N/A                                                        | 0:00:01.293000 | Failed, Failed, Failed, Failed, Failed                |
+    | portfolios | simpleproduct-v1-pipeline                      | 043bf8e6-154f-436f-9ef2-c0d19d2de57e | 2021-06-07 11:28:48.976000+01:00 | Failed    | N/A                                      | N/A                                                        | 0:00:01.734000 | Failed, Failed, Succeeded, Succeeded, Succeeded       |
+    | portfolios | simpleproduct-suffixed-v1-pipeline             | 6cdcb202-dcc7-4c08-b8a7-a7b42d0cf2da | 2021-03-03 22:46:08.472000+00:00 | Failed    | N/A                                      | N/A                                                        | 0:00:01.247000 | Failed                                                |
+    | stacks     | stack--ssm-parameter-v2-pipeline               | 7badb987-137d-4c3b-b773-3e0cc66b5782 | 2021-09-02 11:02:35.745000+01:00 | Succeeded | 467f87832e5330dbdac346ce823e5e0671b27435 | Added stack.template.yaml                                  | 0:02:22.555000 | Succeeded, Failed, Failed, Succeeded                  |
+    | stacks     | stack--aac-type-b-network-v1-pipeline          | N/A                                  | 2021-11-03 19:43:28.612484       | N/A       | N/A                                      | N/A                                                        | 0:00:00        |                                                       |
+    | workspaces | workspace--ssm-parameter-v2-pipeline           | e95b2731-5c8f-4a1c-a35e-430770e10783 | 2021-08-03 15:13:42.181000+01:00 | Succeeded | 64d866c7205f33266d85d7c99eb11f38f4ff99d2 | Edited param.tf                                            | 0:01:46.176000 | Succeeded, Succeeded, Succeeded, Succeeded, Succeeded |
+    +------------+------------------------------------------------+--------------------------------------+----------------------------------+-----------+------------------------------------------+------------------------------------------------------------+----------------+-------------------------------------------------------+
 
 .. note::
 
     This was added in version 0.11.0
 
-You can specify the output format for show-pipelines.  Valid options are ``table`` and ``json``
+You can specify the output format for show-pipelines.  Valid options are ``table``, ``json`` and ``html``
 
 .. code-block:: bash
 
-    servicecatalog-factory show-pipelines ServiceCatalogFactory/portfolios --format json
+    servicecatalog-factory show-pipelines ServiceCatalogFactory/ --format json
 
 nuke-product-version
 --------------------
