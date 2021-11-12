@@ -93,6 +93,30 @@ def nuke_product_version(portfolio_name, product, version):
 @click.option(
     "--create-repo/--no-create-repo", default=False, envvar="SCM_SHOULD_CREATE_REPO"
 )
+@click.option(
+    "--should-validate/--no-should-validate",
+    default=False,
+    envvar="SCT_SHOULD_VALIDATE",
+)
+@click.option(
+    "--custom-source-action-git-url",
+    envvar="SCM_CUSTOM_SOURCE_ACTION_GIT_URL",
+)
+@click.option(
+    "--custom-source-action-git-web-hook-ip-address",
+    default="0.0.0.0/0",
+    envvar="SCM_CUSTOM_SOURCE_ACTION_GIT_WEB_HOOK_IP_ADDRESS",
+)
+@click.option(
+    "--custom-source-action-custom-action-type-version",
+    default="CustomVersion1",
+    envvar="SCM_CUSTOM_SOURCE_ACTION_CUSTOM_ACTION_TYPE_VERSION",
+)
+@click.option(
+    "--custom-source-action-custom-action-type-provider",
+    default="CustomProvider1",
+    envvar="SCM_CUSTOM_SOURCE_ACTION_CUSTOM_ACTION_TYPE_PROVIDER",
+)
 def bootstrap_branch(
     branch_to_bootstrap,
     source_provider,
@@ -109,6 +133,11 @@ def bootstrap_branch(
     scm_bucket_name,
     scm_object_key,
     create_repo,
+    should_validate,
+    custom_source_action_git_url,
+    custom_source_action_git_web_hook_ip_address,
+    custom_source_action_custom_action_type_version,
+    custom_source_action_custom_action_type_provider,
 ):
     args = dict(
         branch_to_bootstrap=branch_to_bootstrap,
@@ -124,6 +153,11 @@ def bootstrap_branch(
         scm_bucket_name=None,
         scm_object_key=None,
         create_repo=create_repo,
+        should_validate=should_validate,
+        custom_source_action_git_url=custom_source_action_git_url,
+        custom_source_action_git_web_hook_ip_address=custom_source_action_git_web_hook_ip_address,
+        custom_source_action_custom_action_type_version=custom_source_action_custom_action_type_version,
+        custom_source_action_custom_action_type_provider=custom_source_action_custom_action_type_provider,
     )
 
     if source_provider == "CodeCommit":

@@ -294,7 +294,7 @@ class BaseTemplateBuilder:
 
 
 class StackTemplateBuilder(BaseTemplateBuilder):
-    def build_test_stage(self, test_input_artifact_name, options, tpl, stages):
+    def build_test_stage(self, test_input_artifact_name, options, tpl, stages, source):
         actions = [
             codepipeline.Actions(
                 RunOrder=1,
@@ -329,6 +329,11 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                                 dict(
                                     name="CATEGORY",
                                     value="stack",
+                                    type="PLAINTEXT",
+                                ),
+                                dict(
+                                    name="SOURCE_PATH",
+                                    value=source.get("Path", "."),
                                     type="PLAINTEXT",
                                 ),
                             ]
@@ -376,6 +381,11 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                                         value="stack",
                                         type="PLAINTEXT",
                                     ),
+                                    dict(
+                                        name="SOURCE_PATH",
+                                        value=source.get("Path", "."),
+                                        type="PLAINTEXT",
+                                    ),
                                 ]
                             )
                         ),
@@ -419,6 +429,11 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                                     dict(
                                         name="CATEGORY",
                                         value="stack",
+                                        type="PLAINTEXT",
+                                    ),
+                                    dict(
+                                        name="SOURCE_PATH",
+                                        value=source.get("Path", "."),
                                         type="PLAINTEXT",
                                     ),
                                 ]
@@ -502,6 +517,11 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                                                 value="stack",
                                                 type="PLAINTEXT",
                                             ),
+                                            dict(
+                                                name="SOURCE_PATH",
+                                                value=source.get("Path", "."),
+                                                type="PLAINTEXT",
+                                            ),
                                         ]
                                     )
                                 ),
@@ -541,6 +561,11 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                                 Name="CATEGORY",
                                 Type="PLAINTEXT",
                                 Value="stack",
+                            ),
+                            codebuild.EnvironmentVariable(
+                                Name="SOURCE_PATH",
+                                Type="PLAINTEXT",
+                                Value=".",
                             ),
                         ],
                     ),
@@ -594,6 +619,11 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                                                 value="stack",
                                                 type="PLAINTEXT",
                                             ),
+                                            dict(
+                                                name="SOURCE_PATH",
+                                                value=source.get("Path", "."),
+                                                type="PLAINTEXT",
+                                            ),
                                         ]
                                     )
                                 ),
@@ -604,7 +634,7 @@ class StackTemplateBuilder(BaseTemplateBuilder):
             )
 
         pipeline_stages.append(
-            self.build_test_stage(test_input_artifact_name, options, tpl, stages)
+            self.build_test_stage(test_input_artifact_name, options, tpl, stages, source)
         )
 
         if stages.get("Package", {}).get("BuildSpec"):
@@ -616,7 +646,7 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                     "phases": {
                         "install": {"runtime-versions": {"python": "3.8"}},
                         "build": {
-                            "commands": [
+                            "commands": ["cd $SOURCE_PATH", ] + [
                                 f"aws cloudformation package --region {region} --template $(pwd)/$CATEGORY.template.$TEMPLATE_FORMAT --s3-bucket sc-factory-artifacts-$ACCOUNT_ID-{region} --s3-prefix $STACK_NAME --output-template-file $CATEGORY.template-{region}.$TEMPLATE_FORMAT"
                                 for region in all_regions
                             ],
@@ -665,6 +695,11 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                             Name="STACK_NAME",
                             Type="PLAINTEXT",
                             Value=t.Sub("${AWS::StackName}"),
+                        ),
+                        codebuild.EnvironmentVariable(
+                            Name="SOURCE_PATH",
+                            Type="PLAINTEXT",
+                            Value=".",
                         ),
                     ],
                 ),
@@ -716,6 +751,11 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                                             value="stack",
                                             type="PLAINTEXT",
                                         ),
+                                        dict(
+                                            name="SOURCE_PATH",
+                                            value=source.get("Path", '.'),
+                                            type="PLAINTEXT",
+                                        ),
                                     ]
                                 )
                             ),
@@ -756,6 +796,11 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                             Type="PLAINTEXT",
                             Value=t.Sub("${AWS::AccountId}"),
                         ),
+                        codebuild.EnvironmentVariable(
+                            Name="SOURCE_PATH",
+                            Type="PLAINTEXT",
+                            Value=".",
+                        ),
                     ],
                 ),
                 Source=codebuild.Source(
@@ -765,6 +810,7 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                             "phases": {
                                 "build": {
                                     "commands": [
+                                        "cd $SOURCE_PATH",
                                         f"aws s3 cp $CATEGORY.template.$TEMPLATE_FORMAT s3://sc-puppet-stacks-repository-$ACCOUNT_ID/$CATEGORY/{name}/{version}/$CATEGORY.template.$TEMPLATE_FORMAT"
                                     ],
                                 }
@@ -821,6 +867,11 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                                             value="stack",
                                             type="PLAINTEXT",
                                         ),
+                                        dict(
+                                            name="SOURCE_PATH",
+                                            value=source.get("Path", "."),
+                                            type="PLAINTEXT",
+                                        ),
                                     ]
                                 )
                             ),
@@ -852,7 +903,7 @@ class StackTemplateBuilder(BaseTemplateBuilder):
 
 
 class NonCFNTemplateBuilder(BaseTemplateBuilder):
-    def build_package_stage(self, pipeline_stages, tpl, stages, options, category):
+    def build_package_stage(self, pipeline_stages, tpl, stages, options, category, source):
         package_input_artifact_name = base_template.SOURCE_OUTPUT_ARTIFACT
         package_project_name = t.Sub("${AWS::StackName}-PackageProject")
         tpl.add_resource(
@@ -876,7 +927,12 @@ class NonCFNTemplateBuilder(BaseTemplateBuilder):
                             Name="CATEGORY",
                             Type="PLAINTEXT",
                             Value=category,
-                        )
+                        ),
+                        codebuild.EnvironmentVariable(
+                            Name="SOURCE_PATH",
+                            Type="PLAINTEXT",
+                            Value=".",
+                        ),
                     ],
                 ),
                 Source=codebuild.Source(
@@ -886,6 +942,7 @@ class NonCFNTemplateBuilder(BaseTemplateBuilder):
                             "phases": {
                                 "build": {
                                     "commands": [
+                                        "cd $SOURCE_PATH",
                                         f"echo '{json.dumps(utils.unwrap(options))}' > options.json",
                                         f"zip -r $CATEGORY.zip .",
                                     ],
@@ -929,6 +986,17 @@ class NonCFNTemplateBuilder(BaseTemplateBuilder):
                         ],
                         Configuration={
                             "ProjectName": package_project_name,
+                            "EnvironmentVariables": t.Sub(
+                                json.dumps(
+                                    [
+                                        dict(
+                                            name="SOURCE_PATH",
+                                            value=source.get("Path", "."),
+                                            type="PLAINTEXT",
+                                        ),
+                                    ]
+                                )
+                            ),
                         },
                     )
                 ],
@@ -1041,7 +1109,7 @@ class TerraformTemplateBuilder(NonCFNTemplateBuilder):
                 tpl, stages, actions, base_template.SOURCE_OUTPUT_ARTIFACT
             )
             pipeline_stages.append(codepipeline.Stages(Name="Tests", Actions=actions))
-        self.build_package_stage(pipeline_stages, tpl, stages, options, "workspace")
+        self.build_package_stage(pipeline_stages, tpl, stages, options, "workspace", source)
         self.build_deploy_stage(pipeline_stages, tpl, name, version, "workspace")
         tpl.add_resource(
             codepipeline.Pipeline(
@@ -1079,7 +1147,7 @@ class CDKAppTemplateBuilder(NonCFNTemplateBuilder):
                 tpl, stages, actions, base_template.SOURCE_OUTPUT_ARTIFACT
             )
             pipeline_stages.append(codepipeline.Stages(Name="Tests", Actions=actions))
-        self.build_package_stage(pipeline_stages, tpl, stages, options, "app")
+        self.build_package_stage(pipeline_stages, tpl, stages, options, "app", source)
         self.build_deploy_stage(pipeline_stages, tpl, name, version, "app")
 
         tpl.add_resource(

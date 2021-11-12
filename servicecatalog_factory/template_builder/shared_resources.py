@@ -18,7 +18,7 @@ DEPLOY_IN_GOVCLOUD_PROJECT_NAME = "ServiceCatalog-Factory-SharedDeployInGovCloud
 
 
 def get_commands_for_deploy() -> list:
-    commands = []
+    commands = ["cd $SOURCE_PATH", ]
     for region in config.get_regions():
         commands.append(
             f"servicecatalog-factory create-or-update-provisioning-artifact-from-codepipeline-id $PIPELINE_NAME $AWS_REGION $CODEPIPELINE_ID {region}"
@@ -28,8 +28,6 @@ def get_commands_for_deploy() -> list:
 
 
 def get_resources() -> list:
-    all_regions = config.get_regions()
-
     return [
         codebuild.Project(
             "Validate",
@@ -54,7 +52,12 @@ def get_resources() -> list:
                         Name="CATEGORY",
                         Type="PLAINTEXT",
                         Value="product",
-                    )
+                    ),
+                    dict(
+                        name="SOURCE_PATH",
+                        value=".",
+                        type="PLAINTEXT",
+                    ),
                 ],
             ),
             Source=codebuild.Source(
@@ -65,6 +68,7 @@ def get_resources() -> list:
                             phases=dict(
                                 build={
                                     "commands": [
+                                        "cd $SOURCE_PATH",
                                         "export FactoryTemplateValidateBucket=$(aws cloudformation list-stack-resources --stack-name servicecatalog-factory --query 'StackResourceSummaries[?LogicalResourceId==`FactoryTemplateValidateBucket`].PhysicalResourceId' --output text)",
                                         "aws s3 cp $CATEGORY.template.$TEMPLATE_FORMAT s3://$FactoryTemplateValidateBucket/$CODEBUILD_BUILD_ID.$TEMPLATE_FORMAT",
                                         "aws cloudformation validate-template --template-url https://$FactoryTemplateValidateBucket.s3.$AWS_REGION.amazonaws.com/$CODEBUILD_BUILD_ID.$TEMPLATE_FORMAT",
@@ -111,6 +115,11 @@ def get_resources() -> list:
                     ),
                     codebuild.EnvironmentVariable(
                         Name="CODEPIPELINE_ID", Type="PLAINTEXT", Value="CHANGE_ME"
+                    ),
+                    codebuild.EnvironmentVariable(
+                        Name="SOURCE_PATH",
+                        Type="PLAINTEXT",
+                        Value=".",
                     ),
                 ],
             ),
@@ -168,6 +177,11 @@ def get_resources() -> list:
                         Type="PLAINTEXT",
                         Value="stack",
                     ),
+                    codebuild.EnvironmentVariable(
+                        Name="SOURCE_PATH",
+                        Type="PLAINTEXT",
+                        Value=".",
+                    ),
                 ],
             ),
             Source=codebuild.Source(
@@ -187,6 +201,7 @@ def get_resources() -> list:
                                 },
                                 "build": {
                                     "commands": [
+                                        "cd $SOURCE_PATH",
                                         "cfn_nag_scan --input-path ./$CATEGORY.template.$TEMPLATE_FORMAT"
                                     ]
                                 }
@@ -226,6 +241,11 @@ def get_resources() -> list:
                         Type="PLAINTEXT",
                         Value="stack",
                     ),
+                    codebuild.EnvironmentVariable(
+                        Name="SOURCE_PATH",
+                        Type="PLAINTEXT",
+                        Value=".",
+                    ),
                 ],
             ),
             Source=codebuild.Source(
@@ -247,6 +267,7 @@ def get_resources() -> list:
                                 },
                                 "build": {
                                     "commands": [
+                                        "cd $SOURCE_PATH",
                                         "rspec  --format progress --format RspecJunitFormatter --out reports/rspec.xml specs/"
                                     ]
                                 }
@@ -268,7 +289,6 @@ def get_resources() -> list:
             ),
             Description=t.Sub("Run cfn nag"),
         ),
-
 
         codebuild.Project(
             "Jinja",
@@ -294,6 +314,11 @@ def get_resources() -> list:
                         Type="PLAINTEXT",
                         Value="stack",
                     ),
+                    codebuild.EnvironmentVariable(
+                        Name="SOURCE_PATH",
+                        Type="PLAINTEXT",
+                        Value=".",
+                    ),
                 ],
             ),
             Source=codebuild.Source(
@@ -312,6 +337,7 @@ def get_resources() -> list:
                                 },
                                 "build": {
                                     "commands": [
+                                        "cd $SOURCE_PATH",
                                         """
                                         python -c "from jinja2 import Template;print(Template(open('$CATEGORY.template.$TEMPLATE_FORMAT', 'r').read()).render())" > product.template.$TEMPLATE_FORMAT
                                         """
