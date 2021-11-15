@@ -10,7 +10,7 @@ from deepmerge import always_merger
 def generate(path, item_collection_name, category, factory_version):
     tasks = list()
     for file_name in glob.glob(f"{path}/*.yaml"):
-        file = yaml.safe_load(open(file_name, 'r').read())
+        file = yaml.safe_load(open(file_name, "r").read())
         for item in file.get(item_collection_name, []):
             for version in item.get("Versions", []):
                 stages = always_merger.merge(

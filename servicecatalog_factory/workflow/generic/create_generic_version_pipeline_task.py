@@ -30,7 +30,9 @@ class CreateGenericVersionPipelineTemplateTask(tasks.FactoryTask):
 
     def run(self):
         template = product_template_factory.get_v2(self.category)
-        builder = template.build(self.name, self.version, self.source, self.options, self.stages)
+        builder = template.build(
+            self.name, self.version, self.source, self.options, self.stages
+        )
         self.write_output_raw(builder.to_yaml(clean_up=True, long_form=True))
 
 
@@ -58,7 +60,6 @@ class CreateGenericVersionPipelineTask(tasks.FactoryTask):
         friendly_uid = f"{self.category}--{self.name}-{self.version}"
         with self.client("cloudformation") as cloudformation:
             cloudformation.create_or_update(
-                StackName=friendly_uid,
-                TemplateBody=template,
+                StackName=friendly_uid, TemplateBody=template,
             )
         self.write_output(self.params_for_results_display())

@@ -116,8 +116,7 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
                 BuildSpecImage=self.version.get(
                     "BuildSpecImage",
                     self.product.get(
-                        "BuildSpecImage",
-                        constants.PACKAGE_BUILD_SPEC_IMAGE_DEFAULT,
+                        "BuildSpecImage", constants.PACKAGE_BUILD_SPEC_IMAGE_DEFAULT,
                     ),
                 ),
                 BuildSpec=self.version.get(
@@ -168,11 +167,7 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
         friendly_uid = None
 
         tags = [
-            {
-                "Key": tag.get("Key"),
-                "Value": tag.get("Value"),
-            }
-            for tag in self.tags
+            {"Key": tag.get("Key"), "Value": tag.get("Value"),} for tag in self.tags
         ]
 
         source = utils.merge(

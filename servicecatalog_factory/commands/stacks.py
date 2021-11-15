@@ -17,19 +17,16 @@ from deepmerge import always_merger
 def delete_stack_from_all_regions(stack_name):
     all_regions = get_regions()
     if click.confirm(
-            "We are going to delete the stack: {} from all regions: {}.  Are you sure?".format(
-                stack_name, all_regions
-            )
+        "We are going to delete the stack: {} from all regions: {}.  Are you sure?".format(
+            stack_name, all_regions
+        )
     ):
         threads = []
         for region in all_regions:
             process = Thread(
                 name=region,
                 target=delete_stack_from_a_regions,
-                kwargs={
-                    "stack_name": stack_name,
-                    "region": region,
-                },
+                kwargs={"stack_name": stack_name, "region": region,},
             )
             process.start()
             threads.append(process)
@@ -40,10 +37,9 @@ def delete_stack_from_all_regions(stack_name):
 def delete_stack_from_a_regions(stack_name, region):
     click.echo("Deleting stack: {} from region: {}".format(stack_name, region))
     with betterboto_client.ClientContextManager(
-            "cloudformation", region_name=region
+        "cloudformation", region_name=region
     ) as cloudformation:
         cloudformation.delete_stack(StackName=stack_name)
         waiter = cloudformation.get_waiter("stack_delete_complete")
         waiter.wait(StackName=stack_name)
     click.echo("Finished")
-

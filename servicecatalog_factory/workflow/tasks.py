@@ -31,15 +31,10 @@ class FactoryTask(luigi.Task):
         return region
 
     def client(self, service):
-        return betterboto_client.ClientContextManager(
-            service,
-        )
+        return betterboto_client.ClientContextManager(service,)
 
     def regional_client(self, service):
-        return betterboto_client.ClientContextManager(
-            service,
-            region_name=self.region,
-        )
+        return betterboto_client.ClientContextManager(service, region_name=self.region,)
 
     def load_from_input(self, input_name):
         with self.input().get(input_name).open("r") as f:
@@ -52,13 +47,7 @@ class FactoryTask(luigi.Task):
         return "Omitted"
 
     def write_output(self, content):
-        self.write_output_raw(
-            json.dumps(
-                content,
-                indent=4,
-                default=str,
-            )
-        )
+        self.write_output_raw(json.dumps(content, indent=4, default=str,))
 
     def write_output_raw(self, content):
         with self.output().open("w") as f:
@@ -104,13 +93,7 @@ def record_event(event_type, task, extra_event_data=None):
         / f"{task_type}-{task.task_id}.json",
         "w",
     ) as f:
-        f.write(
-            json.dumps(
-                event,
-                default=str,
-                indent=4,
-            )
-        )
+        f.write(json.dumps(event, default=str, indent=4,))
 
 
 @luigi.Task.event_handler(luigi.Event.FAILURE)
@@ -118,9 +101,7 @@ def on_task_failure(task, exception):
     exception_details = {
         "exception_type": type(exception),
         "exception_stack_trace": traceback.format_exception(
-            etype=type(exception),
-            value=exception,
-            tb=exception.__traceback__,
+            etype=type(exception), value=exception, tb=exception.__traceback__,
         ),
     }
     record_event("failure", task, exception_details)

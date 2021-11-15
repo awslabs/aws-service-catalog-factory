@@ -56,23 +56,16 @@ class CreateVersionPipelineTask(FactoryTask):
         tags = []
         for tag in self.tags:
             tags.append(
-                {
-                    "Key": tag.get("Key"),
-                    "Value": tag.get("Value"),
-                }
+                {"Key": tag.get("Key"), "Value": tag.get("Value"),}
             )
         with self.client("cloudformation") as cloudformation:
             if self.template.get("Name"):
                 response = cloudformation.create_or_update(
-                    StackName=friendly_uid,
-                    TemplateBody=template_contents,
-                    Tags=tags,
+                    StackName=friendly_uid, TemplateBody=template_contents, Tags=tags,
                 )
             elif self.provisioner.get("Type") == "CloudFormation":
                 response = cloudformation.create_or_update(
-                    StackName=friendly_uid,
-                    TemplateBody=template_contents,
-                    Tags=tags,
+                    StackName=friendly_uid, TemplateBody=template_contents, Tags=tags,
                 )
             elif self.provisioner.get("Type") == "Terraform":
                 response = cloudformation.create_or_update(

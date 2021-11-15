@@ -36,10 +36,7 @@ class CreatePortfolioTask(FactoryTask):
             tags = []
             for t in self.tags:
                 tags.append(
-                    {
-                        "Key": t.get("Key"),
-                        "Value": t.get("Value"),
-                    }
+                    {"Key": t.get("Key"), "Value": t.get("Value"),}
                 )
             tags.append({"Key": "ServiceCatalogFactory:Actor", "Value": "Portfolio"})
 
@@ -56,10 +53,4 @@ class CreatePortfolioTask(FactoryTask):
 
         with self.output().open("w") as f:
             logger.info(f"{logger_prefix}: about to write! {portfolio_detail}")
-            f.write(
-                json.dumps(
-                    portfolio_detail,
-                    indent=4,
-                    default=str,
-                )
-            )
+            f.write(json.dumps(portfolio_detail, indent=4, default=str,))

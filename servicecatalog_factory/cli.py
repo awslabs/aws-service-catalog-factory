@@ -54,7 +54,9 @@ def generate(p):
 
 @cli.command()
 @click.argument("p", type=click.Path(exists=True))
-@click.option("--format", "-f", type=click.Choice(["table", "json", "html"]), default="table")
+@click.option(
+    "--format", "-f", type=click.Choice(["table", "json", "html"]), default="table"
+)
 def show_pipelines(p, format):
     show_pipelines_commands.show_pipelines(p, format)
 
@@ -99,8 +101,7 @@ def nuke_product_version(portfolio_name, product, version):
     envvar="SCT_SHOULD_VALIDATE",
 )
 @click.option(
-    "--custom-source-action-git-url",
-    envvar="SCM_CUSTOM_SOURCE_ACTION_GIT_URL",
+    "--custom-source-action-git-url", envvar="SCM_CUSTOM_SOURCE_ACTION_GIT_URL",
 )
 @click.option(
     "--custom-source-action-git-web-hook-ip-address",
@@ -190,10 +191,7 @@ def bootstrap_branch(
         )
     elif source_provider == "S3":
         args.update(
-            dict(
-                scm_bucket_name=scm_bucket_name,
-                scm_object_key=scm_object_key,
-            )
+            dict(scm_bucket_name=scm_bucket_name, scm_object_key=scm_object_key,)
         )
     else:
         raise Exception(f"Unsupported source provider: {source_provider}")
@@ -240,8 +238,7 @@ def add_secret(secret_name, oauth_token, secret_token):
     envvar="SCT_SHOULD_VALIDATE",
 )
 @click.option(
-    "--custom-source-action-git-url",
-    envvar="SCM_CUSTOM_SOURCE_ACTION_GIT_URL",
+    "--custom-source-action-git-url", envvar="SCM_CUSTOM_SOURCE_ACTION_GIT_URL",
 )
 @click.option(
     "--custom-source-action-git-web-hook-ip-address",
@@ -329,10 +326,7 @@ def bootstrap(
         )
     elif source_provider == "S3":
         args.update(
-            dict(
-                scm_bucket_name=scm_bucket_name,
-                scm_object_key=scm_object_key,
-            )
+            dict(scm_bucket_name=scm_bucket_name, scm_object_key=scm_object_key,)
         )
     elif source_provider == "Custom":
         args.update(

@@ -23,10 +23,8 @@ class DeleteProductTask(FactoryTask):
     def run(self):
         with self.regional_client("servicecatalog") as service_catalog:
             self.info(f"Looking for product to delete: {self.name}")
-            search_products_as_admin_response = (
-                service_catalog.search_products_as_admin_single_page(
-                    Filters={"FullTextSearch": [self.name]}
-                )
+            search_products_as_admin_response = service_catalog.search_products_as_admin_single_page(
+                Filters={"FullTextSearch": [self.name]}
             )
             found_product = False
             for product_view_details in search_products_as_admin_response.get(
@@ -55,10 +53,8 @@ class DeleteProductTask(FactoryTask):
         self.write_output({"found_product": found_product})
 
     def delete_pipelines(self, product_id, service_catalog, cloudformation):
-        list_versions_response = (
-            service_catalog.list_provisioning_artifacts_single_page(
-                ProductId=product_id
-            )
+        list_versions_response = service_catalog.list_provisioning_artifacts_single_page(
+            ProductId=product_id
         )
         version_names = [
             version["Name"]
@@ -73,10 +69,8 @@ class DeleteProductTask(FactoryTask):
                 cloudformation.ensure_deleted(StackName=f"{self.uid}-{version_name}")
 
     def delete_from_service_catalog(self, product_id, service_catalog):
-        list_portfolios_response = (
-            service_catalog.list_portfolios_for_product_single_page(
-                ProductId=product_id,
-            )
+        list_portfolios_response = service_catalog.list_portfolios_for_product_single_page(
+            ProductId=product_id,
         )
         portfolio_ids = [
             portfolio_detail["Id"]
@@ -88,6 +82,4 @@ class DeleteProductTask(FactoryTask):
                 ProductId=product_id, PortfolioId=portfolio_id
             )
         self.info(f"Deleting {self.name} {product_id} from Service Catalog")
-        service_catalog.delete_product(
-            Id=product_id,
-        )
+        service_catalog.delete_product(Id=product_id,)

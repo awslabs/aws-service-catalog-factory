@@ -38,14 +38,10 @@ class BaseTemplateBuilder:
                         Type=constants.ENVIRONMENT_TYPE_DEFAULT,
                         EnvironmentVariables=[
                             codebuild.EnvironmentVariable(
-                                Name="TEMPLATE_FORMAT",
-                                Type="PLAINTEXT",
-                                Value="yaml",
+                                Name="TEMPLATE_FORMAT", Type="PLAINTEXT", Value="yaml",
                             ),
                             codebuild.EnvironmentVariable(
-                                Name="CATEGORY",
-                                Type="PLAINTEXT",
-                                Value="stack",
+                                Name="CATEGORY", Type="PLAINTEXT", Value="stack",
                             ),
                         ],
                     ),
@@ -67,10 +63,7 @@ class BaseTemplateBuilder:
                         codepipeline.InputArtifacts(Name=test_input_artifact_name),
                     ],
                     ActionTypeId=codepipeline.ActionTypeId(
-                        Category="Test",
-                        Owner="AWS",
-                        Version="1",
-                        Provider="CodeBuild",
+                        Category="Test", Owner="AWS", Version="1", Provider="CodeBuild",
                     ),
                     OutputArtifacts=[
                         codepipeline.OutputArtifacts(Name=test_action_name)
@@ -305,10 +298,7 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                     codepipeline.InputArtifacts(Name=test_input_artifact_name),
                 ],
                 ActionTypeId=codepipeline.ActionTypeId(
-                    Category="Test",
-                    Owner="AWS",
-                    Version="1",
-                    Provider="CodeBuild",
+                    Category="Test", Owner="AWS", Version="1", Provider="CodeBuild",
                 ),
                 OutputArtifacts=[
                     codepipeline.OutputArtifacts(
@@ -326,11 +316,7 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                                     value="yaml",
                                     type="PLAINTEXT",
                                 ),
-                                dict(
-                                    name="CATEGORY",
-                                    value="stack",
-                                    type="PLAINTEXT",
-                                ),
+                                dict(name="CATEGORY", value="stack", type="PLAINTEXT",),
                                 dict(
                                     name="SOURCE_PATH",
                                     value=source.get("Path", "."),
@@ -355,10 +341,7 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                         codepipeline.InputArtifacts(Name=test_input_artifact_name),
                     ],
                     ActionTypeId=codepipeline.ActionTypeId(
-                        Category="Test",
-                        Owner="AWS",
-                        Version="1",
-                        Provider="CodeBuild",
+                        Category="Test", Owner="AWS", Version="1", Provider="CodeBuild",
                     ),
                     OutputArtifacts=[
                         codepipeline.OutputArtifacts(
@@ -405,10 +388,7 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                         codepipeline.InputArtifacts(Name=test_input_artifact_name),
                     ],
                     ActionTypeId=codepipeline.ActionTypeId(
-                        Category="Test",
-                        Owner="AWS",
-                        Version="1",
-                        Provider="CodeBuild",
+                        Category="Test", Owner="AWS", Version="1", Provider="CodeBuild",
                     ),
                     OutputArtifacts=[
                         codepipeline.OutputArtifacts(
@@ -553,19 +533,13 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                         Type=constants.ENVIRONMENT_TYPE_DEFAULT,
                         EnvironmentVariables=[
                             codebuild.EnvironmentVariable(
-                                Name="TEMPLATE_FORMAT",
-                                Type="PLAINTEXT",
-                                Value="yaml",
+                                Name="TEMPLATE_FORMAT", Type="PLAINTEXT", Value="yaml",
                             ),
                             codebuild.EnvironmentVariable(
-                                Name="CATEGORY",
-                                Type="PLAINTEXT",
-                                Value="stack",
+                                Name="CATEGORY", Type="PLAINTEXT", Value="stack",
                             ),
                             codebuild.EnvironmentVariable(
-                                Name="SOURCE_PATH",
-                                Type="PLAINTEXT",
-                                Value=".",
+                                Name="SOURCE_PATH", Type="PLAINTEXT", Value=".",
                             ),
                         ],
                     ),
@@ -634,7 +608,9 @@ class StackTemplateBuilder(BaseTemplateBuilder):
             )
 
         pipeline_stages.append(
-            self.build_test_stage(test_input_artifact_name, options, tpl, stages, source)
+            self.build_test_stage(
+                test_input_artifact_name, options, tpl, stages, source
+            )
         )
 
         if stages.get("Package", {}).get("BuildSpec"):
@@ -646,15 +622,14 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                     "phases": {
                         "install": {"runtime-versions": {"python": "3.8"}},
                         "build": {
-                            "commands": ["cd $SOURCE_PATH", ] + [
+                            "commands": ["cd $SOURCE_PATH",]
+                            + [
                                 f"aws cloudformation package --region {region} --template $(pwd)/$CATEGORY.template.$TEMPLATE_FORMAT --s3-bucket sc-factory-artifacts-$ACCOUNT_ID-{region} --s3-prefix $STACK_NAME --output-template-file $CATEGORY.template-{region}.$TEMPLATE_FORMAT"
                                 for region in all_regions
                             ],
                         },
                     },
-                    "artifacts": {
-                        "files": ["*", "**/*"],
-                    },
+                    "artifacts": {"files": ["*", "**/*"],},
                 }
             )
 
@@ -677,14 +652,10 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                     Type=constants.ENVIRONMENT_TYPE_DEFAULT,
                     EnvironmentVariables=[
                         codebuild.EnvironmentVariable(
-                            Name="TEMPLATE_FORMAT",
-                            Type="PLAINTEXT",
-                            Value="yaml",
+                            Name="TEMPLATE_FORMAT", Type="PLAINTEXT", Value="yaml",
                         ),
                         codebuild.EnvironmentVariable(
-                            Name="CATEGORY",
-                            Type="PLAINTEXT",
-                            Value="stack",
+                            Name="CATEGORY", Type="PLAINTEXT", Value="stack",
                         ),
                         codebuild.EnvironmentVariable(
                             Name="ACCOUNT_ID",
@@ -697,15 +668,12 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                             Value=t.Sub("${AWS::StackName}"),
                         ),
                         codebuild.EnvironmentVariable(
-                            Name="SOURCE_PATH",
-                            Type="PLAINTEXT",
-                            Value=".",
+                            Name="SOURCE_PATH", Type="PLAINTEXT", Value=".",
                         ),
                     ],
                 ),
                 Source=codebuild.Source(
-                    BuildSpec=package_build_spec,
-                    Type="CODEPIPELINE",
+                    BuildSpec=package_build_spec, Type="CODEPIPELINE",
                 ),
                 Description=t.Sub("build project"),
             )
@@ -753,7 +721,7 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                                         ),
                                         dict(
                                             name="SOURCE_PATH",
-                                            value=source.get("Path", '.'),
+                                            value=source.get("Path", "."),
                                             type="PLAINTEXT",
                                         ),
                                     ]
@@ -782,14 +750,10 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                     Type=constants.ENVIRONMENT_TYPE_DEFAULT,
                     EnvironmentVariables=[
                         codebuild.EnvironmentVariable(
-                            Name="TEMPLATE_FORMAT",
-                            Type="PLAINTEXT",
-                            Value="yaml",
+                            Name="TEMPLATE_FORMAT", Type="PLAINTEXT", Value="yaml",
                         ),
                         codebuild.EnvironmentVariable(
-                            Name="CATEGORY",
-                            Type="PLAINTEXT",
-                            Value="stack",
+                            Name="CATEGORY", Type="PLAINTEXT", Value="stack",
                         ),
                         codebuild.EnvironmentVariable(
                             Name="ACCOUNT_ID",
@@ -797,9 +761,7 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                             Value=t.Sub("${AWS::AccountId}"),
                         ),
                         codebuild.EnvironmentVariable(
-                            Name="SOURCE_PATH",
-                            Type="PLAINTEXT",
-                            Value=".",
+                            Name="SOURCE_PATH", Type="PLAINTEXT", Value=".",
                         ),
                     ],
                 ),
@@ -811,13 +773,11 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                                 "build": {
                                     "commands": [
                                         "cd $SOURCE_PATH",
-                                        f"aws s3 cp $CATEGORY.template.$TEMPLATE_FORMAT s3://sc-puppet-stacks-repository-$ACCOUNT_ID/$CATEGORY/{name}/{version}/$CATEGORY.template.$TEMPLATE_FORMAT"
+                                        f"aws s3 cp $CATEGORY.template.$TEMPLATE_FORMAT s3://sc-puppet-stacks-repository-$ACCOUNT_ID/$CATEGORY/{name}/{version}/$CATEGORY.template.$TEMPLATE_FORMAT",
                                     ],
                                 }
                             },
-                            "artifacts": {
-                                "files": ["*", "**/*"],
-                            },
+                            "artifacts": {"files": ["*", "**/*"],},
                         }
                     ),
                     Type="CODEPIPELINE",
@@ -903,7 +863,9 @@ class StackTemplateBuilder(BaseTemplateBuilder):
 
 
 class NonCFNTemplateBuilder(BaseTemplateBuilder):
-    def build_package_stage(self, pipeline_stages, tpl, stages, options, category, source):
+    def build_package_stage(
+        self, pipeline_stages, tpl, stages, options, category, source
+    ):
         package_input_artifact_name = base_template.SOURCE_OUTPUT_ARTIFACT
         package_project_name = t.Sub("${AWS::StackName}-PackageProject")
         tpl.add_resource(
@@ -924,14 +886,10 @@ class NonCFNTemplateBuilder(BaseTemplateBuilder):
                     Type=constants.ENVIRONMENT_TYPE_DEFAULT,
                     EnvironmentVariables=[
                         codebuild.EnvironmentVariable(
-                            Name="CATEGORY",
-                            Type="PLAINTEXT",
-                            Value=category,
+                            Name="CATEGORY", Type="PLAINTEXT", Value=category,
                         ),
                         codebuild.EnvironmentVariable(
-                            Name="SOURCE_PATH",
-                            Type="PLAINTEXT",
-                            Value=".",
+                            Name="SOURCE_PATH", Type="PLAINTEXT", Value=".",
                         ),
                     ],
                 ),
@@ -948,9 +906,7 @@ class NonCFNTemplateBuilder(BaseTemplateBuilder):
                                     ],
                                 }
                             },
-                            "artifacts": {
-                                "files": ["*.zip"],
-                            },
+                            "artifacts": {"files": ["*.zip"],},
                         }
                     ),
                     Type="CODEPIPELINE",
@@ -1021,14 +977,10 @@ class NonCFNTemplateBuilder(BaseTemplateBuilder):
                     Type=constants.ENVIRONMENT_TYPE_DEFAULT,
                     EnvironmentVariables=[
                         codebuild.EnvironmentVariable(
-                            Name="TEMPLATE_FORMAT",
-                            Type="PLAINTEXT",
-                            Value="yaml",
+                            Name="TEMPLATE_FORMAT", Type="PLAINTEXT", Value="yaml",
                         ),
                         codebuild.EnvironmentVariable(
-                            Name="CATEGORY",
-                            Type="PLAINTEXT",
-                            Value=category,
+                            Name="CATEGORY", Type="PLAINTEXT", Value=category,
                         ),
                         codebuild.EnvironmentVariable(
                             Name="ACCOUNT_ID",
@@ -1048,9 +1000,7 @@ class NonCFNTemplateBuilder(BaseTemplateBuilder):
                                     ],
                                 }
                             },
-                            "artifacts": {
-                                "files": ["*", "**/*"],
-                            },
+                            "artifacts": {"files": ["*", "**/*"],},
                         }
                     ),
                     Type="CODEPIPELINE",
@@ -1085,9 +1035,7 @@ class NonCFNTemplateBuilder(BaseTemplateBuilder):
                                 Name=base_template.DEPLOY_OUTPUT_ARTIFACT
                             )
                         ],
-                        Configuration={
-                            "ProjectName": deploy_project_name,
-                        },
+                        Configuration={"ProjectName": deploy_project_name,},
                     )
                 ],
             )
@@ -1109,7 +1057,9 @@ class TerraformTemplateBuilder(NonCFNTemplateBuilder):
                 tpl, stages, actions, base_template.SOURCE_OUTPUT_ARTIFACT
             )
             pipeline_stages.append(codepipeline.Stages(Name="Tests", Actions=actions))
-        self.build_package_stage(pipeline_stages, tpl, stages, options, "workspace", source)
+        self.build_package_stage(
+            pipeline_stages, tpl, stages, options, "workspace", source
+        )
         self.build_deploy_stage(pipeline_stages, tpl, name, version, "workspace")
         tpl.add_resource(
             codepipeline.Pipeline(

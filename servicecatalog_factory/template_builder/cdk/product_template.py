@@ -51,15 +51,11 @@ def create_cdk_pipeline(
         )
     )
     template.add_parameter(
-        t.Parameter(
-            "CDKSupportStartCDKDeployFunctionArn",
-            Type="String",
-        )
+        t.Parameter("CDKSupportStartCDKDeployFunctionArn", Type="String",)
     )
     template.add_parameter(
         t.Parameter(
-            "CDKSupportGetOutputsForGivenCodebuildIdFunctionArn",
-            Type="String",
+            "CDKSupportGetOutputsForGivenCodebuildIdFunctionArn", Type="String",
         )
     )
     template.add_parameter(
@@ -114,9 +110,7 @@ def create_cdk_pipeline(
         resource_type = "Custom::DeployDetails"
         props = dict()
 
-    runtime_versions = dict(
-        nodejs=constants.BUILDSPEC_RUNTIME_VERSIONS_NODEJS_DEFAULT,
-    )
+    runtime_versions = dict(nodejs=constants.BUILDSPEC_RUNTIME_VERSIONS_NODEJS_DEFAULT,)
     if configuration.get("runtime-versions"):
         runtime_versions.update(configuration.get("runtime-versions"))
 
@@ -130,9 +124,7 @@ def create_cdk_pipeline(
             ServiceRole=t.Sub(
                 "arn:aws:iam::${AWS::AccountId}:role${CDKSupportIAMRolePaths}${CDKSupportCDKDeployRoleName}"
             ),
-            Artifacts=codebuild.Artifacts(
-                Type="NO_ARTIFACTS",
-            ),
+            Artifacts=codebuild.Artifacts(Type="NO_ARTIFACTS",),
             Environment=codebuild.Environment(
                 ComputeType=t.Ref("CDKSupportCDKComputeType"),
                 EnvironmentVariables=[
@@ -201,10 +193,7 @@ def create_cdk_pipeline(
                                     ]
                                 },
                             ),
-                            artifacts={
-                                "name": "CDKDeploy",
-                                "files": ["*", "**/*"],
-                            },
+                            artifacts={"name": "CDKDeploy", "files": ["*", "**/*"],},
                         )
                     )
                 ),
@@ -221,9 +210,7 @@ def create_cdk_pipeline(
             ServiceRole=t.Sub(
                 "arn:aws:iam::${AWS::AccountId}:role${CDKSupportIAMRolePaths}${CDKSupportCDKDeployRoleName}"
             ),
-            Artifacts=codebuild.Artifacts(
-                Type="NO_ARTIFACTS",
-            ),
+            Artifacts=codebuild.Artifacts(Type="NO_ARTIFACTS",),
             Environment=codebuild.Environment(
                 ComputeType=t.Ref("CDKSupportCDKComputeType"),
                 EnvironmentVariables=[
@@ -291,10 +278,7 @@ def create_cdk_pipeline(
                                     ]
                                 },
                             ),
-                            artifacts={
-                                "name": "CDKDeploy",
-                                "files": ["*", "**/*"],
-                            },
+                            artifacts={"name": "CDKDeploy", "files": ["*", "**/*"],},
                         )
                     )
                 ),
@@ -323,9 +307,7 @@ def create_cdk_pipeline(
     template.add_resource(
         DeployDetailsCustomResource(
             "GetOutputsCode",
-            DependsOn=[
-                "StartCDKDeploy",
-            ],
+            DependsOn=["StartCDKDeploy",],
             ServiceToken=t.Ref("CDKSupportGetOutputsForGivenCodebuildIdFunctionArn"),
             CodeBuildBuildId=t.GetAtt("StartCDKDeploy", "BuildId"),
             BucketName=t.Sub("sc-cdk-artifacts-${AWS::AccountId}"),

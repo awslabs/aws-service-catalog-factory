@@ -41,10 +41,8 @@ def bootstrap_branch(
     custom_source_action_custom_action_type_version,
     custom_source_action_custom_action_type_provider,
 ):
-    constants.VERSION = (
-        "https://github.com/awslabs/aws-service-catalog-factory/archive/{}.zip".format(
-            branch_to_bootstrap
-        )
+    constants.VERSION = "https://github.com/awslabs/aws-service-catalog-factory/archive/{}.zip".format(
+        branch_to_bootstrap
     )
     bootstrap(
         source_provider,

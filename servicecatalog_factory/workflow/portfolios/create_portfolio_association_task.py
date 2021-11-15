@@ -60,6 +60,5 @@ class CreatePortfolioAssociationTask(FactoryTask):
                 [self.portfolio_group_name, self.display_name, "associations"]
             )
             cloudformation.create_or_update(
-                StackName=stack_name,
-                TemplateBody=rendered,
+                StackName=stack_name, TemplateBody=rendered,
             )
