@@ -54,9 +54,9 @@ def get_resources() -> list:
                         Value="product",
                     ),
                     dict(
-                        name="SOURCE_PATH",
-                        value=".",
-                        type="PLAINTEXT",
+                        Name="SOURCE_PATH",
+                        Value=".",
+                        Type="PLAINTEXT",
                     ),
                 ],
             ),
