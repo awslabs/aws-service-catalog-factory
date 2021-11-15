@@ -2,6 +2,7 @@
 #  SPDX-License-Identifier: Apache-2.0
 import datetime
 import json
+import logging
 import os
 
 import click
@@ -60,14 +61,20 @@ def show_pipelines(p, format):
                         )
                         for product in nested_products:
                             for version in product.get("Versions", []):
-                                pipeline_name = f"{p_name}-{portfolio.get('DisplayName')}-{product.get('Name')}-{version.get('Name')}-pipeline"
-                                pipelines_to_check["portfolios"][pipeline_name] = dict()
+                                if 'Status' in version.keys() and version['Status'] == 'Terminated':
+                                    logging.info('Excluding terminated product from pipeline lookup')
+                                else:
+                                    pipeline_name = f"{p_name}-{portfolio.get('DisplayName')}-{product.get('Name')}-{version.get('Name')}-pipeline"
+                                    pipelines_to_check["portfolios"][pipeline_name] = dict()
                     for product in portfolios.get("Products", []):
                         for version in product.get("Versions", []):
-                            pipeline_name = (
-                                f"{product.get('Name')}-{version.get('Name')}-pipeline"
-                            )
-                            pipelines_to_check["portfolios"][pipeline_name] = dict()
+                            if 'Status' in version.keys() and version['Status'] == 'Terminated':
+                                logging.info('Excluding terminated product from pipeline lookup')
+                            else:
+                                pipeline_name = (
+                                    f"{product.get('Name')}-{version.get('Name')}-pipeline"
+                                )
+                                pipelines_to_check["portfolios"][pipeline_name] = dict()
 
     fake_date = datetime.datetime.now()
     with betterboto_client.ClientContextManager("codepipeline") as codepipeline:
