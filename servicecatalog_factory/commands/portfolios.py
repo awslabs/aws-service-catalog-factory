@@ -109,11 +109,7 @@ def check_for_external_definitions_for(portfolio, portfolio_file_name, type):
 
 
 def generate_for_portfolios_versions(
-    all_regions,
-    all_tasks,
-    factory_version,
-    pipeline_versions,
-    products_by_region,
+    all_regions, all_tasks, factory_version, pipeline_versions, products_by_region,
 ):
     for version_pipeline_to_build in pipeline_versions:
         version_details = version_pipeline_to_build.get("version")
@@ -125,8 +121,7 @@ def generate_for_portfolios_versions(
             for region, product_args in products_by_region.get(product_name).items():
                 task_id = f"pipeline_template_{product_name}-{version_details.get('Name')}-{region}"
                 all_tasks[task_id] = delete_a_version_task.DeleteAVersionTask(
-                    product_args=product_args,
-                    version=version_details.get("Name"),
+                    product_args=product_args, version=version_details.get("Name"),
                 )
 
         else:
@@ -181,8 +176,7 @@ def generate_for_portfolios_versions(
             ] = t
 
             t = create_version_pipeline_task.CreateVersionPipelineTask(
-                **create_args,
-                region=constants.HOME_REGION,
+                **create_args, region=constants.HOME_REGION,
             )
             logger.info(
                 f"created pipeline_{product_name}-{version_details.get('Name')}"
@@ -191,11 +185,7 @@ def generate_for_portfolios_versions(
 
 
 def generate_for_products_versions(
-    all_regions,
-    all_tasks,
-    factory_version,
-    products_versions,
-    products_by_region,
+    all_regions, all_tasks, factory_version, products_versions, products_by_region,
 ):
     for product_name, pipeline_details in products_versions.items():
 
@@ -239,12 +229,7 @@ def generate_for_products_versions(
 
 
 def generate_for_products(
-    all_tasks,
-    p_name,
-    portfolios,
-    products_by_region,
-    region,
-    products_versions: dict,
+    all_tasks, p_name, portfolios, products_by_region, region, products_versions: dict,
 ):
     for product in portfolios.get("Products", []):
         product_uid = f"{product.get('Name')}"
@@ -304,9 +289,7 @@ def generate_for_products(
             all_tasks[
                 f"version_{product.get('Name')}_{version.get('Name')}-{region}"
             ] = ensure_product_version_details_correct_task.EnsureProductVersionDetailsCorrect(
-                region=region,
-                version=version,
-                product_args=create_product_task_args,
+                region=region, version=version, product_args=create_product_task_args,
             )
 
         all_tasks[f"product_{p_name}-{region}"] = create_product_task.CreateProductTask(
@@ -390,17 +373,15 @@ def generate_for_portfolios(
 
             all_tasks[
                 f"product_{p_name}_{portfolio.get('DisplayName')}_{product.get('Name')}-{region}"
-            ] = create_product_task.CreateProductTask(
-                **create_product_task_args
-            )
+            ] = create_product_task.CreateProductTask(**create_product_task_args)
 
             all_tasks[
                 f"association_{p_name}_{portfolio.get('DisplayName')}_{product.get('Name')}-{region}"
             ] = associate_product_with_portfolio_task.AssociateProductWithPortfolioTask(
-                    region=region,
-                    portfolio_args=create_portfolio_task_args,
-                    product_args=create_product_task_args,
-                )
+                region=region,
+                portfolio_args=create_portfolio_task_args,
+                product_args=create_product_task_args,
+            )
             for version in product.get("Versions", []):
                 pipeline_versions.append(
                     {
@@ -505,8 +486,7 @@ def ensure_code_commit_repo(details):
                     )
                     parent_commit_id = (
                         codecommit.get_branch(
-                            repositoryName=repository_name,
-                            branchName="master",
+                            repositoryName=repository_name, branchName="master",
                         )
                         .get("branch")
                         .get("commitId")
@@ -768,9 +748,7 @@ def generate_launch_constraints(p):
                 logger.info(f"Wrote nested template to {nested_content_file}")
                 s3 = boto3.resource("s3")
                 s3.meta.client.upload_file(
-                    nested_content_file,
-                    bucket_name,
-                    object_key,
+                    nested_content_file, bucket_name, object_key,
                 )
                 logger.info(
                     f"Uploaded nested template to s3://{bucket_name}:{object_key}"
@@ -789,7 +767,9 @@ def generate_launch_constraints(p):
             f"About to write a template: output/constraints/launch-role/{region}.template.yaml"
         )
         if os.path.exists(f"output/constraints/launch-role/{region}.template.yaml"):
-            with open(f"output/constraints/launch-role/{region}.template.yaml", "w") as cfn:
+            with open(
+                f"output/constraints/launch-role/{region}.template.yaml", "w"
+            ) as cfn:
                 main_template = Template(parent_template).render(
                     VERSION=constants.VERSION,
                     ALL_REGIONS=all_regions,
@@ -823,15 +803,10 @@ def deploy_launch_constraints(partition):
 
 
 def get_source_for_pipeline(pipeline_name, execution_id):
-    with betterboto_client.ClientContextManager(
-        "codepipeline",
-    ) as codepipeline:
+    with betterboto_client.ClientContextManager("codepipeline",) as codepipeline:
         paginator = codepipeline.get_paginator("list_pipeline_executions")
         pages = paginator.paginate(
-            pipelineName=pipeline_name,
-            PaginationConfig={
-                "PageSize": 100,
-            },
+            pipelineName=pipeline_name, PaginationConfig={"PageSize": 100,},
         )
         for page in pages:
             for pipeline_execution_summary in page.get(

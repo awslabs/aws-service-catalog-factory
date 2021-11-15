@@ -40,10 +40,8 @@ class CreateProductTask(FactoryTask):
     def run(self):
         logger_prefix = f"{self.region}-{self.name}"
         with self.regional_client("servicecatalog") as service_catalog:
-            search_products_as_admin_response = (
-                service_catalog.search_products_as_admin_single_page(
-                    Filters={"FullTextSearch": [self.name]}
-                )
+            search_products_as_admin_response = service_catalog.search_products_as_admin_single_page(
+                Filters={"FullTextSearch": [self.name]}
             )
             found = False
             product_view_summary = None
@@ -83,11 +81,7 @@ class CreateProductTask(FactoryTask):
                 logger.info(f"Not found product: {self.name}, creating")
 
                 tags = [{"Key": "ServiceCatalogFactory:Actor", "Value": "Product"}] + [
-                    {
-                        "Key": t.get("Key"),
-                        "Value": t.get("Value"),
-                    }
-                    for t in self.tags
+                    {"Key": t.get("Key"), "Value": t.get("Value"),} for t in self.tags
                 ]
 
                 create_product_args = {
@@ -145,10 +139,4 @@ class CreateProductTask(FactoryTask):
             product_view_summary["uid"] = self.uid
             with self.output().open("w") as f:
                 logger.info(f"{logger_prefix}: about to write! {product_view_summary}")
-                f.write(
-                    json.dumps(
-                        product_view_summary,
-                        indent=4,
-                        default=str,
-                    )
-                )
+                f.write(json.dumps(product_view_summary, indent=4, default=str,))

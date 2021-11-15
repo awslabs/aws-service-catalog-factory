@@ -13,24 +13,32 @@ from servicecatalog_factory import constants
 from servicecatalog_factory.commands.portfolios import generate_portfolios
 from betterboto import client as betterboto_client
 
-result_look_up = dict(Failed='red', Succeeded='green')
+result_look_up = dict(Failed="red", Succeeded="green")
+
 
 def show_pipelines(p, format):
     types_of_file = ["apps", "portfolios", "stacks", "workspaces"]
 
     pipelines_to_check = dict(
-        core={'servicecatalog-factory-pipeline': dict()},
-        apps=dict(), portfolios=dict(), stacks=dict(), workspaces=dict()
+        core={"servicecatalog-factory-pipeline": dict()},
+        apps=dict(),
+        portfolios=dict(),
+        stacks=dict(),
+        workspaces=dict(),
     )
     for type_of_file in types_of_file:
         target_dir = os.path.sep.join([p, type_of_file])
         if os.path.exists(target_dir):
             for file_name in os.listdir(target_dir):
-                content = yaml.safe_load(open(os.path.sep.join([target_dir, file_name]), 'r').read())
+                content = yaml.safe_load(
+                    open(os.path.sep.join([target_dir, file_name]), "r").read()
+                )
                 if type_of_file == "apps":
                     for app in content.get("Apps", []):
                         for version in app.get("Versions", []):
-                            pipeline_name = f"app--{app.get('Name')}-{version.get('Name')}-pipeline"
+                            pipeline_name = (
+                                f"app--{app.get('Name')}-{version.get('Name')}-pipeline"
+                            )
                             pipelines_to_check["apps"][pipeline_name] = dict()
                 elif type_of_file == "stacks":
                     for stack in content.get("Stacks", []):
@@ -56,15 +64,19 @@ def show_pipelines(p, format):
                                 pipelines_to_check["portfolios"][pipeline_name] = dict()
                     for product in portfolios.get("Products", []):
                         for version in product.get("Versions", []):
-                            pipeline_name = f"{product.get('Name')}-{version.get('Name')}-pipeline"
+                            pipeline_name = (
+                                f"{product.get('Name')}-{version.get('Name')}-pipeline"
+                            )
                             pipelines_to_check["portfolios"][pipeline_name] = dict()
 
     fake_date = datetime.datetime.now()
-    with betterboto_client.ClientContextManager('codepipeline') as codepipeline:
+    with betterboto_client.ClientContextManager("codepipeline") as codepipeline:
         for type, pipelines in pipelines_to_check.items():
             for pipeline_name, pipeline_details in pipelines.items():
                 try:
-                    executions = codepipeline.list_pipeline_executions(pipelineName=pipeline_name, maxResults=5).get('pipelineExecutionSummaries', [])
+                    executions = codepipeline.list_pipeline_executions(
+                        pipelineName=pipeline_name, maxResults=5
+                    ).get("pipelineExecutionSummaries", [])
                 except codepipeline.exceptions.PipelineNotFoundException as e:
                     executions = []
 
@@ -75,7 +87,7 @@ def show_pipelines(p, format):
                         status="N/A",
                         lastUpdateTime=fake_date,
                         startTime=fake_date,
-                        sourceRevisions=[dict(revisionId="N/A", revisionSummary="N/A")]
+                        sourceRevisions=[dict(revisionId="N/A", revisionSummary="N/A")],
                     )
 
                 trend = list()
@@ -83,23 +95,31 @@ def show_pipelines(p, format):
                     trend.append(
                         dict(
                             start_time=execution.get("startTime", fake_date),
-                            duration=execution.get("lastUpdateTime", fake_date) - execution.get("startTime", fake_date),
+                            duration=execution.get("lastUpdateTime", fake_date)
+                            - execution.get("startTime", fake_date),
                             status=execution.get("status"),
                         )
                     )
 
-                source_revisions = last_execution.get('sourceRevisions')
+                source_revisions = last_execution.get("sourceRevisions")
                 if len(source_revisions) == 0:
-                    source_revisions.append(dict(revisionId="N/A", revisionSummary="N/A"))
+                    source_revisions.append(
+                        dict(revisionId="N/A", revisionSummary="N/A")
+                    )
 
                 pipelines[pipeline_name] = {
                     "name": pipeline_name,
-                    "pipeline_execution_id": last_execution.get("pipelineExecutionId", "N/A"),
+                    "pipeline_execution_id": last_execution.get(
+                        "pipelineExecutionId", "N/A"
+                    ),
                     "start_time": last_execution.get("startTime", fake_date),
                     "status": last_execution.get("status"),
                     "revision_id": source_revisions[0].get("revisionId", "N/A"),
-                    "revision_summary": source_revisions[0].get("revisionSummary", "N/A"),
-                    "duration": last_execution.get("lastUpdateTime") - last_execution.get("startTime"),
+                    "revision_summary": source_revisions[0].get(
+                        "revisionSummary", "N/A"
+                    ),
+                    "duration": last_execution.get("lastUpdateTime")
+                    - last_execution.get("startTime"),
                     "trend": trend,
                 }
 
@@ -107,7 +127,17 @@ def show_pipelines(p, format):
         click.echo(json.dumps(pipelines_to_check, indent=4, default=str))
     elif format == "table":
         table_data = [
-            ["Type", "Name", "Execution Id","Start Time", "Status", "Last Commit Id", "Last Commit Message", "Duration", "Trend"],
+            [
+                "Type",
+                "Name",
+                "Execution Id",
+                "Start Time",
+                "Status",
+                "Last Commit Id",
+                "Last Commit Message",
+                "Duration",
+                "Trend",
+            ],
         ]
         for type, pipelines in pipelines_to_check.items():
             for pipeline_name, pipeline_details in pipelines.items():
@@ -121,7 +151,12 @@ def show_pipelines(p, format):
                         pipeline_details.get("revision_id"),
                         pipeline_details.get("revision_summary"),
                         pipeline_details.get("duration"),
-                        ", ".join([f"{a.get('status')}" for a in pipeline_details.get("trend", [])]),
+                        ", ".join(
+                            [
+                                f"{a.get('status')}"
+                                for a in pipeline_details.get("trend", [])
+                            ]
+                        ),
                     ]
                 )
         table = terminaltables.AsciiTable(table_data)
@@ -129,26 +164,30 @@ def show_pipelines(p, format):
     elif format == "html":
         content = ""
         content += "<table class='pipes'>"
-        content += "    <tr>"        
+        content += "    <tr>"
         content += "        <th>Name</th>"
         content += "        <th>Status</th>"
         content += "        <th>Start Time</th>"
         content += "        <th>Revision Id</th>"
-        content += "        <th>Revision Summary</th>"        
-        content += "        <th>Duration</th>"        
-        content += "        <th>Trend</th>"        
-        content += "    </tr>"        
-        
+        content += "        <th>Revision Summary</th>"
+        content += "        <th>Duration</th>"
+        content += "        <th>Trend</th>"
+        content += "    </tr>"
+
         for type, pipelines in pipelines_to_check.items():
             for pipeline_name, pipeline_details in pipelines.items():
-                result = result_look_up.get(pipeline_details.get('status'), 'amber')
-                trend = ", ".join([f"{a.get('status')[0]}" for a in pipeline_details.get("trend", [])])
+                result = result_look_up.get(pipeline_details.get("status"), "amber")
+                trend = ", ".join(
+                    [f"{a.get('status')[0]}" for a in pipeline_details.get("trend", [])]
+                )
                 content += f"    <tr class='{result}'>"
                 content += f"        <td>{pipeline_details.get('name')}</td>"
                 content += f"        <td>{pipeline_details.get('status')}</td>"
                 content += f"        <td>{pipeline_details.get('start_time')}</td>"
                 content += f"        <td>{pipeline_details.get('revision_id')}</td>"
-                content += f"        <td>{pipeline_details.get('revision_summary')}</td>"
+                content += (
+                    f"        <td>{pipeline_details.get('revision_summary')}</td>"
+                )
                 content += f"        <td>{pipeline_details.get('duration')}</td>"
                 content += f"        <td>{trend}</td>"
                 content += "    </tr>"

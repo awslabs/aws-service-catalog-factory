@@ -38,10 +38,7 @@ class CreateCombinedProductPipelineTask(FactoryTask):
 
         for tag in self.product.get("Tags"):
             tags.append(
-                {
-                    "Key": tag.get("Key"),
-                    "Value": tag.get("Value"),
-                }
+                {"Key": tag.get("Key"), "Value": tag.get("Value"),}
             )
         provisioner = self.product.get("Provisioner", {}).get(
             "Type", constants.PROVISIONERS_DEFAULT
@@ -49,9 +46,7 @@ class CreateCombinedProductPipelineTask(FactoryTask):
         with self.client("cloudformation") as cloudformation:
             if provisioner == constants.PROVISIONERS_CLOUDFORMATION:
                 response = cloudformation.create_or_update(
-                    StackName=friendly_uid,
-                    TemplateBody=template_contents,
-                    Tags=tags,
+                    StackName=friendly_uid, TemplateBody=template_contents, Tags=tags,
                 )
             else:
                 raise Exception(f"Unknown/unsupported provisioner: {provisioner}")

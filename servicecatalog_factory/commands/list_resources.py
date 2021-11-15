@@ -23,11 +23,7 @@ def list_resources():
         template = cfn_tools.load_yaml(template_contents)
         click.echo(f"## Resources for stack: {file.name.split('.')[0]}")
         table_data = [
-            [
-                "Logical Name",
-                "Resource Type",
-                "Name",
-            ],
+            ["Logical Name", "Resource Type", "Name",],
         ]
         table = terminaltables.AsciiTable(table_data)
         for logical_name, resource in template.get("Resources").items():

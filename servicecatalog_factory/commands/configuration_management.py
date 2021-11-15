@@ -54,8 +54,6 @@ def add_secret(secret_name, oauth_token, secret_token):
                         "SecretToken": secret_token or oauth_token,
                     }
                 ),
-                VersionStages=[
-                    "AWSCURRENT",
-                ],
+                VersionStages=["AWSCURRENT",],
             )
     click.echo("Uploaded secret")

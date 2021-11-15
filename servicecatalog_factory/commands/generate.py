@@ -32,13 +32,15 @@ def generate(p):
     tasks += portfolios_commands.generate(portfolios_path, factory_version)
 
     stacks_path = os.path.sep.join([p, "stacks"])
-    tasks += generic_commands.generate(stacks_path, 'Stacks', 'stack', factory_version)
+    tasks += generic_commands.generate(stacks_path, "Stacks", "stack", factory_version)
 
     workspaces_path = os.path.sep.join([p, "workspaces"])
-    tasks += generic_commands.generate(workspaces_path, 'Workspaces', 'workspace', factory_version)
+    tasks += generic_commands.generate(
+        workspaces_path, "Workspaces", "workspace", factory_version
+    )
 
     workspaces_path = os.path.sep.join([p, "apps"])
-    tasks += generic_commands.generate(workspaces_path, 'Apps', 'app', factory_version)
+    tasks += generic_commands.generate(workspaces_path, "Apps", "app", factory_version)
 
     for type in [
         "failure",

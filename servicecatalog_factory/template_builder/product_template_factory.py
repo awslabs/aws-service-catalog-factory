@@ -3,6 +3,7 @@
 from servicecatalog_factory.template_builder.cdk.product_pipeline import CDK100Template
 from servicecatalog_factory.template_builder import builders
 
+
 def get(name, version):
     if name == "CDK" and version == "1.0.0":
         return CDK100Template()

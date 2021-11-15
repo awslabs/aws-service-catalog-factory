@@ -24,8 +24,7 @@ def get_package_action_from(pipeline_name, codepipeline_id):
     with betterboto_client.ClientContextManager("codepipeline") as codepipeline:
         paginator = codepipeline.get_paginator("list_action_executions")
         pages = paginator.paginate(
-            pipelineName=pipeline_name,
-            filter={"pipelineExecutionId": codepipeline_id},
+            pipelineName=pipeline_name, filter={"pipelineExecutionId": codepipeline_id},
         )
         for page in pages:
             for action_execution_detail in page.get("actionExecutionDetails", []):
@@ -80,9 +79,7 @@ def set_template_url_for_codepipeline_id(pipeline_name, codepipeline_id, region)
             .read()
         )
         s3.put_object(
-            Bucket=bucket,
-            Key=return_key,
-            Body=template,
+            Bucket=bucket, Key=return_key, Body=template,
         )
     action_configuration["BUCKET"] = bucket
     action_configuration["TEMPLATE_URL"] = return_key
@@ -100,14 +97,7 @@ def create_or_update_provisioning_artifact(
     bucket = f"sc-factory-artifacts-{os.environ.get('ACCOUNT_ID')}-{os.environ.get('REGION')}"
     key = f"{provisioner}/{product}/product_ids.json"
     with betterboto_client.ClientContextManager("s3") as s3:
-        body = (
-            s3.get_object(
-                Bucket=bucket,
-                Key=key,
-            )
-            .get("Body")
-            .read()
-        )
+        body = s3.get_object(Bucket=bucket, Key=key,).get("Body").read()
         product_ids_by_region = json.loads(body)
         product_id = product_ids_by_region[region]
 
@@ -150,10 +140,10 @@ def create_or_update_provisioning_artifact(
         )
 
         click.echo(f"Checking for old versions of: {version_name} to delete")
-        provisioning_artifact_details = (
-            servicecatalog.list_provisioning_artifacts_single_page(
-                ProductId=product_id
-            ).get("ProvisioningArtifactDetails", [])
+        provisioning_artifact_details = servicecatalog.list_provisioning_artifacts_single_page(
+            ProductId=product_id
+        ).get(
+            "ProvisioningArtifactDetails", []
         )
         for provisioning_artifact_detail in provisioning_artifact_details:
             if (

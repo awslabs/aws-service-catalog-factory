@@ -35,11 +35,14 @@ def bootstrap_branch(
     scm_bucket_name,
     scm_object_key,
     create_repo,
+    should_validate,
+    custom_source_action_git_url,
+    custom_source_action_git_web_hook_ip_address,
+    custom_source_action_custom_action_type_version,
+    custom_source_action_custom_action_type_provider,
 ):
-    constants.VERSION = (
-        "https://github.com/awslabs/aws-service-catalog-factory/archive/{}.zip".format(
-            branch_to_bootstrap
-        )
+    constants.VERSION = "https://github.com/awslabs/aws-service-catalog-factory/archive/{}.zip".format(
+        branch_to_bootstrap
     )
     bootstrap(
         source_provider,
@@ -54,6 +57,11 @@ def bootstrap_branch(
         scm_bucket_name,
         scm_object_key,
         create_repo,
+        should_validate,
+        custom_source_action_git_url,
+        custom_source_action_git_web_hook_ip_address,
+        custom_source_action_custom_action_type_version,
+        custom_source_action_custom_action_type_provider,
     )
 
 

@@ -24,8 +24,18 @@ def test_bootstrap_branch(bootstrap_mocked):
         scm_bucket_name,
         scm_object_key,
         create_repo,
+        should_validate,
+        custom_source_action_git_url,
+        custom_source_action_git_web_hook_ip_address,
+        custom_source_action_custom_action_type_version,
+        custom_source_action_custom_action_type_provider,
     ) = (
         branch_name,
+        None,
+        None,
+        None,
+        None,
+        None,
         None,
         None,
         None,
@@ -54,6 +64,11 @@ def test_bootstrap_branch(bootstrap_mocked):
         scm_bucket_name,
         scm_object_key,
         create_repo,
+        should_validate,
+        custom_source_action_git_url,
+        custom_source_action_git_web_hook_ip_address,
+        custom_source_action_custom_action_type_version,
+        custom_source_action_custom_action_type_provider,
     )
 
     # verify
