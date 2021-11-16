@@ -1,6 +1,6 @@
 #  Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-
+from servicecatalog_factory import constants
 from servicecatalog_factory.template_builder import product_template_factory
 from servicecatalog_factory.workflow import tasks
 import luigi
@@ -54,6 +54,11 @@ class CreateGenericVersionPipelineTask(tasks.FactoryTask):
 
     def requires(self):
         return self.clone(CreateGenericVersionPipelineTemplateTask)
+
+    def api_calls_used(self):
+        return [
+            f'cloudformation.create_or_update_{constants.HOME_REGION}',
+        ]
 
     def run(self):
         template = self.input().open().read()
