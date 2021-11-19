@@ -127,18 +127,22 @@ source: any(include("source_codecommit"), include("source_github"), include("sou
 
 source_s3:
   Provider: enum("S3")
+  Path: str(required=False)
   Configuration: include('configuration_s3')
 
 source_github:
   Provider: enum("Github")
+  Path: str(required=False)
   Configuration: include('configuration_github')
 
 source_codestarsourceconnection:
   Provider: enum("CodeStarSourceConnection")
+  Path: str(required=False)
   Configuration: include('configuration_codestarsourceconnection')
 
 source_codecommit:
   Provider: enum("CodeCommit")
+  Path: str(required=False)
   Configuration: include('configuration_codecommit')
 
 code_s3_bucket:
