@@ -89,6 +89,10 @@ workspace_with_source:
 
 schema: enum("factory-2019-04-01", "Factory-2019-04-01")
 
+tag:
+  Key: str()
+  Value: str()
+
 configuration_codecommit:
   RepositoryName: str(required=False)
   BranchName: str(required=False)
