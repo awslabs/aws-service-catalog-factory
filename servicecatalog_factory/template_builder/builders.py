@@ -531,7 +531,9 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                             "BuildSpecImage", constants.ENVIRONMENT_IMAGE_DEFAULT
                         ),
                         Type=constants.ENVIRONMENT_TYPE_DEFAULT,
-                        PrivilegedMode=stages.get("Build", {}).get("PrivilegedMode","false"),
+                        PrivilegedMode=stages.get("Build", {}).get(
+                            "PrivilegedMode", "false"
+                        ),
                         EnvironmentVariables=[
                             codebuild.EnvironmentVariable(
                                 Name="TEMPLATE_FORMAT", Type="PLAINTEXT", Value="yaml",
