@@ -532,7 +532,8 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                         ),
                         Type=constants.ENVIRONMENT_TYPE_DEFAULT,
                         PrivilegedMode=stages.get("Build", {}).get(
-                            "PrivilegedMode", constants.GENERIC_BUILD_PROJECT_PRIVILEGED_MODE_DEFAULT
+                            "PrivilegedMode",
+                            constants.GENERIC_BUILD_PROJECT_PRIVILEGED_MODE_DEFAULT,
                         ),
                         EnvironmentVariables=[
                             codebuild.EnvironmentVariable(
