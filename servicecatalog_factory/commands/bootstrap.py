@@ -8,7 +8,7 @@ import click
 from betterboto import client as betterboto_client
 from jinja2 import Template
 
-from servicecatalog_factory import constants
+from servicecatalog_factory import constants, config
 from servicecatalog_factory.commands.portfolios import get_regions
 from servicecatalog_factory.template_builder import product_templates
 from servicecatalog_factory.utilities.assets import (
@@ -86,6 +86,7 @@ def bootstrap(
 ):
     click.echo("Starting bootstrap")
     click.echo("Starting regional deployments")
+    initialiser_stack_tags = config.get_initialiser_stack_tags()
     all_regions = get_regions()
     with betterboto_client.MultiRegionClientContextManager(
         "cloudformation", all_regions
@@ -111,6 +112,7 @@ def bootstrap(
                     "UsePreviousValue": False,
                 },
             ],
+            "Tags": initialiser_stack_tags,
         }
         for client_region, client in clients.items():
             process = Thread(
@@ -196,6 +198,7 @@ def bootstrap(
         Source=source_args,
         create_repo=create_repo,
         should_validate=should_validate,
+        tags=initialiser_stack_tags,
     )
     template = Template(template).render(
         VERSION=constants.VERSION,
@@ -203,6 +206,7 @@ def bootstrap(
         Source=source_args,
         create_repo=create_repo,
         should_validate=should_validate,
+        tags=initialiser_stack_tags,
     )
     args = {
         "StackName": constants.BOOTSTRAP_STACK_NAME,
@@ -215,6 +219,7 @@ def bootstrap(
                 "UsePreviousValue": False,
             },
         ],
+        "Tags": initialiser_stack_tags,
     }
     with betterboto_client.ClientContextManager("cloudformation") as cloudformation:
         cloudformation.create_or_update(**args)
@@ -222,6 +227,7 @@ def bootstrap(
             StackName=constants.BOOTSTRAP_TEMPLATES_STACK_NAME,
             TemplateBody=product_templates.get_template().to_yaml(clean_up=True),
             Capabilities=["CAPABILITY_NAMED_IAM"],
+            Tags=initialiser_stack_tags,
         )
         response = cloudformation.describe_stacks(
             StackName=constants.BOOTSTRAP_STACK_NAME

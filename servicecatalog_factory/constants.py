@@ -106,3 +106,5 @@ CODEPIPELINE_SUPPORTED_REGIONS = [
 STATIC_HTML_PAGE = "static-html-page.html"
 
 GENERIC_BUILD_PROJECT_PRIVILEGED_MODE_DEFAULT = False
+
+INITIALISER_STACK_NAME_SSM_PARAMETER = "service-catalog-factory-initialiser-stack-name"
