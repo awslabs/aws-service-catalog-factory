@@ -4,7 +4,7 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: |
   Initialiser template used to bring up the install ServiceCatalog-Factory
-  {"version": "0.65.0", "framework": "servicecatalog-factory", "role": "initialiser"}
+  {"version": "0.73.0", "framework": "servicecatalog-factory", "role": "initialiser"}
 
 
 Metadata:
@@ -18,6 +18,7 @@ Metadata:
           default: "Options"
         Parameters:
           - ShouldValidate
+          - ShouldPipelinesInheritTags
       - Label:
           default: "Source Code Management - choose which one of the following sources you will use:"
         Parameters:
@@ -64,6 +65,13 @@ Parameters:
       - "false"
     Default: "true"
     Description: "Setting this to true adds a validate stage to the pipeline where the manifest file validated before the deploy occurs."
+  ShouldPipelinesInheritTags:
+    Type: String
+    AllowedValues:
+      - "true"
+      - "false"
+    Default: "true"
+    Description: "Setting this to true means tags used for this initialiser stack are passed onto pipelines created"
   SCMSourceProvider:
     Type: String
     AllowedValues:
@@ -119,6 +127,15 @@ Resources:
       Name: service-catalog-factory-initialiser-version
       Type: String
       Value: '0.57.2--zzz' #InitialiserVersion
+      Tags:
+        "ServiceCatalogFactory:Actor": "Framework"
+
+  InitialiserStackNameParam:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: service-catalog-factory-initialiser-stack-name
+      Type: String
+      Value: !Ref AWS::StackName
       Tags:
         "ServiceCatalogFactory:Actor": "Framework"
 
@@ -203,6 +220,9 @@ Resources:
           - Name: SCT_SHOULD_VALIDATE
             Type: PLAINTEXT
             Value: !Ref ShouldValidate
+          - Name: SHOULD_PIPELINES_INHERIT_TAGS
+            Type: PLAINTEXT
+            Value: !Ref ShouldPipelinesInheritTags
 
       Source:
         Type: NO_SOURCE
@@ -213,6 +233,7 @@ Resources:
               commands:
                 - pip install ${VERSION}
                 - servicecatalog-factory --info set-regions ${ENABLED_REGIONS}
+                - servicecatalog-factory set-config-value should_pipelines_inherit_tags ${SHOULD_PIPELINES_INHERIT_TAGS}
             build:
               commands:
                 - servicecatalog-factory --info bootstrap
@@ -322,7 +343,9 @@ Resources:
 
   StartInstall:
     Type: Custom::CustomResource
-    DependsOn: InitialiserProject
+    DependsOn:
+      - InitialiserProject
+      - InitialiserStackNameParam
     Properties:
       ServiceToken: !GetAtt StartInstallLambda.Arn
       ProjectName: !Ref InitialiserProject
@@ -344,6 +367,8 @@ Resources:
           - !Ref SCMCustomSourceActionCustomActionTypeVersion
           - !Ref SCMCustomSourceActionCustomActionTypeProvider
           - !Ref ShouldValidate
+          - !Ref ShouldPipelinesInheritTags
+
 
 Outputs:
   ServiceCatalogFactoryRepoConsoleURL:

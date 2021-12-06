@@ -106,3 +106,8 @@ CODEPIPELINE_SUPPORTED_REGIONS = [
 STATIC_HTML_PAGE = "static-html-page.html"
 
 GENERIC_BUILD_PROJECT_PRIVILEGED_MODE_DEFAULT = False
+
+INITIALISER_STACK_NAME_SSM_PARAMETER = "service-catalog-factory-initialiser-stack-name"
+
+
+CONFIG_SHOULD_PIPELINES_INHERIT_TAGS = "should_pipelines_inherit_tags"

@@ -53,7 +53,10 @@ class CreateVersionPipelineTask(FactoryTask):
         template = cfn_tools.load_yaml(template_contents)
         friendly_uid = template.get("Description").split("\n")[0]
         self.info(f"creating the stack: {friendly_uid}")
-        tags = []
+        tags = [dict(Key="ServiceCatalogFactory:Actor", Value="Generated",)]
+        if self.should_pipelines_inherit_tags:
+            tags += list(self.initialiser_stack_tags)
+
         for tag in self.tags:
             tags.append(
                 {"Key": tag.get("Key"), "Value": tag.get("Value"),}

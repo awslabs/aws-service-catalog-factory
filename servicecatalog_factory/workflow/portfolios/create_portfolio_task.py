@@ -34,6 +34,8 @@ class CreatePortfolioTask(FactoryTask):
                 f"{self.portfolio_group_name}-{self.display_name}"
             )
             tags = []
+            if self.should_pipelines_inherit_tags:
+                tags += list(self.initialiser_stack_tags)
             for t in self.tags:
                 tags.append(
                     {"Key": t.get("Key"), "Value": t.get("Value"),}
