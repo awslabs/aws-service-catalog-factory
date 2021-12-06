@@ -62,4 +62,21 @@ def get_initialiser_stack_tags():
                 f"Could not find SSM parameter: {constants.INITIALISER_STACK_NAME_SSM_PARAMETER}, do not know the tags to use"
             )
             return []
-        return yaml.safe_load()
+
+
+def get_config():
+    logger.info("getting config")
+    with betterboto_client.ClientContextManager(
+        "ssm",
+    ) as ssm:
+        response = ssm.get_parameter(Name=constants.CONFIG_PARAM_NAME)
+        return yaml.safe_load(response.get("Parameter").get("Value"))
+
+
+def get_should_pipelines_inherit_tags():
+    logger.info(
+        f"getting {constants.CONFIG_SHOULD_PIPELINES_INHERIT_TAGS}"
+    )
+    return get_config().get(
+        constants.CONFIG_SHOULD_PIPELINES_INHERIT_TAGS, True
+    )

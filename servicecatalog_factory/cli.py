@@ -15,6 +15,7 @@ from servicecatalog_factory.commands import show_pipelines as show_pipelines_com
 from servicecatalog_factory.commands import stacks
 from servicecatalog_factory.commands import validate as validate_commands
 from servicecatalog_factory.commands import version as version_commands
+from servicecatalog_factory.commands import management as management_commands
 from servicecatalog_factory import cloudformation_servicecatalog_deploy_action
 import logging
 import click
@@ -518,6 +519,13 @@ def create_or_update_provisioning_artifact_from_codepipeline_id(
     cloudformation_servicecatalog_deploy_action.deploy(
         pipeline_name, pipeline_region, codepipeline_id, region
     )
+
+
+@cli.command()
+@click.argument("name")
+@click.argument("value")
+def set_config_value(name, value):
+    management_commands.set_config_value(name, value)
 
 
 if __name__ == "__main__":
