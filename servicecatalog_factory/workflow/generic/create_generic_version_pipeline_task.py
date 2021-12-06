@@ -1,6 +1,6 @@
 #  Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-from servicecatalog_factory import constants
+from servicecatalog_factory import constants, utils
 from servicecatalog_factory.template_builder import product_template_factory
 from servicecatalog_factory.workflow import tasks
 import luigi
@@ -44,6 +44,7 @@ class CreateGenericVersionPipelineTask(tasks.FactoryTask):
     source = luigi.DictParameter()
     options = luigi.DictParameter()
     stages = luigi.DictParameter()
+    tags = luigi.ListParameter()
 
     def params_for_results_display(self):
         return {
@@ -63,8 +64,16 @@ class CreateGenericVersionPipelineTask(tasks.FactoryTask):
     def run(self):
         template = self.input().open().read()
         friendly_uid = f"{self.category}--{self.name}-{self.version}"
+
+        tags = [dict(Key="ServiceCatalogFactory:Actor", Value="Generated", )]
+        if self.should_pipelines_inherit_tags:
+            tags += list(self.initialiser_stack_tags)
+
+        for tag in self.tags:
+            tags.append(dict(Key=tag.get("Key"), Value=tag.get("Value"), ))
+
         with self.client("cloudformation") as cloudformation:
             cloudformation.create_or_update(
-                StackName=friendly_uid, TemplateBody=template,
+                StackName=friendly_uid, TemplateBody=template, Tags=tags,
             )
         self.write_output(self.params_for_results_display())

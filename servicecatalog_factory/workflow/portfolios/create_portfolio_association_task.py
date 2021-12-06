@@ -59,6 +59,10 @@ class CreatePortfolioAssociationTask(FactoryTask):
             stack_name = "-".join(
                 [self.portfolio_group_name, self.display_name, "associations"]
             )
+            tags = [dict(Key="ServiceCatalogFactory:Actor", Value="Generated", )]
+            if self.should_pipelines_inherit_tags:
+                tags += list(self.initialiser_stack_tags)
+
             cloudformation.create_or_update(
-                StackName=stack_name, TemplateBody=rendered,
+                StackName=stack_name, TemplateBody=rendered, Tags=tags,
             )

@@ -24,6 +24,20 @@ class FactoryTask(luigi.Task):
         return account_id
 
     @property
+    def should_pipelines_inherit_tags(self):
+        should_pipelines_inherit_tags_value = os.environ.get("SCT_SHOULD_PIPELINES_INHERIT_TAGS", None)
+        if should_pipelines_inherit_tags_value is None:
+            raise Exception("You must export SCT_SHOULD_PIPELINES_INHERIT_TAGS")
+        return should_pipelines_inherit_tags_value.upper() == "TRUE"
+
+    @property
+    def initialiser_stack_tags(self):
+        initialiser_stack_tags_value = os.environ.get("SCT_INITIALISER_STACK_TAGS", None)
+        if initialiser_stack_tags_value is None:
+            raise Exception("You must export SCT_INITIALISER_STACK_TAGS")
+        return json.loads(initialiser_stack_tags_value)
+
+    @property
     def factory_region(self):
         region = os.environ.get("REGION", None)
         if region is None:

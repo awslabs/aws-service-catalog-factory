@@ -28,6 +28,7 @@ def generate(path, item_collection_name, category, factory_version):
                             item.get("Options", {}), version.get("Options", {})
                         ),
                         stages=stages,
+                        tags=version.get("Tags", []) + item.get("Tags", []),
                     )
                 )
 

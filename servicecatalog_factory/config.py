@@ -73,6 +73,7 @@ def get_config():
         return yaml.safe_load(response.get("Parameter").get("Value"))
 
 
+@functools.lru_cache(maxsize=32)
 def get_should_pipelines_inherit_tags():
     logger.info(
         f"getting {constants.CONFIG_SHOULD_PIPELINES_INHERIT_TAGS}"

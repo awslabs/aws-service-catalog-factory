@@ -15,7 +15,7 @@ from luigi import LuigiStatusCode
 
 from servicecatalog_factory.commands import portfolios as portfolios_commands
 from servicecatalog_factory.commands import generic as generic_commands
-from servicecatalog_factory import constants
+from servicecatalog_factory import constants, config
 
 import logging
 
@@ -51,6 +51,9 @@ def generate(p):
         "broken_task",
     ]:
         os.makedirs(Path(constants.RESULTS_DIRECTORY) / type)
+
+    os.environ["SCT_SHOULD_PIPELINES_INHERIT_TAGS"] = str(config.get_should_pipelines_inherit_tags())
+    os.environ["SCT_INITIALISER_STACK_TAGS"] = json.dumps(config.get_initialiser_stack_tags())
 
     run_result = luigi.build(
         tasks,
