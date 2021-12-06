@@ -66,18 +66,12 @@ def get_initialiser_stack_tags():
 
 def get_config():
     logger.info("getting config")
-    with betterboto_client.ClientContextManager(
-        "ssm",
-    ) as ssm:
+    with betterboto_client.ClientContextManager("ssm",) as ssm:
         response = ssm.get_parameter(Name=constants.CONFIG_PARAM_NAME)
         return yaml.safe_load(response.get("Parameter").get("Value"))
 
 
 @functools.lru_cache(maxsize=32)
 def get_should_pipelines_inherit_tags():
-    logger.info(
-        f"getting {constants.CONFIG_SHOULD_PIPELINES_INHERIT_TAGS}"
-    )
-    return get_config().get(
-        constants.CONFIG_SHOULD_PIPELINES_INHERIT_TAGS, True
-    )
+    logger.info(f"getting {constants.CONFIG_SHOULD_PIPELINES_INHERIT_TAGS}")
+    return get_config().get(constants.CONFIG_SHOULD_PIPELINES_INHERIT_TAGS, True)

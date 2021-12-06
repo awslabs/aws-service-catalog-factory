@@ -52,8 +52,12 @@ def generate(p):
     ]:
         os.makedirs(Path(constants.RESULTS_DIRECTORY) / type)
 
-    os.environ["SCT_SHOULD_PIPELINES_INHERIT_TAGS"] = str(config.get_should_pipelines_inherit_tags())
-    os.environ["SCT_INITIALISER_STACK_TAGS"] = json.dumps(config.get_initialiser_stack_tags())
+    os.environ["SCT_SHOULD_PIPELINES_INHERIT_TAGS"] = str(
+        config.get_should_pipelines_inherit_tags()
+    )
+    os.environ["SCT_INITIALISER_STACK_TAGS"] = json.dumps(
+        config.get_initialiser_stack_tags()
+    )
 
     run_result = luigi.build(
         tasks,

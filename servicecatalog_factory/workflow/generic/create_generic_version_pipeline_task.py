@@ -65,12 +65,12 @@ class CreateGenericVersionPipelineTask(tasks.FactoryTask):
         template = self.input().open().read()
         friendly_uid = f"{self.category}--{self.name}-{self.version}"
 
-        tags = [dict(Key="ServiceCatalogFactory:Actor", Value="Generated", )]
+        tags = [dict(Key="ServiceCatalogFactory:Actor", Value="Generated",)]
         if self.should_pipelines_inherit_tags:
             tags += list(self.initialiser_stack_tags)
 
         for tag in self.tags:
-            tags.append(dict(Key=tag.get("Key"), Value=tag.get("Value"), ))
+            tags.append(dict(Key=tag.get("Key"), Value=tag.get("Value"),))
 
         with self.client("cloudformation") as cloudformation:
             cloudformation.create_or_update(
