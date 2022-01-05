@@ -15,6 +15,7 @@ Welcome to aws-service-catalog-factory's documentation!
    factory/using_the_cli
    factory/using_the_sdk
    factory/terraform_support
+   factory/cdk_support
 
    factory/project_assurance
 
