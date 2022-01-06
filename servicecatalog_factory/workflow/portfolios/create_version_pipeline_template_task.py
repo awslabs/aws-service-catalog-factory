@@ -147,6 +147,7 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
             friendly_uid=f"{friendly_uid}-{self.version.get('Name')}",
             version=self.version,
             product=self.product,
+            template_format=self.provisioner.get("Format", "yaml"),
             Options=utils.merge(
                 self.product.get("Options", {}), self.version.get("Options", {})
             ),
