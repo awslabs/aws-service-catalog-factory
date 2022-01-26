@@ -777,7 +777,7 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                                 "build": {
                                     "commands": [
                                         "cd $SOURCE_PATH",
-                                        f"aws s3 cp $CATEGORY.template.$TEMPLATE_FORMAT s3://sc-puppet-stacks-repository-$ACCOUNT_ID/$CATEGORY/{name}/{version}/$CATEGORY.template.$TEMPLATE_FORMAT",
+                                        f'aws s3 cp . s3://sc-puppet-stacks-repository-$ACCOUNT_ID/$CATEGORY/{name}/{version}/ --recursive --exclude "*" --include "$CATEGORY.template.$TEMPLATE_FORMAT" --include "$CATEGORY.template-*.$TEMPLATE_FORMAT"',
                                     ],
                                 }
                             },
