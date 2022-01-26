@@ -5,6 +5,7 @@ import json
 
 import troposphere as t
 import yaml
+import jinja2
 
 from servicecatalog_factory import utils
 from servicecatalog_factory import config
@@ -619,6 +620,7 @@ class StackTemplateBuilder(BaseTemplateBuilder):
 
         if stages.get("Package", {}).get("BuildSpec"):
             package_build_spec = stages.get("Package", {}).get("BuildSpec")
+            package_build_spec = jinja2.Template(package_build_spec).render(ALL_REGIONS=all_regions)
         else:
             package_build_spec = yaml.safe_dump(
                 {
