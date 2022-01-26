@@ -38,6 +38,7 @@ class FactoryTaskUnitTest(unittest.TestCase):
 
         self.hub_client_mock, self.sut.hub_client = mocked_client()
         self.hub_regional_client_mock, self.sut.hub_regional_client = mocked_client()
+        self.sut.client = mock.MagicMock()
 
         self.sut.write_output = mock.MagicMock()
         self.sut.input = mock.MagicMock()

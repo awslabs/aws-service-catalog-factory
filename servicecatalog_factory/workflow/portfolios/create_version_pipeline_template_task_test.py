@@ -1,17 +1,19 @@
 #  Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 
-from unittest import skip
+from unittest import mock, skip
 from servicecatalog_factory.workflow import tasks_unit_tests_helper
 
+import os
 
 class CreateVersionPipelineTemplateTaskTest(
     tasks_unit_tests_helper.FactoryTaskUnitTest
 ):
-    all_regions = []
+    version = {}
+    all_regions = ["region"]
     version = {}
     product = {}
-    provisioner = {}
+    provisioner = {"Type": "Cloudformation"}
     template = {}
     factory_version = "factory_version"
     products_args_by_region = {}
@@ -50,6 +52,25 @@ class CreateVersionPipelineTemplateTaskTest(
 
         # verify
         self.assertEqual(expected_result, actual_result)
+
+    
+    @mock.patch.dict(os.environ, {"ACCOUNT_ID": "account_id", "REGION": "region"}, clear=True)
+    def test_handle_cloudformation_provisioner_format(self):
+        for provisioner_format in [None, "json", "yaml"]:
+            # setup
+            self.sut.provisioner = {"Type": "Cloudformation", "Format": provisioner_format}
+
+            # exercise
+            rendered = self.sut.handle_cloudformation_provisioner(
+                product_ids_by_region={},
+                friendly_uid="",
+                tags=[],
+                source={"Provider": "codecommit", "Configuration": { "PollForSourceChanges": "False"} }
+            )
+
+            # verify
+            self.assertIn(f"product.template.{provisioner_format}", rendered)
+            self.assertNotIn(f"product.template.{'yaml' if provisioner_format == 'json' else 'json'}", rendered)
 
     @skip
     def test_requires(self):
