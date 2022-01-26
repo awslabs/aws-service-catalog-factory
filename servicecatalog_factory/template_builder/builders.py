@@ -5,6 +5,7 @@ import json
 
 import troposphere as t
 import yaml
+import jinja2
 
 from servicecatalog_factory import utils
 from servicecatalog_factory import config
@@ -619,6 +620,7 @@ class StackTemplateBuilder(BaseTemplateBuilder):
 
         if stages.get("Package", {}).get("BuildSpec"):
             package_build_spec = stages.get("Package", {}).get("BuildSpec")
+            package_build_spec = jinja2.Template(package_build_spec).render(ALL_REGIONS=all_regions)
         else:
             package_build_spec = yaml.safe_dump(
                 {
@@ -673,6 +675,9 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                         ),
                         codebuild.EnvironmentVariable(
                             Name="SOURCE_PATH", Type="PLAINTEXT", Value=".",
+                        ),
+                        codebuild.EnvironmentVariable(
+                            Name="ALL_REGIONS", Type="PLAINTEXT", Value=" ".join(all_regions),
                         ),
                     ],
                 ),
@@ -777,7 +782,7 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                                 "build": {
                                     "commands": [
                                         "cd $SOURCE_PATH",
-                                        f"aws s3 cp $CATEGORY.template.$TEMPLATE_FORMAT s3://sc-puppet-stacks-repository-$ACCOUNT_ID/$CATEGORY/{name}/{version}/$CATEGORY.template.$TEMPLATE_FORMAT",
+                                        f'aws s3 cp . s3://sc-puppet-stacks-repository-$ACCOUNT_ID/$CATEGORY/{name}/{version}/ --recursive --exclude "*" --include "$CATEGORY.template.$TEMPLATE_FORMAT" --include "$CATEGORY.template-*.$TEMPLATE_FORMAT"',
                                     ],
                                 }
                             },
