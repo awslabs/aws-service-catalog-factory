@@ -674,6 +674,9 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                         codebuild.EnvironmentVariable(
                             Name="SOURCE_PATH", Type="PLAINTEXT", Value=".",
                         ),
+                        codebuild.EnvironmentVariable(
+                            Name="ALL_REGIONS", Type="PLAINTEXT", Value=" ".join(all_regions),
+                        ),
                     ],
                 ),
                 Source=codebuild.Source(
