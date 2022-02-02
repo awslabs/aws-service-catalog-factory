@@ -7,6 +7,7 @@ from servicecatalog_factory.workflow.portfolios.create_version_pipeline_template
     CreateVersionPipelineTemplateTask,
 )
 from servicecatalog_factory.workflow.tasks import FactoryTask
+from servicecatalog_factory import constants
 
 
 class CreateVersionPipelineTask(FactoryTask):
@@ -47,6 +48,11 @@ class CreateVersionPipelineTask(FactoryTask):
             factory_version=self.factory_version,
             tags=self.tags,
         )
+
+    def api_calls_used(self):
+        return [
+            f"cloudformation.create_or_update_{constants.HOME_REGION}",
+        ]
 
     def run(self):
         template_contents = self.input().open("r").read()

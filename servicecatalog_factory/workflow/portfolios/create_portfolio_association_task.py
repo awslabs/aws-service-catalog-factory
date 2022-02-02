@@ -40,6 +40,11 @@ class CreatePortfolioAssociationTask(FactoryTask):
             "display_name": self.display_name,
         }
 
+    def api_calls_used(self):
+        return [
+            f"cloudformation.create_or_update_{constants.HOME_REGION}",
+        ]
+
     def output(self):
         output_file = f"output/CreatePortfolioAssociationTask/{self.region}-{self.portfolio_group_name}-{self.display_name}.json"
         return luigi.LocalTarget(output_file)
