@@ -16,6 +16,7 @@ from luigi import LuigiStatusCode
 from servicecatalog_factory.commands import portfolios as portfolios_commands
 from servicecatalog_factory.commands import generic as generic_commands
 from servicecatalog_factory import constants, config
+from servicecatalog_factory.commands.extract_from_ssm import extract_from_ssm
 
 import logging
 
@@ -28,6 +29,7 @@ def generate(p):
     logger.info("Generating")
     tasks = []
 
+    extract_from_ssm(p)
     portfolios_path = os.path.sep.join([p, "portfolios"])
     tasks += portfolios_commands.generate(portfolios_path, factory_version)
 

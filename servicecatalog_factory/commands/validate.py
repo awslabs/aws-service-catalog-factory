@@ -5,6 +5,7 @@ import os
 import click
 
 from servicecatalog_factory.utilities.assets import resolve_from_site_packages
+from servicecatalog_factory.commands.extract_from_ssm import extract_from_ssm
 
 import yamale
 import logging
@@ -14,6 +15,7 @@ logger.setLevel(logging.INFO)
 
 
 def validate(p):
+    extract_from_ssm(p)
     types_of_file = ["apps", "portfolios", "stacks", "workspaces"]
 
     for type_of_file in types_of_file:

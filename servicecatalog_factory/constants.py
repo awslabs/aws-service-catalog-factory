@@ -111,3 +111,6 @@ INITIALISER_STACK_NAME_SSM_PARAMETER = "service-catalog-factory-initialiser-stac
 
 
 CONFIG_SHOULD_PIPELINES_INHERIT_TAGS = "should_pipelines_inherit_tags"
+
+
+SERVICE_CATALOG_FACTORY_PIPELINES = "/servicecatalog-factory/pipelines"
