@@ -61,10 +61,10 @@ def extract_from_ssm(target):
 
                 if item_type == "portfolios":
                     item["DisplayName"] = item_name
-                    pipelines[file_name]["Portfolios"] = item
+                    pipelines[file_name]["Portfolios"].append(item)
                 elif item_type == "products":
                     item["Name"] = item_name
-                    pipelines[file_name]["Products"] = item
+                    pipelines[file_name]["Products"].append(item)
 
         for file_name, items in pipelines.items():
             target_path = os.path.sep.join([target, "portfolios"])
