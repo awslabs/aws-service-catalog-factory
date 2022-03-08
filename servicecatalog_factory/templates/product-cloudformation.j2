@@ -186,7 +186,7 @@ Resources:
                 Provider: CodeBuild
               Configuration:
                 ProjectName: ServiceCatalog-Factory-SharedValidate
-                EnvironmentVariables: '[{"name":"TEMPLATE_FORMAT","value":"{{ template_format }}","type":"PLAINTEXT"}]'
+                EnvironmentVariables: '[{"name":"TEMPLATE_FORMAT","value":"{{ template_format }}","type":"PLAINTEXT"}, {"name":"SOURCE_PATH","value":"{{ Source.get("Path", ".") }}","type":"PLAINTEXT"}]'
               RunOrder: 1
               InputArtifacts:
               {% if Options.ShouldParseAsJinja2Template %}
@@ -227,7 +227,7 @@ Resources:
                 Provider: CodeBuild
               Configuration:
                 ProjectName: !Ref PackageProject
-                EnvironmentVariables: !Sub '[{"name":"PROVISIONER","value":"cloudformation","type":"PLAINTEXT"},{"name":"PIPELINE_NAME","value":"${AWS::StackName}-pipeline","type":"PLAINTEXT"},{"name":"TEMPLATE_FORMAT","value":"{{ template_format }}","type":"PLAINTEXT"},{"name":"CODEPIPELINE_ID","value":"#{codepipeline.PipelineExecutionId}","type":"PLAINTEXT"},{"name":"NAME","value":"{{ product.Name }}","type":"PLAINTEXT"},{"name":"VERSION","value":"{{ version.Name }}","type":"PLAINTEXT"},{"name":"DESCRIPTION","value":"{{ version.Description | replace("'", "\'") }}","type":"PLAINTEXT"}]'
+                EnvironmentVariables: !Sub '[{"name":"PROVISIONER","value":"cloudformation","type":"PLAINTEXT"},{"name":"PIPELINE_NAME","value":"${AWS::StackName}-pipeline","type":"PLAINTEXT"},{"name":"TEMPLATE_FORMAT","value":"{{ template_format }}","type":"PLAINTEXT"},{"name":"CODEPIPELINE_ID","value":"#{codepipeline.PipelineExecutionId}","type":"PLAINTEXT"},{"name":"NAME","value":"{{ product.Name }}","type":"PLAINTEXT"},{"name":"VERSION","value":"{{ version.Name }}","type":"PLAINTEXT"},{"name":"DESCRIPTION","value":"{{ version.Description | replace("'", "\'") }}","type":"PLAINTEXT"},{"name":"SOURCE_PATH","value":"{{ Source.get("Path", ".") }}","type":"PLAINTEXT"}]'
 
               RunOrder: 1
               InputArtifacts:
@@ -257,7 +257,7 @@ Resources:
                 Provider: ServiceCatalog
                 Version: '1'
               Configuration:
-                TemplateFilePath: product.template-{{ region }}.{{ template_format }}
+                TemplateFilePath: {% if Source.get("Path") %}{{ Source.get("Path", "") }}/{% endif %}product.template-{{ region }}.{{ template_format }}
                 ProductVersionName: {{ version.Name }}
                 ProductType: CLOUD_FORMATION_TEMPLATE{% if version.Description %}
                 ProductVersionDescription: {{ version.Description }}{% endif %}
@@ -274,7 +274,7 @@ Resources:
                 Version: '1'
               Configuration:
                 ProjectName: ServiceCatalog-Factory-SharedDeployInGovCloud
-                EnvironmentVariables: !Sub '[{"name":"PIPELINE_NAME","value":"${AWS::StackName}-pipeline","type":"PLAINTEXT"},{"name":"CODEPIPELINE_ID","value":"#{codepipeline.PipelineExecutionId}","type":"PLAINTEXT"}]'
+                EnvironmentVariables: !Sub '[{"name":"PIPELINE_NAME","value":"${AWS::StackName}-pipeline","type":"PLAINTEXT"},{"name":"CODEPIPELINE_ID","value":"#{codepipeline.PipelineExecutionId}","type":"PLAINTEXT"}, {"name":"SOURCE_PATH","value":"{{ Source.get("Path", ".") }}","type":"PLAINTEXT"}]'
             {% endif %}
 
   {% if Source.Provider.lower() == 'github' %}Webhook:
@@ -342,6 +342,9 @@ Resources:
           - Name: PROVISIONER
             Type: PLAINTEXT
             Value: "CHANGE_ME"
+          - Name: SOURCE_PATH
+            Type: PLAINTEXT
+            Value: "."
       Source:
         Type: CODEPIPELINE
         {% if Stages.get("Package", {}).get("BuildSpec") %}
@@ -356,6 +359,7 @@ Resources:
                   python: 3.8
               build:
                 commands:
+                  - cd $SOURCE_PATH
                 {% for region in ALL_REGIONS %}
                   - aws cloudformation package --region {{ region }} --template $(pwd)/product.template.{{ template_format }} --s3-bucket sc-factory-artifacts-${ACCOUNT_ID}-{{ region }} --s3-prefix ${STACK_NAME} --output-template-file product.template-{{ region }}.{{ template_format }}
                 {% endfor %}
