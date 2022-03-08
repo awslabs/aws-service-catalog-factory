@@ -9,6 +9,10 @@
         Type: linuxContainer
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/standard:4.0
+        EnvironmentVariables:
+          - Name: SOURCE_PATH
+            Type: PLAINTEXT
+            Value: "."
       Source:
         Type: CODEPIPELINE
         BuildSpec: |
@@ -22,6 +26,7 @@
                   - cfn_nag_rules # Show all cfn_nag_rules that will be used in the scan
               build:
                 commands:
+                  - cd $SOURCE_PATH
                   - cfn_nag_scan --input-path ./product.template.{{ template_format }}
             artifacts:
               files: '**/*'
