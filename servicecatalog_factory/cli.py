@@ -513,9 +513,8 @@ def generate_template(
 @click.argument("pipeline-region")
 @click.argument("codepipeline-id")
 @click.argument("region")
-@click.argument("source_path")
 @click.option(
-    "--source_path", default="./", envvar="SOURCE_PATH"
+    "--source_path", default=".", envvar="SOURCE_PATH"
 )
 def create_or_update_provisioning_artifact_from_codepipeline_id(
     pipeline_name, pipeline_region, codepipeline_id, region, source_path
