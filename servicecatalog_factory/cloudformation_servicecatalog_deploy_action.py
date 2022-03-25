@@ -11,9 +11,9 @@ from betterboto import client as betterboto_client
 import time
 
 
-def deploy(pipeline_name, pipeline_region, codepipeline_id, region):
+def deploy(pipeline_name, pipeline_region, codepipeline_id, region, source_path):
     action_configuration = set_template_url_for_codepipeline_id(
-        pipeline_name, codepipeline_id, region
+        pipeline_name, codepipeline_id, region, source_path
     )
     create_or_update_provisioning_artifact(
         region, pipeline_region, action_configuration
@@ -37,7 +37,7 @@ def get_package_action_from(pipeline_name, codepipeline_id):
         raise Exception(f"Could not find Package action for {codepipeline_id}")
 
 
-def set_template_url_for_codepipeline_id(pipeline_name, codepipeline_id, region):
+def set_template_url_for_codepipeline_id(pipeline_name, codepipeline_id, region, source_path):
     action = get_package_action_from(pipeline_name, codepipeline_id)
     environment_variables = json.loads(
         action["input"]["resolvedConfiguration"]["EnvironmentVariables"]
@@ -69,13 +69,14 @@ def set_template_url_for_codepipeline_id(pipeline_name, codepipeline_id, region)
 
     print(f"bucket is {bucket}")
     print(f"key is {key}")
+    print(f"source_path is {source_path}")
 
     with betterboto_client.ClientContextManager("s3") as s3:
         template = (
             zipfile.ZipFile(
                 io.BytesIO(s3.get_object(Bucket=bucket, Key=key).get("Body").read())
             )
-            .open(f"product.template-{region}.{template_format}", "r")
+            .open(f"{source_path}/product.template-{region}.{template_format}", "r")
             .read()
         )
         s3.put_object(
