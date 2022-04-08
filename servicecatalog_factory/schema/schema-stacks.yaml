@@ -123,7 +123,14 @@ configuration_s3:
   BucketName: str(required=False)
   S3ObjectKey: str(required=False)
 
-source: any(include("source_codecommit"), include("source_github"), include("source_s3"), include("source_codestarsourceconnection"))
+configuration_custom:
+  Branch: str(required=True)
+  GitUrl: str(required=True)
+  GitWebHookIpAddress: str(required=True)
+  CustomActionTypeVersion: str(required=True)
+  CustomActionTypeProvider: str(required=True)
+
+source: any(include("source_codecommit"), include("source_github"), include("source_s3"), include("source_codestarsourceconnection"), include("source_custom"))
 
 source_s3:
   Provider: enum("S3")
@@ -144,6 +151,10 @@ source_codecommit:
   Provider: enum("CodeCommit")
   Path: str(required=False)
   Configuration: include('configuration_codecommit')
+
+source_custom:
+  Provider: enum("Custom")
+  Configuration: include('configuration_custom')
 
 code_s3_bucket:
   Bucket: str()
