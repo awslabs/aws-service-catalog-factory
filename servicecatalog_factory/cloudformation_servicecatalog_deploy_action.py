@@ -37,7 +37,9 @@ def get_package_action_from(pipeline_name, codepipeline_id):
         raise Exception(f"Could not find Package action for {codepipeline_id}")
 
 
-def set_template_url_for_codepipeline_id(pipeline_name, codepipeline_id, region, source_path):
+def set_template_url_for_codepipeline_id(
+    pipeline_name, codepipeline_id, region, source_path
+):
     action = get_package_action_from(pipeline_name, codepipeline_id)
     environment_variables = json.loads(
         action["input"]["resolvedConfiguration"]["EnvironmentVariables"]
