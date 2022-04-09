@@ -9,7 +9,6 @@ import zipfile
 import click
 from betterboto import client as betterboto_client
 import time
-import yaml
 from deepdiff import DeepDiff
 import cfn_flip
 
@@ -133,6 +132,7 @@ def create_or_update_provisioning_artifact(
 
 
             difference = DeepDiff(existing_template, new_template, ignore_order=True)
+            print(difference)
 
         else:
             difference = dict(changed="everything")
