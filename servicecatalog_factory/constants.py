@@ -81,28 +81,6 @@ BUILDSPEC_RUNTIME_VERSIONS_NODEJS_DEFAULT = "12"
 DEFAULT_PARTITION = "aws"
 PARTITION = os.getenv("PARTITION", DEFAULT_PARTITION)
 
-CODEPIPELINE_SUPPORTED_REGIONS = [
-    "us-east-2",
-    "us-east-1",
-    "us-west-1",
-    "us-west-2",
-    "ap-east-1",
-    "ap-south-1",
-    "ap-northeast-2",
-    "ap-southeast-1",
-    "ap-southeast-2",
-    "ap-northeast-1",
-    "ca-central-1",
-    "eu-central-1",
-    "eu-west-1",
-    "eu-west-2",
-    "eu-south-1",
-    "eu-west-3",
-    "eu-north-1",
-    "sa-east-1",
-    "us-gov-west-1",
-]
-
 STATIC_HTML_PAGE = "static-html-page.html"
 
 GENERIC_BUILD_PROJECT_PRIVILEGED_MODE_DEFAULT = False

@@ -84,12 +84,6 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
         )
         return rendered
 
-    def can_use_code_pipeline(self, product_ids_by_region):
-        for region, details in product_ids_by_region.items():
-            if region not in constants.CODEPIPELINE_SUPPORTED_REGIONS:
-                return False
-        return True
-
     def handle_cloudformation_provisioner(
         self, product_ids_by_region, friendly_uid, tags, source
     ):
@@ -124,7 +118,6 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
                     self.product.get("BuildSpec", constants.PACKAGE_BUILD_SPEC_DEFAULT),
                 ),
             )
-        can_use_code_pipeline = str(self.can_use_code_pipeline(product_ids_by_region))
 
         rendered = template.render(
             friendly_uid=f"{friendly_uid}-{self.version.get('Name')}",
@@ -141,7 +134,6 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
             FACTORY_VERSION=self.factory_version,
             tags=tags,
             PARTITION=constants.PARTITION,
-            CAN_USE_CODE_PIPELINE=can_use_code_pipeline,
         )
         rendered = jinja2.Template(rendered).render(
             friendly_uid=f"{friendly_uid}-{self.version.get('Name')}",
@@ -155,7 +147,6 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
             ALL_REGIONS=self.all_regions,
             product_ids_by_region=product_ids_by_region,
             PARTITION=constants.PARTITION,
-            CAN_USE_CODE_PIPELINE=can_use_code_pipeline,
         )
         return rendered
 

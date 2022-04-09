@@ -50,16 +50,9 @@ def set_template_url_for_codepipeline_id(
             environment_variable.get("name")
         ] = environment_variable.get("value")
 
-    #
-    #
-    # THIS NEEDS TO BE PASSED IN OR MADE THE SAME!!!  current error is that the template is not in the zip file
-    #
-    #
     return_key = "{PROVISIONER}/{region}/{NAME}/{VERSION}/{CODEPIPELINE_ID}/product.template.{TEMPLATE_FORMAT}".format(
         region=region, **action_configuration
     )
-
-    print(return_key)
 
     output_artifacts = action.get("output").get("outputArtifacts")
     assert len(output_artifacts) == 1
@@ -68,10 +61,6 @@ def set_template_url_for_codepipeline_id(
     key = output_artifacts.get("s3location").get("key")
 
     template_format = action_configuration.get("TEMPLATE_FORMAT")
-
-    print(f"bucket is {bucket}")
-    print(f"key is {key}")
-    print(f"source_path is {source_path}")
 
     with betterboto_client.ClientContextManager("s3") as s3:
         template = (
