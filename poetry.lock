@@ -178,6 +178,20 @@ python-versions = ">=3.6"
 toml = ["tomli"]
 
 [[package]]
+name = "deepdiff"
+version = "5.7.0"
+description = "Deep Difference and Search of any Python object/data."
+category = "main"
+optional = false
+python-versions = ">=3.6"
+
+[package.dependencies]
+ordered-set = "4.0.2"
+
+[package.extras]
+cli = ["click (==8.0.3)", "pyyaml (==5.4.1)", "toml (==0.10.2)", "clevercsv (==0.7.1)"]
+
+[[package]]
 name = "deepmerge"
 version = "0.3.0"
 description = "a toolset to deeply merge python dictionaries."
@@ -310,6 +324,14 @@ six = ">=1.7"
 [package.extras]
 coverage_plugin = ["coverage (>=4.4.1)"]
 dev = ["Sphinx (>=1.6.5)", "sphinx-rtd-theme", "mock", "coverage"]
+
+[[package]]
+name = "ordered-set"
+version = "4.0.2"
+description = "A set that remembers its order, and allows looking up its items by their index in that order."
+category = "main"
+optional = false
+python-versions = ">=3.5"
 
 [[package]]
 name = "pathspec"
@@ -516,8 +538,8 @@ pyyaml = "*"
 
 [metadata]
 lock-version = "1.1"
-python-versions = ">=3.7,<4"
-content-hash = "025968142041c316b17b5bf59771f4c1d41a6a2d4031c5e5a8b8f4e45773dc09"
+python-versions = ">=3.7,<3.8"
+content-hash = "bac4c40aaddabdf2e2e6920ae8fd60bbf904c173ae1d216a2a2b82788f26c7b5"
 
 [metadata.files]
 appdirs = [
@@ -608,6 +630,10 @@ coverage = [
     {file = "coverage-6.0.2-pp36-none-any.whl", hash = "sha256:7092eab374346121805fb637572483270324407bf150c30a3b161fc0c4ca5164"},
     {file = "coverage-6.0.2-pp37-none-any.whl", hash = "sha256:30922626ce6f7a5a30bdba984ad21021529d3d05a68b4f71ea3b16bda35b8895"},
     {file = "coverage-6.0.2.tar.gz", hash = "sha256:6807947a09510dc31fa86f43595bf3a14017cd60bf633cc746d52141bfa6b149"},
+]
+deepdiff = [
+    {file = "deepdiff-5.7.0-py3-none-any.whl", hash = "sha256:1ffb38c3b5d9174eb2df95850c93aee55ec00e19396925036a2e680f725079e0"},
+    {file = "deepdiff-5.7.0.tar.gz", hash = "sha256:838766484e323dcd9dec6955926a893a83767dc3f3f94542773e6aa096efe5d4"},
 ]
 deepmerge = [
     {file = "deepmerge-0.3.0-py2.py3-none-any.whl", hash = "sha256:87166dbe9ba1a3348a45c9d4ada6778f518d41afc0b85aa017ea3041facc3f9c"},
@@ -748,6 +774,9 @@ mccabe = [
 nose2 = [
     {file = "nose2-0.10.0-py2.py3-none-any.whl", hash = "sha256:aa620e759f2c5018d9ba041340391913e282ecebd3c392027f1575847b093ec6"},
     {file = "nose2-0.10.0.tar.gz", hash = "sha256:886ba617a96de0130c54b24479bd5c2d74d5c940d40f3809c3a275511a0c4a60"},
+]
+ordered-set = [
+    {file = "ordered-set-4.0.2.tar.gz", hash = "sha256:ba93b2df055bca202116ec44b9bead3df33ea63a7d5827ff8e16738b97f33a95"},
 ]
 pathspec = [
     {file = "pathspec-0.9.0-py2.py3-none-any.whl", hash = "sha256:7d15c4ddb0b5c802d161efc417ec1a2558ea2653c2e8ad9c19098201dc1c993a"},

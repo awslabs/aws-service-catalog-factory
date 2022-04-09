@@ -9,7 +9,8 @@ import zipfile
 import click
 from betterboto import client as betterboto_client
 import time
-
+import yaml
+from deepdiff import DeepDiff
 
 def deploy(pipeline_name, pipeline_region, codepipeline_id, region, source_path):
     action_configuration = set_template_url_for_codepipeline_id(
@@ -108,7 +109,27 @@ def create_or_update_provisioning_artifact(
             ProductId=product_id,
         ).get("Info")
 
-        raise Exception(response)
+        template_url = response.get("TemplateUrl")
+        artefact_bucket = template_url.split("/")[2].split(".")[0]
+        artefact_key = "/".join(template_url.split("/")[3:])
+
+        with betterboto_client.ClientContextManager(
+                "s3",
+        ) as s3:
+            existing_template = s3.get_object(
+                Bucket=artefact_bucket,
+                Key=artefact_key,
+            ).get("Body").read()
+
+            new_template = s3.get_object(
+                Bucket=bucket,
+                Key=action_configuration.get('TEMPLATE_URL'),
+            ).get("Body").read()
+
+        existing_template = yaml.safe_load(existing_template)
+        new_template = yaml.safe_load(new_template)
+
+        print(DeepDiff(existing_template, new_template, ignore_order=True))
 
         response = servicecatalog.create_provisioning_artifact(
             ProductId=product_id,
