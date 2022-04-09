@@ -129,7 +129,9 @@ def create_or_update_provisioning_artifact(
         existing_template = yaml.safe_load(existing_template)
         new_template = yaml.safe_load(new_template)
 
-        print(DeepDiff(existing_template, new_template, ignore_order=True))
+        difference = DeepDiff(existing_template, new_template, ignore_order=True)
+
+        print(difference)
 
         response = servicecatalog.create_provisioning_artifact(
             ProductId=product_id,
