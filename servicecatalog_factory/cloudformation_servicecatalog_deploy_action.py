@@ -11,6 +11,7 @@ from betterboto import client as betterboto_client
 import time
 import yaml
 from deepdiff import DeepDiff
+import cfn_flip
 
 def deploy(pipeline_name, pipeline_region, codepipeline_id, region, source_path):
     action_configuration = set_template_url_for_codepipeline_id(
@@ -120,18 +121,16 @@ def create_or_update_provisioning_artifact(
             with betterboto_client.ClientContextManager(
                     "s3",
             ) as s3:
-                existing_template = s3.get_object(
+                existing_template, format = cfn_flip.load(s3.get_object(
                     Bucket=artefact_bucket,
                     Key=artefact_key,
-                ).get("Body").read()
+                ).get("Body").read())
 
-                new_template = s3.get_object(
+                new_template, format = cfn_flip.load(s3.get_object(
                     Bucket=bucket,
                     Key=action_configuration.get('TEMPLATE_URL'),
-                ).get("Body").read()
+                ).get("Body").read())
 
-            existing_template = yaml.safe_load(existing_template)
-            new_template = yaml.safe_load(new_template)
 
             difference = DeepDiff(existing_template, new_template, ignore_order=True)
 
