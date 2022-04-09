@@ -79,6 +79,16 @@ def set_template_url_for_codepipeline_id(
     return action_configuration
 
 
+def get_existing_provisioning_artefact(servicecatalog, version_name, product_id):
+    try:
+        servicecatalog.describe_provisioning_artifact(
+            ProvisioningArtifactName=version_name,
+            ProductId=product_id,
+        ).get("Info")
+    except servicecatalog.exceptions.ResourceNotFoundException:
+        return None
+
+
 def create_or_update_provisioning_artifact(
     region, pipeline_region, action_configuration
 ):
@@ -100,40 +110,41 @@ def create_or_update_provisioning_artifact(
     with betterboto_client.ClientContextManager(
         "servicecatalog", region_name=region
     ) as servicecatalog:
-        click.echo(
-            f"Creating: {version_name} in: {region} for {product}: using: {template_url}"
-        )
+        existing_provisioning_artefact = get_existing_provisioning_artefact(servicecatalog, version_name, product_id)
 
-        response = servicecatalog.describe_provisioning_artifact(
-            ProvisioningArtifactName=version_name,
-            ProductId=product_id,
-        ).get("Info")
+        if existing_provisioning_artefact:
+            template_url = existing_provisioning_artefact.get("TemplateUrl")
+            artefact_bucket = template_url.split("/")[2].split(".")[0]
+            artefact_key = "/".join(template_url.split("/")[3:])
 
-        template_url = response.get("TemplateUrl")
-        artefact_bucket = template_url.split("/")[2].split(".")[0]
-        artefact_key = "/".join(template_url.split("/")[3:])
+            with betterboto_client.ClientContextManager(
+                    "s3",
+            ) as s3:
+                existing_template = s3.get_object(
+                    Bucket=artefact_bucket,
+                    Key=artefact_key,
+                ).get("Body").read()
 
-        with betterboto_client.ClientContextManager(
-                "s3",
-        ) as s3:
-            existing_template = s3.get_object(
-                Bucket=artefact_bucket,
-                Key=artefact_key,
-            ).get("Body").read()
+                new_template = s3.get_object(
+                    Bucket=bucket,
+                    Key=action_configuration.get('TEMPLATE_URL'),
+                ).get("Body").read()
 
-            new_template = s3.get_object(
-                Bucket=bucket,
-                Key=action_configuration.get('TEMPLATE_URL'),
-            ).get("Body").read()
+            existing_template = yaml.safe_load(existing_template)
+            new_template = yaml.safe_load(new_template)
 
-        existing_template = yaml.safe_load(existing_template)
-        new_template = yaml.safe_load(new_template)
+            difference = DeepDiff(existing_template, new_template, ignore_order=True)
 
-        difference = DeepDiff(existing_template, new_template, ignore_order=True)
+        else:
+            difference = {}
 
         if len(difference) == 0:
             click.echo("There were no changes in the template")
         else:
+            click.echo(
+                f"Creating: {version_name} in: {region} for {product}: using: {template_url}"
+            )
+
             response = servicecatalog.create_provisioning_artifact(
                 ProductId=product_id,
                 Parameters={
