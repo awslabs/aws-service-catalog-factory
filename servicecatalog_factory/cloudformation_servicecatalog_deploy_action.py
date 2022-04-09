@@ -136,7 +136,7 @@ def create_or_update_provisioning_artifact(
             difference = DeepDiff(existing_template, new_template, ignore_order=True)
 
         else:
-            difference = {}
+            difference = dict(changed="everything")
 
         if len(difference) == 0:
             click.echo("There were no changes in the template")
