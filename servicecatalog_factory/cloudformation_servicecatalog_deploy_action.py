@@ -103,6 +103,13 @@ def create_or_update_provisioning_artifact(
             f"Creating: {version_name} in: {region} for {product}: using: {template_url}"
         )
 
+        response = servicecatalog.describe_provisioning_artifact(
+            ProvisioningArtifactName=version_name,
+            ProductId=product_id,
+        ).get("Info")
+
+        raise Exception(response)
+
         response = servicecatalog.create_provisioning_artifact(
             ProductId=product_id,
             Parameters={
