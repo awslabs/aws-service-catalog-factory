@@ -101,4 +101,3 @@ def test_constants():
     assert sut.BUILDSPEC_RUNTIME_VERSIONS_NODEJS_DEFAULT == "12"
 
     assert sut.DEFAULT_PARTITION == "aws"
-

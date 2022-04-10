@@ -12,6 +12,7 @@ import time
 from deepdiff import DeepDiff
 import cfn_flip
 
+
 def deploy(pipeline_name, pipeline_region, codepipeline_id, region, source_path):
     action_configuration = set_template_url_for_codepipeline_id(
         pipeline_name, codepipeline_id, region, source_path
@@ -82,8 +83,7 @@ def set_template_url_for_codepipeline_id(
 def get_existing_provisioning_artefact(servicecatalog, version_name, product_id):
     try:
         servicecatalog.describe_provisioning_artifact(
-            ProvisioningArtifactName=version_name,
-            ProductId=product_id,
+            ProvisioningArtifactName=version_name, ProductId=product_id,
         ).get("Info")
     except servicecatalog.exceptions.ResourceNotFoundException:
         return None
@@ -110,32 +110,43 @@ def create_or_update_provisioning_artifact(
     with betterboto_client.ClientContextManager(
         "servicecatalog", region_name=region
     ) as servicecatalog:
-        existing_provisioning_artefact = get_existing_provisioning_artefact(servicecatalog, version_name, product_id)
+        existing_provisioning_artefact = get_existing_provisioning_artefact(
+            servicecatalog, version_name, product_id
+        )
 
         if existing_provisioning_artefact:
             template_url = existing_provisioning_artefact.get("TemplateUrl")
             artefact_bucket = template_url.split("/")[2].split(".")[0]
             artefact_key = "/".join(template_url.split("/")[3:])
 
-            with betterboto_client.ClientContextManager(
-                    "s3",
-            ) as s3:
-                existing_template, format = cfn_flip.load(s3.get_object(
-                    Bucket=artefact_bucket,
-                    Key=artefact_key,
-                ).get("Body").read())
+            with betterboto_client.ClientContextManager("s3",) as s3:
+                existing_template, _ = cfn_flip.dump_yaml(
+                    cfn_flip.load(
+                        s3.get_object(Bucket=artefact_bucket, Key=artefact_key,)
+                        .get("Body")
+                        .read()
+                    ),
+                    clean_up=True,
+                    long_form=True,
+                )
 
-                new_template, format = cfn_flip.load(s3.get_object(
-                    Bucket=bucket,
-                    Key=action_configuration.get('TEMPLATE_URL'),
-                ).get("Body").read())
-
-
-            difference = DeepDiff(existing_template, new_template, ignore_order=True)
-            print(difference)
-
+                new_template, _ = cfn_flip.dump_yaml(
+                    cfn_flip.load(
+                        s3.get_object(
+                            Bucket=bucket, Key=action_configuration.get("TEMPLATE_URL"),
+                        )
+                        .get("Body")
+                        .read()
+                    ),
+                    clean_up=True,
+                    long_form=True,
+                )
         else:
-            difference = dict(changed="everything")
+            existing_template = 1
+            new_template = 0
+
+        difference = DeepDiff(existing_template, new_template, ignore_order=True)
+        print(difference)
 
         if len(difference) == 0:
             click.echo("There were no changes in the template")
@@ -154,9 +165,9 @@ def create_or_update_provisioning_artifact(
                     "DisableTemplateValidation": False,
                 },
             )
-            new_provisioning_artifact_id = response.get("ProvisioningArtifactDetail").get(
-                "Id"
-            )
+            new_provisioning_artifact_id = response.get(
+                "ProvisioningArtifactDetail"
+            ).get("Id")
             status = "CREATING"
             while status == "CREATING":
                 time.sleep(3)
