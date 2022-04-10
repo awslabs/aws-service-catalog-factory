@@ -120,24 +120,24 @@ def create_or_update_provisioning_artifact(
             artefact_key = "/".join(template_url.split("/")[3:])
 
             with betterboto_client.ClientContextManager("s3",) as s3:
-                existing_template, _ = cfn_flip.dump_yaml(
+                existing_template = cfn_flip.dump_yaml(
                     cfn_flip.load(
                         s3.get_object(Bucket=artefact_bucket, Key=artefact_key,)
                         .get("Body")
                         .read()
-                    ),
+                    )[0],
                     clean_up=True,
                     long_form=True,
                 )
 
-                new_template, _ = cfn_flip.dump_yaml(
+                new_template = cfn_flip.dump_yaml(
                     cfn_flip.load(
                         s3.get_object(
                             Bucket=bucket, Key=action_configuration.get("TEMPLATE_URL"),
                         )
                         .get("Body")
                         .read()
-                    ),
+                    )[0],
                     clean_up=True,
                     long_form=True,
                 )
