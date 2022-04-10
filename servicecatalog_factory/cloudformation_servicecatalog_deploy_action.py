@@ -82,7 +82,7 @@ def set_template_url_for_codepipeline_id(
 
 def get_existing_provisioning_artefact(servicecatalog, version_name, product_id):
     try:
-        servicecatalog.describe_provisioning_artifact(
+        return servicecatalog.describe_provisioning_artifact(
             ProvisioningArtifactName=version_name, ProductId=product_id,
         ).get("Info")
     except servicecatalog.exceptions.ResourceNotFoundException:
