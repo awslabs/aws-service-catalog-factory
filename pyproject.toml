@@ -8,7 +8,7 @@ description = "Making it easier to build ServiceCatalog products"
 classifiers = ["Development Status :: 5 - Production/Stable", "Intended Audience :: Developers", "Programming Language :: Python :: 3", "License :: OSI Approved :: Apache Software License", "Operating System :: OS Independent", "Natural Language :: English"]
 homepage = "https://service-catalog-tools-workshop.com/"
 readme = "README.md"
-repository = "https://github.com/awslabs/aws-service-catalog-factory-framework"
+repository = "https://github.com/awslabs/aws-service-catalog-factory"
 authors = ["Eamonn Faherty <aws-service-catalog-tools@amazon.com>"]
 packages = [
     { include = "servicecatalog_factory", from = "." },
