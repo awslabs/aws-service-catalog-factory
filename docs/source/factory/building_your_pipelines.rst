@@ -456,7 +456,7 @@ Under the ``Versions`` folder, you can now create a folder for each version of y
     # tree .
     .
     ├── v1
-    │   └── specification.yaml
+    │   └── specification.yaml
     └── v2
         └── specification.yaml
 
@@ -487,16 +487,16 @@ Folder Structure for above examples should look like this under ``ServiceCatalog
     .
     └── portfolios
         ├── demo
-        │   └── Portfolios
-        │       └── central-it-team-portfolio
-        │           └── Products
-        │               └── account-vending-account-creation
-        │                   └── Versions
-        │                       ├── v1
-        │                       │   └── specification.yaml
-        │                       └── v2
-        │                           └── specification.yaml
-        │               └── account-vending-account-creation.yaml
+        │   └── Portfolios
+        │       └── central-it-team-portfolio
+        │           └── Products
+        │               └── account-vending-account-creation
+        │                   └── Versions
+        │                       ├── v1
+        │                       │   └── specification.yaml
+        │                       └── v2
+        │                           └── specification.yaml
+        │               └── account-vending-account-creation.yaml
         └── demo.yaml
 
     9 directories, 4 files
