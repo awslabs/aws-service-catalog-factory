@@ -383,7 +383,7 @@ specification for component versions outside of your main portfolio file.
 
 You have a portfolio file named ``demo.yaml`` under your ``portfolios`` directory.
 
-In ``demo.yaml`` you define a portfolio named ``central-it-team-portfolio`` under the ``Portfolios`` section:
+In ``demo.yaml`` you define a portfolio named ``central-it-team-portfolio`` under the ``Portfolios`` section and a component/product named ``account-vending-account-creation`` under the ``Products`` section:
 
 .. code-block:: yaml
 
@@ -394,17 +394,12 @@ In ``demo.yaml`` you define a portfolio named ``central-it-team-portfolio`` unde
         ProviderName: central-it-team
         Associations:
           - arn:aws:iam::${AWS::AccountId}:role/Admin
-
-.... and a component/product named ``account-vending-account-creation`` under the ``Products`` section:
-
-.. code-block:: yaml
-
-    Products:
-      - Name: account-vending-account-creation
-        Owner: central-it@customer.com
-        Description: template used to interact with custom resources in the shared projects
-        Distributor: central-it-team
-        SupportDescription: Contact us on Chime for help #central-it-team
+        Products:
+          - Name: account-vending-account-creation
+            Owner: central-it@customer.com
+            Description: template used to interact with custom resources in the shared projects
+            Distributor: central-it-team
+            SupportDescription: Contact us on Chime for help #central-it-team
 
 Rather than specifying your ``Versions`` section for the component/product, you can specify it in a specifications file within a directory structure which matches the flow of the manifest file using the following syntax:
 
