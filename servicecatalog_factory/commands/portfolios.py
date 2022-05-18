@@ -55,6 +55,7 @@ def get_regions():
 def generate_portfolios(portfolios_file_path):
     logger.info("Loading portfolio: {}".format(portfolios_file_path))
     with open(portfolios_file_path) as portfolios_file:
+        portfolio_file_base_path = os.path.dirname(portfolios_file_path)
         portfolio_file_name = portfolios_file_path.split("/")[-1]
         portfolio_file_name = portfolio_file_name.replace(".yaml", "")
         portfolios_file_contents = portfolios_file.read()
@@ -62,19 +63,21 @@ def generate_portfolios(portfolios_file_path):
         logger.info("Checking for external config")
         for portfolio in portfolios.get("Portfolios", []):
             check_for_external_definitions_for(
-                portfolio, portfolio_file_name, "Components"
+                portfolio, portfolio_file_name, "Components", portfolio_file_base_path
             )
             check_for_external_definitions_for(
-                portfolio, portfolio_file_name, "Products"
+                portfolio, portfolio_file_name, "Products", portfolio_file_base_path
             )
         return portfolios
 
 
-def check_for_external_definitions_for(portfolio, portfolio_file_name, type):
+def check_for_external_definitions_for(
+    portfolio, portfolio_file_name, type, portfolio_file_base_path
+):
     for component in portfolio.get(type, []):
         portfolio_external_components_specification_path = os.path.sep.join(
             [
-                "portfolios",
+                portfolio_file_base_path,
                 portfolio_file_name,
                 "Portfolios",
                 portfolio.get("DisplayName"),

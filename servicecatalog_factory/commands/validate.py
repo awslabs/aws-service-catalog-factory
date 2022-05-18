@@ -28,7 +28,13 @@ def validate(p):
                 )
             )
 
-            for portfolio_file_name in os.listdir(target_dir):
+            portfolio_file_names = [
+                i
+                for i in os.listdir(target_dir)
+                if os.path.isfile(os.path.sep.join([target_dir, i]))
+            ]
+
+            for portfolio_file_name in portfolio_file_names:
                 logger.info("Validating file: {}".format(portfolio_file_name))
                 data = yamale.make_data(
                     content=open(
