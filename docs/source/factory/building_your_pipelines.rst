@@ -370,9 +370,9 @@ From the portfolio you can set a version to be active or not using the following
 You set Versions[].Active to False to stop users from provisioning your product version.
 
 Please note the ```servicecatalog-factory-pipeline``` updates the active setting.  If you find the value is not in sync 
-run the pipeline. 
+run the pipeline.
 
-Specifying versions of a component outside of the main portfolio file
+Specifying versions of a component and/or products outside of the main portfolio file
 ---------------------------------------------------------------------
 
 You may find that your portfolio file increases in size fairly quickly.  Having a large file to manage is often more
@@ -401,6 +401,36 @@ In ``demo.yaml`` you define a portfolio named ``central-it-team-portfolio`` unde
             Distributor: central-it-team
             SupportDescription: Contact us on Chime for help #central-it-team
 
+For Products
+++++++++++++
+As well as specifying your ``Products`` section for the product in the portfolio file, you can specify it as a product file within a directory structure which matches the flow of the manifest file using the following syntax:
+
+  - ``/portfolios/<name_of_manifest_without.yaml>/Portfolios/<DisplayName_of_portfolio>/Products/<name_of_product>/<name of the product>.yaml``
+
+**For example:**
+To specify a product called ``product-a`` under the Products section of the ``central-it-team-portfolio`` portfolio defined in the 'demo.yaml' file, you can create a directory named in the following way:
+
+  - ``/portfolios/demo/Portfolios/central-it-team-portfolio/Products/product-a/``
+
+And a product file like:
+
+  - ``/portfolios/demo/Portfolios/central-it-team-portfolio/Products/product-a/product-a.yaml``
+
+With the Content:
+
+.. code-block:: yaml
+
+    Owner: central-it@customer.com
+    Description: template used to interact with custom resources in the shared projects
+    Distributor: central-it-team
+    SupportDescription: Contact us on Chime for help #central-it-team
+
+The Product name is taken from the filename of the product - this should also match the product folder name
+
+  .. note:: You can put products in files or in the portfolio file
+
+For Versions
+++++++++++++
 Rather than specifying your ``Versions`` section for the component/product, you can specify it in a specifications file within a directory structure which matches the flow of the manifest file using the following syntax:
 
   - ``/portfolios/<name_of_manifest_without.yaml>/Portfolios/<DisplayName_of_portfolio>/Products/<name_of_product>/Versions``
@@ -426,7 +456,7 @@ Under the ``Versions`` folder, you can now create a folder for each version of y
     # tree .
     .
     ├── v1
-    │   └── specification.yaml
+    │   └── specification.yaml
     └── v2
         └── specification.yaml
 
@@ -457,18 +487,19 @@ Folder Structure for above examples should look like this under ``ServiceCatalog
     .
     └── portfolios
         ├── demo
-        │   └── Portfolios
-        │       └── central-it-team-portfolio
-        │           └── Products
-        │               └── account-vending-account-creation
-        │                   └── Versions
-        │                       ├── v1
-        │                       │   └── specification.yaml
-        │                       └── v2
-        │                           └── specification.yaml
+        │   └── Portfolios
+        │       └── central-it-team-portfolio
+        │           └── Products
+        │               └── account-vending-account-creation
+        │                   └── Versions
+        │                       ├── v1
+        │                       │   └── specification.yaml
+        │                       └── v2
+        │                           └── specification.yaml
+        │               └── account-vending-account-creation.yaml
         └── demo.yaml
 
-    9 directories, 3 files
+    9 directories, 4 files
 
 
 When your service-catalog-factory pipeline runs it will treat these versions as if they were defined within the portfolio file.
