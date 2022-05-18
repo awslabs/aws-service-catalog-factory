@@ -71,7 +71,9 @@ def generate_portfolios(portfolios_file_path):
         return portfolios
 
 
-def check_for_external_definitions_for(portfolio, portfolio_file_name, type, portfolio_file_base_path):
+def check_for_external_definitions_for(
+    portfolio, portfolio_file_name, type, portfolio_file_base_path
+):
     for component in portfolio.get(type, []):
         portfolio_external_components_specification_path = os.path.sep.join(
             [
