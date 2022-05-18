@@ -71,50 +71,45 @@ def generate_portfolios(portfolios_file_path):
         return portfolios
 
 
-def check_for_external_definitions_for(portfolio, portfolio_file_name, type, portfolio_file_base_path):
-    #Looks and checks for products in ignored/src/ServiceCatalogFactory/portfolios/portfolio<without.yaml>/Portfolios/<portfolio-display-name>/Products 
+def check_for_external_definitions_for(
+    portfolio, portfolio_file_name, type, portfolio_file_base_path
+):
+    # Looks and checks for products in ignored/src/ServiceCatalogFactory/portfolios/portfolio<without.yaml>/Portfolios/<portfolio-display-name>/Products
     portfolio_products_path = os.path.sep.join(
-            [
-                portfolio_file_base_path,
-                portfolio_file_name,
-                "Portfolios",
-                portfolio.get("DisplayName"),
-                type
-            ]
+        [
+            portfolio_file_base_path,
+            portfolio_file_name,
+            "Portfolios",
+            portfolio.get("DisplayName"),
+            type,
+        ]
+    )
+
+    # Allows for creation of Products in portfolio or append based on file in the products folder
+    if os.path.exists(portfolio_products_path) and type == "Products":
+        if portfolio.get("Products") is None:
+            portfolio["Products"] = []
+
+        # Find all products
+        external_products = os.listdir(portfolio_products_path)
+
+        # Loop over product folders
+        for external_product in external_products:
+
+            external_product_spec_file_path = os.path.sep.join(
+                [portfolio_products_path, external_product, f"{external_product}.yaml",]
             )
 
-    #Allows for creation of Products in portfolio or append based on file in the products folder
-    if os.path.exists(portfolio_products_path) and type == 'Products':
-            if portfolio.get("Products") is None:
-                    portfolio["Products"] = []
+            # Only append products defined in spec files as products could have been defined in the portfolio
+            if os.path.exists(external_product_spec_file_path):
+                external_product_spec_file = open(
+                    external_product_spec_file_path, "r",
+                ).read()
+                external_product_yaml = yaml.safe_load(external_product_spec_file)
+                external_product_yaml["Name"] = external_product
+                portfolio["Products"].append(external_product_yaml)
 
-            #Find all products
-            external_products = os.listdir(
-                portfolio_products_path
-            )
-
-            #Loop over product folders
-            for external_product in external_products:
-                
-                external_product_spec_file_path = os.path.sep.join(
-                        [
-                            portfolio_products_path,
-                            external_product,
-                            f'{external_product}.yaml',
-                        ]
-                    )
-
-                #Only append products defined in spec files as products could have been defined in the portfolio
-                if  os.path.exists(external_product_spec_file_path):
-                    external_product_spec_file = open(
-                        external_product_spec_file_path,
-                        "r",
-                    ).read()
-                    external_product_yaml = yaml.safe_load(external_product_spec_file)
-                    external_product_yaml["Name"] = external_product
-                    portfolio["Products"].append(external_product_yaml)
-
-    #Versions
+    # Versions
     for component in portfolio.get(type, []):
         portfolio_external_components_specification_path = os.path.sep.join(
             [

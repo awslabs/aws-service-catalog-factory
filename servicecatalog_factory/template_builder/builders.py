@@ -528,7 +528,8 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                     TimeoutInMinutes=60,
                     Environment=codebuild.Environment(
                         ComputeType=stages.get("Build", {}).get(
-                            "BuildEnvironmentComputeType", constants.ENVIRONMENT_COMPUTE_TYPE_DEFAULT
+                            "BuildEnvironmentComputeType",
+                            constants.ENVIRONMENT_COMPUTE_TYPE_DEFAULT,
                         ),
                         Image=stages.get("Build", {}).get(
                             "BuildSpecImage", constants.ENVIRONMENT_IMAGE_DEFAULT
