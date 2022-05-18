@@ -29,6 +29,7 @@ install_requires = \
  'cfn-flip==1.2.3',
  'click==7.0',
  'colorclass>=2.2.0,<3.0.0',
+ 'deepdiff>=5.7.0,<6.0.0',
  'deepmerge>=0.3.0,<0.4.0',
  'docutils==0.14',
  'jinja2==2.11.3',
@@ -56,7 +57,7 @@ setup_kwargs = {
     'package_data': package_data,
     'install_requires': install_requires,
     'entry_points': entry_points,
-    'python_requires': '>=3.7,<4',
+    'python_requires': '>=3.7,<3.8',
 }
 
 

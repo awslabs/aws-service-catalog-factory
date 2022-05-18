@@ -48,20 +48,9 @@ Resources:
           Value: "{{ tag.get("Value") }}"
 {% endfor %}
 
-  {% if CAN_USE_CODE_PIPELINE == "True" %}
-      ArtifactStores:
-  {% for region in ALL_REGIONS %}
-        - Region: {{ region }}
-          ArtifactStore:
-            Type: S3
-            Location: !Sub "sc-factory-artifacts-${AWS::AccountId}-{{ region }}"
-  {% endfor %}
-  {% else %}
       ArtifactStore:
         Type: S3
         Location: !Sub "sc-factory-artifacts-${AWS::AccountId}-${AWS::Region}"
-
-  {% endif %}
       RestartExecutionOnUpdate: false
       Stages:
         - Name: Source
@@ -245,25 +234,6 @@ Resources:
 
         - Name: Deploy
           Actions:
-            {% if CAN_USE_CODE_PIPELINE == "True" %}
-            {% for region in ALL_REGIONS %}
-            - Name: Deploy-{{region}}
-              Region: {{ region }}
-              InputArtifacts:
-                - Name: Package
-              ActionTypeId:
-                Category: Deploy
-                Owner: AWS
-                Provider: ServiceCatalog
-                Version: '1'
-              Configuration:
-                TemplateFilePath: {% if Source.get("Path") %}{{ Source.get("Path", "") }}/{% endif %}product.template-{{ region }}.{{ template_format }}
-                ProductVersionName: {{ version.Name }}
-                ProductType: CLOUD_FORMATION_TEMPLATE{% if version.Description %}
-                ProductVersionDescription: {{ version.Description }}{% endif %}
-                ProductId: {{ product_ids_by_region[region] }}
-            {% endfor %}
-            {% else %}
             - Name: Deploy
               InputArtifacts:
                 - Name: Package
@@ -273,9 +243,8 @@ Resources:
                 Provider: CodeBuild
                 Version: '1'
               Configuration:
-                ProjectName: ServiceCatalog-Factory-SharedDeployInGovCloud
+                ProjectName: ServiceCatalog-Factory-SharedDeploy
                 EnvironmentVariables: !Sub '[{"name":"PIPELINE_NAME","value":"${AWS::StackName}-pipeline","type":"PLAINTEXT"},{"name":"CODEPIPELINE_ID","value":"#{codepipeline.PipelineExecutionId}","type":"PLAINTEXT"}, {"name":"SOURCE_PATH","value":"{{ Source.get("Path", ".") }}","type":"PLAINTEXT"}]'
-            {% endif %}
 
   {% if Source.Provider.lower() == 'github' %}Webhook:
     Type: 'AWS::CodePipeline::Webhook'

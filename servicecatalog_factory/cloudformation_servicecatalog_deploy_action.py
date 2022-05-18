@@ -9,6 +9,8 @@ import zipfile
 import click
 from betterboto import client as betterboto_client
 import time
+from deepdiff import DeepDiff
+import cfn_flip
 
 
 def deploy(pipeline_name, pipeline_region, codepipeline_id, region, source_path):
@@ -50,16 +52,9 @@ def set_template_url_for_codepipeline_id(
             environment_variable.get("name")
         ] = environment_variable.get("value")
 
-    #
-    #
-    # THIS NEEDS TO BE PASSED IN OR MADE THE SAME!!!  current error is that the template is not in the zip file
-    #
-    #
     return_key = "{PROVISIONER}/{region}/{NAME}/{VERSION}/{CODEPIPELINE_ID}/product.template.{TEMPLATE_FORMAT}".format(
         region=region, **action_configuration
     )
-
-    print(return_key)
 
     output_artifacts = action.get("output").get("outputArtifacts")
     assert len(output_artifacts) == 1
@@ -68,10 +63,6 @@ def set_template_url_for_codepipeline_id(
     key = output_artifacts.get("s3location").get("key")
 
     template_format = action_configuration.get("TEMPLATE_FORMAT")
-
-    print(f"bucket is {bucket}")
-    print(f"key is {key}")
-    print(f"source_path is {source_path}")
 
     with betterboto_client.ClientContextManager("s3") as s3:
         template = (
@@ -87,6 +78,15 @@ def set_template_url_for_codepipeline_id(
     action_configuration["BUCKET"] = bucket
     action_configuration["TEMPLATE_URL"] = return_key
     return action_configuration
+
+
+def get_existing_provisioning_artefact(servicecatalog, version_name, product_id):
+    try:
+        return servicecatalog.describe_provisioning_artifact(
+            ProvisioningArtifactName=version_name, ProductId=product_id,
+        ).get("Info")
+    except servicecatalog.exceptions.ResourceNotFoundException:
+        return None
 
 
 def create_or_update_provisioning_artifact(
@@ -110,57 +110,98 @@ def create_or_update_provisioning_artifact(
     with betterboto_client.ClientContextManager(
         "servicecatalog", region_name=region
     ) as servicecatalog:
-        click.echo(
-            f"Creating: {version_name} in: {region} for {product}: using: {template_url}"
+        existing_provisioning_artefact = get_existing_provisioning_artefact(
+            servicecatalog, version_name, product_id
         )
 
-        response = servicecatalog.create_provisioning_artifact(
-            ProductId=product_id,
-            Parameters={
-                "Name": version_name,
-                "Description": description,
-                "Info": {"LoadTemplateFromURL": template_url},
-                "Type": "CLOUD_FORMATION_TEMPLATE",
-                "DisableTemplateValidation": False,
-            },
-        )
-        new_provisioning_artifact_id = response.get("ProvisioningArtifactDetail").get(
-            "Id"
-        )
-        status = "CREATING"
-        while status == "CREATING":
-            time.sleep(3)
-            status = servicecatalog.describe_provisioning_artifact(
+        if existing_provisioning_artefact:
+            template_url = existing_provisioning_artefact.get("TemplateUrl")
+            artefact_bucket = template_url.split("/")[2].split(".")[0]
+            artefact_key = "/".join(template_url.split("/")[3:])
+
+            with betterboto_client.ClientContextManager("s3",) as s3:
+                existing_template = cfn_flip.dump_yaml(
+                    cfn_flip.load(
+                        s3.get_object(Bucket=artefact_bucket, Key=artefact_key,)
+                        .get("Body")
+                        .read()
+                    )[0],
+                    clean_up=True,
+                    long_form=True,
+                )
+
+                new_template = cfn_flip.dump_yaml(
+                    cfn_flip.load(
+                        s3.get_object(
+                            Bucket=bucket, Key=action_configuration.get("TEMPLATE_URL"),
+                        )
+                        .get("Body")
+                        .read()
+                    )[0],
+                    clean_up=True,
+                    long_form=True,
+                )
+        else:
+            existing_template = 1
+            new_template = 0
+
+        difference = DeepDiff(existing_template, new_template, ignore_order=True)
+        print(difference)
+
+        if len(difference) == 0:
+            click.echo("There were no changes in the template")
+        else:
+            click.echo(
+                f"Creating: {version_name} in: {region} for {product}: using: {template_url}"
+            )
+
+            response = servicecatalog.create_provisioning_artifact(
                 ProductId=product_id,
-                ProvisioningArtifactId=new_provisioning_artifact_id,
-            ).get("Status")
-
-        if status == "FAILED":
-            raise Exception("Creating the provisioning artifact failed")
-
-        click.echo(
-            f"Created: {new_provisioning_artifact_id} in: {region} for: {product_id} {version_name}"
-        )
-
-        click.echo(f"Checking for old versions of: {version_name} to delete")
-        provisioning_artifact_details = servicecatalog.list_provisioning_artifacts_single_page(
-            ProductId=product_id
-        ).get(
-            "ProvisioningArtifactDetails", []
-        )
-        for provisioning_artifact_detail in provisioning_artifact_details:
-            if (
-                provisioning_artifact_detail.get("Name") == version_name
-                and provisioning_artifact_detail.get("Id")
-                != new_provisioning_artifact_id
-            ):
-                existing_provisioning_artifact_id = provisioning_artifact_detail.get(
-                    "Id"
-                )
-                click.echo(
-                    f"Deleting version: {existing_provisioning_artifact_id} of: {version_name}"
-                )
-                servicecatalog.delete_provisioning_artifact(
+                Parameters={
+                    "Name": version_name,
+                    "Description": description,
+                    "Info": {"LoadTemplateFromURL": template_url},
+                    "Type": "CLOUD_FORMATION_TEMPLATE",
+                    "DisableTemplateValidation": False,
+                },
+            )
+            new_provisioning_artifact_id = response.get(
+                "ProvisioningArtifactDetail"
+            ).get("Id")
+            status = "CREATING"
+            while status == "CREATING":
+                time.sleep(3)
+                status = servicecatalog.describe_provisioning_artifact(
                     ProductId=product_id,
-                    ProvisioningArtifactId=existing_provisioning_artifact_id,
-                )
+                    ProvisioningArtifactId=new_provisioning_artifact_id,
+                ).get("Status")
+
+            if status == "FAILED":
+                raise Exception("Creating the provisioning artifact failed")
+
+            click.echo(
+                f"Created: {new_provisioning_artifact_id} in: {region} for: {product_id} {version_name}"
+            )
+
+            click.echo(f"Checking for old versions of: {version_name} to delete")
+            provisioning_artifact_details = servicecatalog.list_provisioning_artifacts_single_page(
+                ProductId=product_id
+            ).get(
+                "ProvisioningArtifactDetails", []
+            )
+            for provisioning_artifact_detail in provisioning_artifact_details:
+                if (
+                    provisioning_artifact_detail.get("Name") == version_name
+                    and provisioning_artifact_detail.get("Id")
+                    != new_provisioning_artifact_id
+                ):
+                    existing_provisioning_artifact_id = provisioning_artifact_detail.get(
+                        "Id"
+                    )
+                    click.echo(
+                        f"Deleting version: {existing_provisioning_artifact_id} of: {version_name}"
+                    )
+                    servicecatalog.delete_provisioning_artifact(
+                        ProductId=product_id,
+                        ProvisioningArtifactId=existing_provisioning_artifact_id,
+                    )
