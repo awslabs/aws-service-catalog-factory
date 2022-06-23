@@ -138,7 +138,7 @@ source_s3:
   Configuration: include('configuration_s3')
 
 source_github:
-  Provider: enum("Github")
+  Provider: enum("Github", "GitHub")
   Path: str(required=False)
   Configuration: include('configuration_github')
 

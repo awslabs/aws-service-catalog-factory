@@ -172,7 +172,7 @@ source_s3:
   Configuration: include('configuration_s3')
 
 source_github:
-  Provider: enum("Github")
+  Provider: enum("Github", "GitHub")
   Configuration: include('configuration_github')
 
 source_codestarsourceconnection:
