@@ -245,7 +245,7 @@ Resources:
 
         - Name: Deploy
           Actions:
-            {% if CAN_USE_CODE_PIPELINE == "True" and False == True %}
+            {% if CAN_USE_CODE_PIPELINE == "True" %}
             {% for region in ALL_REGIONS %}
             - Name: Deploy-{{region}}
               Region: {{ region }}
