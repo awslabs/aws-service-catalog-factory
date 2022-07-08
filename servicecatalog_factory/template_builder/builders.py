@@ -287,175 +287,12 @@ class BaseTemplateBuilder:
         )
 
 
-class StackTemplateBuilder(BaseTemplateBuilder):
-    def build_test_stage(self, test_input_artifact_name, options, tpl, stages, source):
-        actions = [
-            codepipeline.Actions(
-                RunOrder=1,
-                RoleArn=t.Sub(
-                    "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/SourceRole"
-                ),
-                InputArtifacts=[
-                    codepipeline.InputArtifacts(Name=test_input_artifact_name),
-                ],
-                ActionTypeId=codepipeline.ActionTypeId(
-                    Category="Test", Owner="AWS", Version="1", Provider="CodeBuild",
-                ),
-                OutputArtifacts=[
-                    codepipeline.OutputArtifacts(
-                        Name=base_template.VALIDATE_OUTPUT_ARTIFACT
-                    )
-                ],
-                Configuration={
-                    "ProjectName": shared_resources.VALIDATE_PROJECT_NAME,
-                    "PrimarySource": test_input_artifact_name,
-                    "EnvironmentVariables": t.Sub(
-                        json.dumps(
-                            [
-                                dict(
-                                    name="TEMPLATE_FORMAT",
-                                    value="yaml",
-                                    type="PLAINTEXT",
-                                ),
-                                dict(name="CATEGORY", value="stack", type="PLAINTEXT",),
-                                dict(
-                                    name="SOURCE_PATH",
-                                    value=source.get("Path", "."),
-                                    type="PLAINTEXT",
-                                ),
-                            ]
-                        )
-                    ),
-                },
-                Name="Validate",
-            )
-        ]
+class CFNTemplateBuilder(BaseTemplateBuilder):
+    category = "notset"
 
-        if options.get("ShouldCFNNag"):
-            actions.append(
-                codepipeline.Actions(
-                    RunOrder=1,
-                    RoleArn=t.Sub(
-                        "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/SourceRole"
-                    ),
-                    InputArtifacts=[
-                        codepipeline.InputArtifacts(Name=test_input_artifact_name),
-                    ],
-                    ActionTypeId=codepipeline.ActionTypeId(
-                        Category="Test", Owner="AWS", Version="1", Provider="CodeBuild",
-                    ),
-                    OutputArtifacts=[
-                        codepipeline.OutputArtifacts(
-                            Name=base_template.CFNNAG_OUTPUT_ARTIFACT
-                        )
-                    ],
-                    Configuration={
-                        "ProjectName": shared_resources.CFNNAG_PROJECT_NAME,
-                        "PrimarySource": test_input_artifact_name,
-                        "EnvironmentVariables": t.Sub(
-                            json.dumps(
-                                [
-                                    dict(
-                                        name="TEMPLATE_FORMAT",
-                                        value="yaml",
-                                        type="PLAINTEXT",
-                                    ),
-                                    dict(
-                                        name="CATEGORY",
-                                        value="stack",
-                                        type="PLAINTEXT",
-                                    ),
-                                    dict(
-                                        name="SOURCE_PATH",
-                                        value=source.get("Path", "."),
-                                        type="PLAINTEXT",
-                                    ),
-                                ]
-                            )
-                        ),
-                    },
-                    Name="CFNNag",
-                )
-            )
-
-        if options.get("ShouldCloudformationRSpec"):
-            actions.append(
-                codepipeline.Actions(
-                    RunOrder=1,
-                    RoleArn=t.Sub(
-                        "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/SourceRole"
-                    ),
-                    InputArtifacts=[
-                        codepipeline.InputArtifacts(Name=test_input_artifact_name),
-                    ],
-                    ActionTypeId=codepipeline.ActionTypeId(
-                        Category="Test", Owner="AWS", Version="1", Provider="CodeBuild",
-                    ),
-                    OutputArtifacts=[
-                        codepipeline.OutputArtifacts(
-                            Name=base_template.CLOUDFORMATION_RSPEC_OUTPUT_ARTIFACT
-                        )
-                    ],
-                    Configuration={
-                        "ProjectName": shared_resources.RSPEC_PROJECT_NAME,
-                        "PrimarySource": test_input_artifact_name,
-                        "EnvironmentVariables": t.Sub(
-                            json.dumps(
-                                [
-                                    dict(
-                                        name="TEMPLATE_FORMAT",
-                                        value="yaml",
-                                        type="PLAINTEXT",
-                                    ),
-                                    dict(
-                                        name="CATEGORY",
-                                        value="stack",
-                                        type="PLAINTEXT",
-                                    ),
-                                    dict(
-                                        name="SOURCE_PATH",
-                                        value=source.get("Path", "."),
-                                        type="PLAINTEXT",
-                                    ),
-                                ]
-                            )
-                        ),
-                    },
-                    Name="CloudFormationRSpec",
-                )
-            )
-
-        self.add_custom_tests(tpl, stages, actions, test_input_artifact_name)
-
-        stage = codepipeline.Stages(Name="Tests", Actions=actions)
-
-        return stage
-
-    def build(self, name, version, source, options, stages):
-        all_regions = config.get_regions()
-        factory_version = constants.VERSION
-        template_description = f'{{"version": "{factory_version}", "framework": "servicecatalog-factory", "role": "product-pipeline", "type": "cloudformation", "category": "stack"}}'
-        tpl = t.Template(Description=template_description)
-
-        build_input_artifact_name = base_template.SOURCE_OUTPUT_ARTIFACT
-        test_input_artifact_name = base_template.SOURCE_OUTPUT_ARTIFACT
-        package_input_artifact_name = base_template.SOURCE_OUTPUT_ARTIFACT
-
-        if options.get("ShouldParseAsJinja2Template"):
-            build_input_artifact_name = base_template.PARSE_OUTPUT_ARTIFACT
-            test_input_artifact_name = base_template.PARSE_OUTPUT_ARTIFACT
-            package_input_artifact_name = base_template.PARSE_OUTPUT_ARTIFACT
-
-        if stages.get("Build", {}).get("BuildSpec"):
-            test_input_artifact_name = base_template.BUILD_OUTPUT_ARTIFACT
-            package_input_artifact_name = base_template.BUILD_OUTPUT_ARTIFACT
-
-        deploy_input_artifact_name = "Package"
-
-        pipeline_stages = []
-
-        self.build_source_stage(tpl, pipeline_stages, source)
-
+    def build_build_stage(
+        self, tpl, pipeline_stages, source, options, stages, build_input_artifact_name
+    ):
         if options.get("ShouldParseAsJinja2Template"):
             pipeline_stages.append(
                 codepipeline.Stages(
@@ -495,7 +332,7 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                                             ),
                                             dict(
                                                 name="CATEGORY",
-                                                value="stack",
+                                                value=self.category,
                                                 type="PLAINTEXT",
                                             ),
                                             dict(
@@ -544,7 +381,7 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                                 Name="TEMPLATE_FORMAT", Type="PLAINTEXT", Value="yaml",
                             ),
                             codebuild.EnvironmentVariable(
-                                Name="CATEGORY", Type="PLAINTEXT", Value="stack",
+                                Name="CATEGORY", Type="PLAINTEXT", Value=self.category,
                             ),
                             codebuild.EnvironmentVariable(
                                 Name="SOURCE_PATH", Type="PLAINTEXT", Value=".",
@@ -598,7 +435,7 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                                             ),
                                             dict(
                                                 name="CATEGORY",
-                                                value="stack",
+                                                value=self.category,
                                                 type="PLAINTEXT",
                                             ),
                                             dict(
@@ -615,12 +452,164 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                 )
             )
 
-        pipeline_stages.append(
-            self.build_test_stage(
-                test_input_artifact_name, options, tpl, stages, source
+    def build_test_stage(self, test_input_artifact_name, options, tpl, stages, source):
+        actions = [
+            codepipeline.Actions(
+                RunOrder=1,
+                RoleArn=t.Sub(
+                    "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/SourceRole"
+                ),
+                InputArtifacts=[
+                    codepipeline.InputArtifacts(Name=test_input_artifact_name),
+                ],
+                ActionTypeId=codepipeline.ActionTypeId(
+                    Category="Test", Owner="AWS", Version="1", Provider="CodeBuild",
+                ),
+                OutputArtifacts=[
+                    codepipeline.OutputArtifacts(
+                        Name=base_template.VALIDATE_OUTPUT_ARTIFACT
+                    )
+                ],
+                Configuration={
+                    "ProjectName": shared_resources.VALIDATE_PROJECT_NAME,
+                    "PrimarySource": test_input_artifact_name,
+                    "EnvironmentVariables": t.Sub(
+                        json.dumps(
+                            [
+                                dict(
+                                    name="TEMPLATE_FORMAT",
+                                    value="yaml",
+                                    type="PLAINTEXT",
+                                ),
+                                dict(
+                                    name="CATEGORY",
+                                    value=self.category,
+                                    type="PLAINTEXT",
+                                ),
+                                dict(
+                                    name="SOURCE_PATH",
+                                    value=source.get("Path", "."),
+                                    type="PLAINTEXT",
+                                ),
+                            ]
+                        )
+                    ),
+                },
+                Name="Validate",
             )
-        )
+        ]
 
+        if options.get("ShouldCFNNag"):
+            actions.append(
+                codepipeline.Actions(
+                    RunOrder=1,
+                    RoleArn=t.Sub(
+                        "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/SourceRole"
+                    ),
+                    InputArtifacts=[
+                        codepipeline.InputArtifacts(Name=test_input_artifact_name),
+                    ],
+                    ActionTypeId=codepipeline.ActionTypeId(
+                        Category="Test", Owner="AWS", Version="1", Provider="CodeBuild",
+                    ),
+                    OutputArtifacts=[
+                        codepipeline.OutputArtifacts(
+                            Name=base_template.CFNNAG_OUTPUT_ARTIFACT
+                        )
+                    ],
+                    Configuration={
+                        "ProjectName": shared_resources.CFNNAG_PROJECT_NAME,
+                        "PrimarySource": test_input_artifact_name,
+                        "EnvironmentVariables": t.Sub(
+                            json.dumps(
+                                [
+                                    dict(
+                                        name="TEMPLATE_FORMAT",
+                                        value="yaml",
+                                        type="PLAINTEXT",
+                                    ),
+                                    dict(
+                                        name="CATEGORY",
+                                        value=self.category,
+                                        type="PLAINTEXT",
+                                    ),
+                                    dict(
+                                        name="SOURCE_PATH",
+                                        value=source.get("Path", "."),
+                                        type="PLAINTEXT",
+                                    ),
+                                ]
+                            )
+                        ),
+                    },
+                    Name="CFNNag",
+                )
+            )
+
+        if options.get("ShouldCloudformationRSpec"):
+            actions.append(
+                codepipeline.Actions(
+                    RunOrder=1,
+                    RoleArn=t.Sub(
+                        "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/SourceRole"
+                    ),
+                    InputArtifacts=[
+                        codepipeline.InputArtifacts(Name=test_input_artifact_name),
+                    ],
+                    ActionTypeId=codepipeline.ActionTypeId(
+                        Category="Test", Owner="AWS", Version="1", Provider="CodeBuild",
+                    ),
+                    OutputArtifacts=[
+                        codepipeline.OutputArtifacts(
+                            Name=base_template.CLOUDFORMATION_RSPEC_OUTPUT_ARTIFACT
+                        )
+                    ],
+                    Configuration={
+                        "ProjectName": shared_resources.RSPEC_PROJECT_NAME,
+                        "PrimarySource": test_input_artifact_name,
+                        "EnvironmentVariables": t.Sub(
+                            json.dumps(
+                                [
+                                    dict(
+                                        name="TEMPLATE_FORMAT",
+                                        value="yaml",
+                                        type="PLAINTEXT",
+                                    ),
+                                    dict(
+                                        name="CATEGORY",
+                                        value=self.category,
+                                        type="PLAINTEXT",
+                                    ),
+                                    dict(
+                                        name="SOURCE_PATH",
+                                        value=source.get("Path", "."),
+                                        type="PLAINTEXT",
+                                    ),
+                                ]
+                            )
+                        ),
+                    },
+                    Name="CloudFormationRSpec",
+                )
+            )
+
+        self.add_custom_tests(tpl, stages, actions, test_input_artifact_name)
+
+        stage = codepipeline.Stages(Name="Tests", Actions=actions)
+
+        return stage
+
+    def build_package_stage(
+        self,
+        tpl,
+        pipeline_stages,
+        source,
+        stages,
+        package_input_artifact_name,
+        all_regions,
+        name,
+        version,
+    ):
         if stages.get("Package", {}).get("BuildSpec"):
             package_build_spec = stages.get("Package", {}).get("BuildSpec")
             package_build_spec = jinja2.Template(package_build_spec).render(
@@ -661,32 +650,42 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                         "BuildSpecImage", constants.ENVIRONMENT_IMAGE_DEFAULT
                     ),
                     Type=constants.ENVIRONMENT_TYPE_DEFAULT,
-                    EnvironmentVariables=[
-                        codebuild.EnvironmentVariable(
-                            Name="TEMPLATE_FORMAT", Type="PLAINTEXT", Value="yaml",
-                        ),
-                        codebuild.EnvironmentVariable(
-                            Name="CATEGORY", Type="PLAINTEXT", Value="stack",
-                        ),
-                        codebuild.EnvironmentVariable(
-                            Name="ACCOUNT_ID",
-                            Type="PLAINTEXT",
-                            Value=t.Sub("${AWS::AccountId}"),
-                        ),
-                        codebuild.EnvironmentVariable(
-                            Name="STACK_NAME",
-                            Type="PLAINTEXT",
-                            Value=t.Sub("${AWS::StackName}"),
-                        ),
-                        codebuild.EnvironmentVariable(
-                            Name="SOURCE_PATH", Type="PLAINTEXT", Value=".",
-                        ),
-                        codebuild.EnvironmentVariable(
-                            Name="ALL_REGIONS",
-                            Type="PLAINTEXT",
-                            Value=" ".join(all_regions),
-                        ),
-                    ],
+                    # EnvironmentVariables=[
+                    #     dict(Name="TEMPLATE_FORMAT", Type="PLAINTEXT", Value="yaml",),
+                    #     dict(Name="CATEGORY", Type="PLAINTEXT", Value=self.category,),
+                    #     dict(
+                    #         Name="PROVISIONER",
+                    #         Type="PLAINTEXT",
+                    #         Value="cloudformation",
+                    #     ),
+                    #     dict(Name="DESCRIPTION", Type="PLAINTEXT", Value="TBA",),
+                    #     dict(
+                    #         Name="ACCOUNT_ID",
+                    #         Type="PLAINTEXT",
+                    #         Value=t.Sub("${AWS::AccountId}"),
+                    #     ),
+                    #     dict(
+                    #         Name="STACK_NAME",
+                    #         Type="PLAINTEXT",
+                    #         Value=t.Sub("${AWS::StackName}"),
+                    #     ),
+                    #     dict(Name="SOURCE_PATH", Type="PLAINTEXT", Value=".",),
+                    #     dict(Name="NAME", Type="PLAINTEXT", Value=name,),
+                    #     dict(Name="VERSION", Type="PLAINTEXT", Value=version,),
+                    #     dict(
+                    #         Name="PIPELINE_NAME",
+                    #         Type="PLAINTEXT",
+                    #         Value=t.Sub("${AWS::StackName}-pipeline"),
+                    #     ),
+                    #     dict(
+                    #         Name="CODEPIPELINE_ID", Type="PLAINTEXT", Value="NOT_SET",
+                    #     ),
+                    #     dict(
+                    #         Name="ALL_REGIONS",
+                    #         Type="PLAINTEXT",
+                    #         Value=" ".join(all_regions),
+                    #     ),
+                    # ],
                 ),
                 Source=codebuild.Source(
                     BuildSpec=package_build_spec, Type="CODEPIPELINE",
@@ -727,18 +726,61 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                                     [
                                         dict(
                                             name="TEMPLATE_FORMAT",
-                                            value="yaml",
                                             type="PLAINTEXT",
+                                            value="yaml",
                                         ),
                                         dict(
                                             name="CATEGORY",
-                                            value="stack",
                                             type="PLAINTEXT",
+                                            value=self.category,
+                                        ),
+                                        dict(
+                                            name="PROVISIONER",
+                                            type="PLAINTEXT",
+                                            value="cloudformation",
+                                        ),
+                                        dict(
+                                            name="DESCRIPTION",
+                                            type="PLAINTEXT",
+                                            value="TBA",
+                                        ),
+                                        dict(
+                                            name="ACCOUNT_ID",
+                                            type="PLAINTEXT",
+                                            value="${AWS::AccountId}",
+                                        ),
+                                        dict(
+                                            name="STACK_NAME",
+                                            type="PLAINTEXT",
+                                            value="${AWS::StackName}",
                                         ),
                                         dict(
                                             name="SOURCE_PATH",
-                                            value=source.get("Path", "."),
                                             type="PLAINTEXT",
+                                            value=".",
+                                        ),
+                                        dict(
+                                            name="NAME", type="PLAINTEXT", value=name,
+                                        ),
+                                        dict(
+                                            name="VERSION",
+                                            type="PLAINTEXT",
+                                            value=version,
+                                        ),
+                                        dict(
+                                            name="PIPELINE_NAME",
+                                            type="PLAINTEXT",
+                                            value="${AWS::StackName}-pipeline",
+                                        ),
+                                        dict(
+                                            name="CODEPIPELINE_ID",
+                                            type="PLAINTEXT",
+                                            value="#{codepipeline.PipelineExecutionId}",
+                                        ),
+                                        dict(
+                                            name="ALL_REGIONS",
+                                            type="PLAINTEXT",
+                                            value=" ".join(all_regions),
                                         ),
                                     ]
                                 )
@@ -749,6 +791,92 @@ class StackTemplateBuilder(BaseTemplateBuilder):
             )
         )
 
+    def build(self, name, version, source, options, stages):
+        all_regions = config.get_regions()
+        factory_version = constants.VERSION
+        template_description = f'{{"version": "{factory_version}", "framework": "servicecatalog-factory", "role": "product-pipeline", "type": "cloudformation", "category": "{self.category}"}}'
+        tpl = t.Template(Description=template_description)
+
+        build_input_artifact_name = base_template.SOURCE_OUTPUT_ARTIFACT
+        test_input_artifact_name = base_template.SOURCE_OUTPUT_ARTIFACT
+        package_input_artifact_name = base_template.SOURCE_OUTPUT_ARTIFACT
+
+        if options.get("ShouldParseAsJinja2Template"):
+            build_input_artifact_name = base_template.PARSE_OUTPUT_ARTIFACT
+            test_input_artifact_name = base_template.PARSE_OUTPUT_ARTIFACT
+            package_input_artifact_name = base_template.PARSE_OUTPUT_ARTIFACT
+
+        if stages.get("Build", {}).get("BuildSpec"):
+            test_input_artifact_name = base_template.BUILD_OUTPUT_ARTIFACT
+            package_input_artifact_name = base_template.BUILD_OUTPUT_ARTIFACT
+
+        deploy_input_artifact_name = "Package"
+
+        pipeline_stages = []
+
+        self.build_source_stage(tpl, pipeline_stages, source)
+        self.build_build_stage(
+            tpl, pipeline_stages, source, options, stages, build_input_artifact_name
+        )
+        pipeline_stages.append(
+            self.build_test_stage(
+                test_input_artifact_name, options, tpl, stages, source
+            )
+        )
+        self.build_package_stage(
+            tpl,
+            pipeline_stages,
+            source,
+            stages,
+            package_input_artifact_name,
+            all_regions,
+            name,
+            version,
+        )
+        self.build_deploy_stage(
+            tpl,
+            pipeline_stages,
+            source,
+            deploy_input_artifact_name,
+            name,
+            version,
+            all_regions,
+        )
+
+        tpl.add_resource(
+            codepipeline.Pipeline(
+                "Pipeline",
+                RoleArn=t.Sub(
+                    "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/CodePipelineRole"
+                ),
+                Stages=pipeline_stages,
+                Name=t.Sub("${AWS::StackName}-pipeline"),
+                ArtifactStore=codepipeline.ArtifactStore(
+                    Type="S3",
+                    Location=t.Sub(
+                        "sc-factory-artifacts-${AWS::AccountId}-${AWS::Region}"
+                    ),
+                ),
+                RestartExecutionOnUpdate=False,
+            ),
+        )
+
+        return tpl
+
+
+class StackTemplateBuilder(CFNTemplateBuilder):
+    category = "stack"
+
+    def build_deploy_stage(
+        self,
+        tpl,
+        pipeline_stages,
+        source,
+        deploy_input_artifact_name,
+        name,
+        version,
+        all_regions,
+    ):
         deploy_project_name = t.Sub("${AWS::StackName}-DeployProject")
         tpl.add_resource(
             codebuild.Project(
@@ -769,7 +897,7 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                             Name="TEMPLATE_FORMAT", Type="PLAINTEXT", Value="yaml",
                         ),
                         codebuild.EnvironmentVariable(
-                            Name="CATEGORY", Type="PLAINTEXT", Value="stack",
+                            Name="CATEGORY", Type="PLAINTEXT", Value=self.category,
                         ),
                         codebuild.EnvironmentVariable(
                             Name="ACCOUNT_ID",
@@ -840,7 +968,7 @@ class StackTemplateBuilder(BaseTemplateBuilder):
                                         ),
                                         dict(
                                             name="CATEGORY",
-                                            value="stack",
+                                            value=self.category,
                                             type="PLAINTEXT",
                                         ),
                                         dict(
@@ -857,25 +985,82 @@ class StackTemplateBuilder(BaseTemplateBuilder):
             )
         )
 
-        tpl.add_resource(
-            codepipeline.Pipeline(
-                "Pipeline",
-                RoleArn=t.Sub(
-                    "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/CodePipelineRole"
-                ),
-                Stages=pipeline_stages,
-                Name=t.Sub("${AWS::StackName}-pipeline"),
-                ArtifactStore=codepipeline.ArtifactStore(
-                    Type="S3",
-                    Location=t.Sub(
-                        "sc-factory-artifacts-${AWS::AccountId}-${AWS::Region}"
-                    ),
-                ),
-                RestartExecutionOnUpdate=False,
-            ),
-        )
 
-        return tpl
+class ProductTemplateBuilder(CFNTemplateBuilder):
+    category = "product"
+
+    def build_deploy_stage(
+        self,
+        tpl,
+        pipeline_stages,
+        source,
+        deploy_input_artifact_name,
+        name,
+        version,
+        all_regions,
+    ):
+        pipeline_stages.append(
+            codepipeline.Stages(
+                Name="Deploy",
+                Actions=[
+                    codepipeline.Actions(
+                        Name="Deploy",
+                        RunOrder=1,
+                        # RoleArn=t.Sub(
+                        #     "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/SourceRole"
+                        # ),
+                        InputArtifacts=[
+                            codepipeline.InputArtifacts(
+                                Name=deploy_input_artifact_name
+                            ),
+                        ],
+                        ActionTypeId=codepipeline.ActionTypeId(
+                            Category="Build",
+                            Owner="AWS",
+                            Version="1",
+                            Provider="CodeBuild",
+                        ),
+                        Configuration={
+                            "ProjectName": shared_resources.DEPLOY_VIA_CODEBUILD_PROJECT_NAME,
+                            "EnvironmentVariables": t.Sub(
+                                json.dumps(
+                                    [
+                                        dict(
+                                            name="PROVISIONER",
+                                            value="cloudformation",
+                                            type="PLAINTEXT",
+                                        ),
+                                        dict(
+                                            name="PIPELINE_NAME",
+                                            value="${AWS::StackName}-pipeline",
+                                            type="PLAINTEXT",
+                                        ),
+                                        dict(
+                                            name="CODEPIPELINE_ID",
+                                            value="#{codepipeline.PipelineExecutionId}",
+                                            type="PLAINTEXT",
+                                        ),
+                                        dict(
+                                            name="SOURCE_PATH",
+                                            value=source.get("Path", "."),
+                                            type="PLAINTEXT",
+                                        ),
+                                        dict(
+                                            name="NAME", value=name, type="PLAINTEXT",
+                                        ),
+                                        dict(
+                                            name="VERSION",
+                                            value=version,
+                                            type="PLAINTEXT",
+                                        ),
+                                    ]
+                                )
+                            ),
+                        },
+                    )
+                ],
+            )
+        )
 
 
 class NonCFNTemplateBuilder(BaseTemplateBuilder):

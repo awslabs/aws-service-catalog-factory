@@ -50,11 +50,6 @@ def set_template_url_for_codepipeline_id(
             environment_variable.get("name")
         ] = environment_variable.get("value")
 
-    #
-    #
-    # THIS NEEDS TO BE PASSED IN OR MADE THE SAME!!!  current error is that the template is not in the zip file
-    #
-    #
     return_key = "{PROVISIONER}/{region}/{NAME}/{VERSION}/{CODEPIPELINE_ID}/product.template.{TEMPLATE_FORMAT}".format(
         region=region, **action_configuration
     )

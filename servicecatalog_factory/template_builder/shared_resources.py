@@ -14,7 +14,7 @@ VALIDATE_PROJECT_NAME = "ServiceCatalog-Factory-SharedValidate"
 CFNNAG_PROJECT_NAME = "ServiceCatalog-Factory-SharedCFNNag"
 RSPEC_PROJECT_NAME = "ServiceCatalog-Factory-SharedRSpec"
 JINJA_PROJECT_NAME = "ServiceCatalog-Factory-SharedJINJA"
-DEPLOY_IN_GOVCLOUD_PROJECT_NAME = "ServiceCatalog-Factory-SharedDeployInGovCloud"
+DEPLOY_VIA_CODEBUILD_PROJECT_NAME = "ServiceCatalog-Factory-SharedDeployViaCodeBuild"
 
 
 def get_commands_for_deploy() -> list:
@@ -81,7 +81,7 @@ def get_resources() -> list:
         ),
         codebuild.Project(
             "Deploy",
-            Name=DEPLOY_IN_GOVCLOUD_PROJECT_NAME,
+            Name=DEPLOY_VIA_CODEBUILD_PROJECT_NAME,
             ServiceRole=t.Sub(
                 "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodeRole"
             ),

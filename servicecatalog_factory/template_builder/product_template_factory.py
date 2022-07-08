@@ -14,6 +14,8 @@ def get(name, version):
 def get_v2(name):
     if name == "stack":
         return builders.StackTemplateBuilder()
+    elif name == "products":
+        return builders.ProductTemplateBuilder()
     elif name == "workspace":
         return builders.TerraformTemplateBuilder()
     elif name == "app":

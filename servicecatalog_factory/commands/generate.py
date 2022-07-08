@@ -33,6 +33,11 @@ def generate(p):
     portfolios_path = os.path.sep.join([p, "portfolios"])
     tasks += portfolios_commands.generate(portfolios_path, factory_version)
 
+    products_path = os.path.sep.join([p, "products"])
+    tasks += generic_commands.generate(
+        products_path, "Products", "products", factory_version
+    )
+
     stacks_path = os.path.sep.join([p, "stacks"])
     tasks += generic_commands.generate(stacks_path, "Stacks", "stack", factory_version)
 
