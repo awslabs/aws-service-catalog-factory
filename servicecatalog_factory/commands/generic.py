@@ -12,6 +12,7 @@ def generate(path, item_collection_name, category, factory_version):
     for file_name in glob.glob(f"{path}/*.yaml"):
         file = yaml.safe_load(open(file_name, "r").read())
         for item in file.get(item_collection_name, []):
+            name = item.get("Name")
             for version in item.get("Versions", []):
                 stages = always_merger.merge(
                     item.get("Stages", {}), version.get("Stages", {})
@@ -19,7 +20,27 @@ def generate(path, item_collection_name, category, factory_version):
                 tasks.append(
                     create_generic_version_pipeline_task.CreateGenericVersionPipelineTask(
                         category=category,
-                        name=item.get("Name"),
+                        name=name,
+                        version=version.get("Name"),
+                        source=always_merger.merge(
+                            item.get("Source", {}), version.get("Source", {})
+                        ),
+                        options=always_merger.merge(
+                            item.get("Options", {}), version.get("Options", {})
+                        ),
+                        stages=stages,
+                        tags=version.get("Tags", []) + item.get("Tags", []),
+                    )
+                )
+            for version_file_name in glob.glob(f"{path}/{name}/Versions/*.yaml"):
+                version = yaml.safe_load(open(version_file_name, "r").read())
+                stages = always_merger.merge(
+                    item.get("Stages", {}), version.get("Stages", {})
+                )
+                tasks.append(
+                    create_generic_version_pipeline_task.CreateGenericVersionPipelineTask(
+                        category=category,
+                        name=name,
                         version=version.get("Name"),
                         source=always_merger.merge(
                             item.get("Source", {}), version.get("Source", {})

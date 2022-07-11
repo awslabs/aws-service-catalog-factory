@@ -650,42 +650,6 @@ class CFNTemplateBuilder(BaseTemplateBuilder):
                         "BuildSpecImage", constants.ENVIRONMENT_IMAGE_DEFAULT
                     ),
                     Type=constants.ENVIRONMENT_TYPE_DEFAULT,
-                    # EnvironmentVariables=[
-                    #     dict(Name="TEMPLATE_FORMAT", Type="PLAINTEXT", Value="yaml",),
-                    #     dict(Name="CATEGORY", Type="PLAINTEXT", Value=self.category,),
-                    #     dict(
-                    #         Name="PROVISIONER",
-                    #         Type="PLAINTEXT",
-                    #         Value="cloudformation",
-                    #     ),
-                    #     dict(Name="DESCRIPTION", Type="PLAINTEXT", Value="TBA",),
-                    #     dict(
-                    #         Name="ACCOUNT_ID",
-                    #         Type="PLAINTEXT",
-                    #         Value=t.Sub("${AWS::AccountId}"),
-                    #     ),
-                    #     dict(
-                    #         Name="STACK_NAME",
-                    #         Type="PLAINTEXT",
-                    #         Value=t.Sub("${AWS::StackName}"),
-                    #     ),
-                    #     dict(Name="SOURCE_PATH", Type="PLAINTEXT", Value=".",),
-                    #     dict(Name="NAME", Type="PLAINTEXT", Value=name,),
-                    #     dict(Name="VERSION", Type="PLAINTEXT", Value=version,),
-                    #     dict(
-                    #         Name="PIPELINE_NAME",
-                    #         Type="PLAINTEXT",
-                    #         Value=t.Sub("${AWS::StackName}-pipeline"),
-                    #     ),
-                    #     dict(
-                    #         Name="CODEPIPELINE_ID", Type="PLAINTEXT", Value="NOT_SET",
-                    #     ),
-                    #     dict(
-                    #         Name="ALL_REGIONS",
-                    #         Type="PLAINTEXT",
-                    #         Value=" ".join(all_regions),
-                    #     ),
-                    # ],
                 ),
                 Source=codebuild.Source(
                     BuildSpec=package_build_spec, Type="CODEPIPELINE",
@@ -1006,9 +970,6 @@ class ProductTemplateBuilder(CFNTemplateBuilder):
                     codepipeline.Actions(
                         Name="Deploy",
                         RunOrder=1,
-                        # RoleArn=t.Sub(
-                        #     "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/SourceRole"
-                        # ),
                         InputArtifacts=[
                             codepipeline.InputArtifacts(
                                 Name=deploy_input_artifact_name
