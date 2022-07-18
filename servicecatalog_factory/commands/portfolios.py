@@ -865,11 +865,15 @@ def get_source_for_pipeline(pipeline_name, execution_id):
                             )
                             source = rule.get("Description")
                             return source
+                    elif trigger.get("triggerType") == "PollForSourceChanges":
+                        return trigger.get("triggerDetail")[7:]
 
 
 def print_source_directory(pipeline_name, execution_id, artifact):
     source = get_source_for_pipeline(pipeline_name, execution_id)
-    click.echo(os.getenv(f"CODEBUILD_SRC_DIR_{artifact}{source}", "."))
+    source_to_use = f"CODEBUILD_SRC_DIR_{artifact}_{source}"
+    click.echo(f"source_to_use: {source_to_use} ")
+    click.echo(os.getenv(source_to_use, "."))
     return
 
 
