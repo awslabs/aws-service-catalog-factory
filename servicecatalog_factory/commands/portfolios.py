@@ -872,7 +872,6 @@ def get_source_for_pipeline(pipeline_name, execution_id):
 def print_source_directory(pipeline_name, execution_id, artifact):
     source = get_source_for_pipeline(pipeline_name, execution_id)
     source_to_use = f"CODEBUILD_SRC_DIR_{artifact}_{source}"
-    click.echo(f"source_to_use: {source_to_use} ")
     click.echo(os.getenv(source_to_use, "."))
     return
 
