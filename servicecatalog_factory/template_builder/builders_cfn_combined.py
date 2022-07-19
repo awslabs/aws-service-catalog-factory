@@ -165,10 +165,12 @@ class CFNCombinedTemplateBuilder(builders_base.BaseTemplateBuilder):
                 ),
             )
             path = version.get("Source", {}).get("Path", ".")
+            description = version.get("Description", item.get("Description", "Not set"))
             output = base_directory
             common_commands.append(f'echo "{path}" > {output}/path.txt')
             common_commands.append(f'echo "{item_name}" > {output}/item_name.txt')
             common_commands.append(f'echo "{version_name}" > {output}/version_name.txt')
+            common_commands.append(f'echo "{description}" > {output}/description.txt')
             secondary_artifacts["Validate"][f"Validate_{version_name}"] = {
                 "base-directory": base_directory,
                 "files": "**/*",
@@ -193,6 +195,7 @@ class CFNCombinedTemplateBuilder(builders_base.BaseTemplateBuilder):
                 "export NAME=$(cat item_name.txt)",
                 "export VERSION=$(cat version_name.txt)",
                 "export SOURCE_PATH=$(cat path.txt)",
+                "export DESCRIPTION=$(cat description.txt)",
                 "cd $SOURCE_PATH",
                 "pwd",
             ]
@@ -227,12 +230,14 @@ class CFNCombinedTemplateBuilder(builders_base.BaseTemplateBuilder):
                         "NAME": "NOT_SET",
                         "VERSION": "NOT_SET",
                         "SOURCE_PATH": "NOT_SET",
+                        "DESCRIPTION": "NOT_SET",
                     },
                     "exported-variables": [
                         "TRIGGERING_SOURCE",
                         "NAME",
                         "VERSION",
                         "SOURCE_PATH",
+                        "DESCRIPTION",
                     ],
                 },
                 phases=dict(
@@ -927,6 +932,11 @@ class ProductTemplateBuilder(CFNCombinedTemplateBuilder):
                             json.dumps(
                                 [
                                     dict(
+                                        name="TEMPLATE_FORMAT",
+                                        type="PLAINTEXT",
+                                        value="yaml",
+                                    ),
+                                    dict(
                                         name="PROVISIONER",
                                         value="cloudformation",
                                         type="PLAINTEXT",
@@ -940,6 +950,11 @@ class ProductTemplateBuilder(CFNCombinedTemplateBuilder):
                                         name="CODEPIPELINE_ID",
                                         value="#{codepipeline.PipelineExecutionId}",
                                         type="PLAINTEXT",
+                                    ),
+                                    dict(
+                                        name="DESCRIPTION",
+                                        type="PLAINTEXT",
+                                        value="#{BuildVariables.DESCRIPTION}",
                                     ),
                                     dict(
                                         name="TRIGGERING_SOURCE",
@@ -960,6 +975,11 @@ class ProductTemplateBuilder(CFNCombinedTemplateBuilder):
                                         name="VERSION",
                                         type="PLAINTEXT",
                                         value="#{BuildVariables.VERSION}",
+                                    ),
+                                    dict(
+                                        name="DESCRIPTION",
+                                        type="PLAINTEXT",
+                                        value="#{BuildVariables.DESCRIPTION}",
                                     ),
                                 ]
                             )
