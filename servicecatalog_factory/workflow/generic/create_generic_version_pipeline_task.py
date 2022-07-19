@@ -29,7 +29,9 @@ class CreateGenericVersionPipelineTemplateTask(tasks.FactoryTask):
         )
 
     def run(self):
-        template = product_template_factory.get_v2(self.category, constants.PIPELINE_MODE_SPILT)
+        template = product_template_factory.get_v2(
+            self.category, constants.PIPELINE_MODE_SPILT
+        )
         builder = template.build(
             self.name, self.version, self.source, self.options, self.stages
         )
@@ -101,7 +103,9 @@ class CreateGenericCombinedPipelineTemplateTask(tasks.FactoryTask):
         )
 
     def run(self):
-        template = product_template_factory.get_v2(self.category, constants.PIPELINE_MODE_COMBINED)
+        template = product_template_factory.get_v2(
+            self.category, constants.PIPELINE_MODE_COMBINED
+        )
         builder = template.build(
             self.name, self.item, self.versions, self.options, self.stages
         )

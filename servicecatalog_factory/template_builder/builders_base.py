@@ -104,18 +104,11 @@ class BaseTemplateBuilder:
                     "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/SourceRole"
                 ),
                 ActionTypeId=codepipeline.ActionTypeId(
-                    Category="Source",
-                    Owner="AWS",
-                    Version="1",
-                    Provider="CodeCommit",
+                    Category="Source", Owner="AWS", Version="1", Provider="CodeCommit",
                 ),
                 Configuration={
-                    "RepositoryName": source.get("Configuration").get(
-                        "RepositoryName"
-                    ),
-                    "BranchName": source.get("Configuration").get(
-                        "BranchName"
-                    ),
+                    "RepositoryName": source.get("Configuration").get("RepositoryName"),
+                    "BranchName": source.get("Configuration").get("BranchName"),
                     "PollForSourceChanges": source.get("Configuration").get(
                         "PollForSourceChanges", True
                     ),
@@ -137,9 +130,7 @@ class BaseTemplateBuilder:
                         "",
                         [
                             "{{resolve:secretsmanager:",
-                            source.get("Configuration").get(
-                                "SecretsManagerSecret"
-                            ),
+                            source.get("Configuration").get("SecretsManagerSecret"),
                             ":SecretString:OAuthToken}}",
                         ],
                     ),
@@ -160,15 +151,11 @@ class BaseTemplateBuilder:
                     Provider="CodeStarSourceConnection",
                 ),
                 Configuration={
-                    "ConnectionArn": source.get("Configuration").get(
-                        "ConnectionArn"
-                    ),
+                    "ConnectionArn": source.get("Configuration").get("ConnectionArn"),
                     "FullRepositoryId": source.get("Configuration").get(
                         "FullRepositoryId"
                     ),
-                    "BranchName": source.get("Configuration").get(
-                        "BranchName"
-                    ),
+                    "BranchName": source.get("Configuration").get("BranchName"),
                     "OutputArtifactFormat": source.get("Configuration").get(
                         "OutputArtifactFormat"
                     ),
@@ -177,16 +164,12 @@ class BaseTemplateBuilder:
             s3=codepipeline.Actions(
                 **common_args,
                 ActionTypeId=codepipeline.ActionTypeId(
-                    Category="Source",
-                    Owner="AWS",
-                    Version="1",
-                    Provider="S3",
+                    Category="Source", Owner="AWS", Version="1", Provider="S3",
                 ),
                 Configuration={
                     "S3Bucket": t.Sub(
                         source.get("Configuration").get(
-                            "S3Bucket",
-                            source.get("Configuration").get("BucketName"),
+                            "S3Bucket", source.get("Configuration").get("BucketName"),
                         )
                     ),
                     "S3ObjectKey": t.Sub(
@@ -222,10 +205,7 @@ class BaseTemplateBuilder:
 
         stages.append(
             codepipeline.Stages(
-                Name="Source",
-                Actions=[
-                    self.get_source_action_for_source(source)
-                ],
+                Name="Source", Actions=[self.get_source_action_for_source(source)],
             ),
         )
 
@@ -264,5 +244,3 @@ class BaseTemplateBuilder:
             output_to_add.Value = t.Sub("${GitUrl}||${WebhookUrl}", **values_for_sub)
             output_to_add.Export = t.Export(t.Sub("${AWS::StackName}-pipeline"))
             tpl.add_output(output_to_add)
-
-

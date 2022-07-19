@@ -58,14 +58,10 @@ def create_task_for_split_pipeline(category, item, name, version):
         category=category,
         name=name,
         version=version.get("Name"),
-        source=always_merger.merge(
-            item.get("Source", {}), version.get("Source", {})
-        ),
+        source=always_merger.merge(item.get("Source", {}), version.get("Source", {})),
         options=always_merger.merge(
             item.get("Options", {}), version.get("Options", {})
         ),
-        stages=always_merger.merge(
-        item.get("Stages", {}), version.get("Stages", {})
-    ),
+        stages=always_merger.merge(item.get("Stages", {}), version.get("Stages", {})),
         tags=version.get("Tags", []) + item.get("Tags", []),
     )

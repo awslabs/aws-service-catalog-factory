@@ -44,6 +44,8 @@ def set_template_url_for_codepipeline_id(
     environment_variables = json.loads(
         action["input"]["resolvedConfiguration"]["EnvironmentVariables"]
     )
+    for n, v in action.get("output", {}).get("outputVariables", {}).get("EnvironmentVariables", {}).items():
+        environment_variables.append(dict(name=n, value=v))
     action_configuration = dict()
     for environment_variable in environment_variables:
         action_configuration[

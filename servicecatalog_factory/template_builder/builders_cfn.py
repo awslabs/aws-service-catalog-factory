@@ -182,7 +182,9 @@ class CFNSplitTemplateBuilder(builders_base.BaseTemplateBuilder):
                 )
             )
 
-    def build_test_stage(self, tpl, pipeline_stages, path, options, stages, test_input_artifact_name):
+    def build_test_stage(
+        self, tpl, pipeline_stages, path, options, stages, test_input_artifact_name
+    ):
         actions = [
             codepipeline.Actions(
                 RunOrder=1,
@@ -216,11 +218,7 @@ class CFNSplitTemplateBuilder(builders_base.BaseTemplateBuilder):
                                     value=self.category,
                                     type="PLAINTEXT",
                                 ),
-                                dict(
-                                    name="SOURCE_PATH",
-                                    value=path,
-                                    type="PLAINTEXT",
-                                ),
+                                dict(name="SOURCE_PATH", value=path, type="PLAINTEXT",),
                             ]
                         )
                     ),
@@ -526,12 +524,7 @@ class CFNSplitTemplateBuilder(builders_base.BaseTemplateBuilder):
             version,
         )
         self.build_deploy_stage(
-            tpl,
-            pipeline_stages,
-            path,
-            deploy_input_artifact_name,
-            name,
-            version,
+            tpl, pipeline_stages, path, deploy_input_artifact_name, name, version,
         )
 
         tpl.add_resource(
@@ -559,13 +552,7 @@ class StackTemplateBuilder(CFNSplitTemplateBuilder):
     category = "stack"
 
     def build_deploy_stage(
-        self,
-        tpl,
-        pipeline_stages,
-        path,
-        deploy_input_artifact_name,
-        name,
-        version,
+        self, tpl, pipeline_stages, path, deploy_input_artifact_name, name, version,
     ):
         deploy_project_name = t.Sub("${AWS::StackName}-DeployProject")
         tpl.add_resource(
@@ -680,13 +667,7 @@ class ProductTemplateBuilder(CFNSplitTemplateBuilder):
     category = "product"
 
     def build_deploy_stage(
-        self,
-        tpl,
-        pipeline_stages,
-        path,
-        deploy_input_artifact_name,
-        name,
-        version,
+        self, tpl, pipeline_stages, path, deploy_input_artifact_name, name, version,
     ):
         pipeline_stages.append(
             codepipeline.Stages(
