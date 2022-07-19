@@ -9,6 +9,7 @@ packages = \
  'servicecatalog_factory.commands',
  'servicecatalog_factory.template_builder',
  'servicecatalog_factory.template_builder.cdk',
+ 'servicecatalog_factory.template_builder.troposphere_contstants',
  'servicecatalog_factory.utilities',
  'servicecatalog_factory.workflow',
  'servicecatalog_factory.workflow.codecommit',
