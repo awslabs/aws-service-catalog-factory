@@ -429,11 +429,6 @@ class CFNSplitTemplateBuilder(builders_base.BaseTemplateBuilder):
                                             value="cloudformation",
                                         ),
                                         dict(
-                                            name="DESCRIPTION",
-                                            type="PLAINTEXT",
-                                            value="TBA",
-                                        ),
-                                        dict(
                                             name="ACCOUNT_ID",
                                             type="PLAINTEXT",
                                             value="${AWS::AccountId}",
@@ -692,6 +687,11 @@ class ProductTemplateBuilder(CFNSplitTemplateBuilder):
                             "EnvironmentVariables": t.Sub(
                                 json.dumps(
                                     [
+                                        dict(
+                                            name="TEMPLATE_FORMAT",
+                                            value="yaml",
+                                            type="PLAINTEXT",
+                                        ),
                                         dict(
                                             name="PROVISIONER",
                                             value="cloudformation",

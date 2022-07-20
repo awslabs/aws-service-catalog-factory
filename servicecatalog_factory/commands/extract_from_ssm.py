@@ -10,7 +10,7 @@ import yaml
 def extract_from_ssm(target):
     with betterboto_client.ClientContextManager("ssm") as ssm:
         paginator = ssm.get_paginator("get_parameters_by_path")
-        for pipeline_type in ["stacks", "workspaces", "apps"]:
+        for pipeline_type in ["stacks", "workspaces", "apps", "products"]:
             pipelines = dict()
             for page in paginator.paginate(
                 Path=f"{constants.SERVICE_CATALOG_FACTORY_PIPELINES}/{pipeline_type}",

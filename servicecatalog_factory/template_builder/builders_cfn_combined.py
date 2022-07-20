@@ -676,14 +676,63 @@ class CFNCombinedTemplateBuilder(builders_base.BaseTemplateBuilder):
 class StackTemplateBuilder(CFNCombinedTemplateBuilder):
     category = "stack"
 
-    def build_deploy_stage_EPF(  # TODO FIXME
-        self, tpl, pipeline_stages, path, deploy_input_artifact_name, name, version,
-    ):
-        deploy_project_name = t.Sub("${AWS::StackName}-DeployProject")
+    def build_deploy_stage(self, tpl, item, versions, input_artifact_name):
+        stages = item.get("Stages", {})
+
+        input_artifacts = list()
+        output_artifacts = list()
+        common_commands = list()
+        secondary_artifacts = dict()
+        count = 0
+        common_commands.append("env")
+        for version in versions:
+            version_name = version.get("Name")
+            base_directory = (
+                "$CODEBUILD_SRC_DIR"
+                if count == 0
+                else f"$CODEBUILD_SRC_DIR_Package_{version_name}"
+            )
+            input_artifacts.append(
+                codepipeline.InputArtifacts(
+                    Name=f"{input_artifact_name}_{version_name}"
+                ),
+            )
+            output_artifacts.append(
+                codepipeline.OutputArtifacts(
+                    Name=f"{base_template.DEPLOY_OUTPUT_ARTIFACT}_{version_name}"
+                ),
+            )
+            secondary_artifacts[f"Deploy_{version_name}"] = {
+                "base-directory": base_directory,
+                "files": "**/*",
+            }
+            count += 1
+
+        common_commands.extend(
+            ["cd ${TRIGGERING_SOURCE}", "pwd", "cd ${SOURCE_PATH}", "pwd",]
+        )
+        package_build_spec = yaml.safe_dump(
+            {
+                "version": "0.2",
+                "phases": {
+                    "build": {
+                        "commands": common_commands
+                        + [
+                            f'aws s3 cp . s3://sc-puppet-stacks-repository-$ACCOUNT_ID/$CATEGORY/$NAME/$VERSION/ --recursive --exclude "*" --include "$CATEGORY.template.$TEMPLATE_FORMAT" --include "$CATEGORY.template-*.$TEMPLATE_FORMAT"',
+                        ],
+                    },
+                },
+                "artifacts": {
+                    "files": ["*", "**/*"],
+                    "secondary-artifacts": secondary_artifacts,
+                },
+            }
+        )
+
         tpl.add_resource(
             codebuild.Project(
                 "DeployProject",
-                Name=deploy_project_name,
+                Name=t.Sub("${AWS::StackName}-DeployProject"),
                 ServiceRole=t.Sub(
                     "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodeRole"
                 ),
@@ -692,19 +741,26 @@ class StackTemplateBuilder(CFNCombinedTemplateBuilder):
                 TimeoutInMinutes=60,
                 Environment=codebuild.Environment(
                     ComputeType=constants.ENVIRONMENT_COMPUTE_TYPE_DEFAULT,
-                    Image=constants.ENVIRONMENT_IMAGE_DEFAULT,
+                    Image=stages.get("Build", {}).get(
+                        "BuildSpecImage", constants.ENVIRONMENT_IMAGE_DEFAULT
+                    ),
                     Type=constants.ENVIRONMENT_TYPE_DEFAULT,
                     EnvironmentVariables=[
                         codebuild.EnvironmentVariable(
-                            Name="TEMPLATE_FORMAT", Type="PLAINTEXT", Value="yaml",
-                        ),
-                        codebuild.EnvironmentVariable(
-                            Name="CATEGORY", Type="PLAINTEXT", Value=self.category,
-                        ),
-                        codebuild.EnvironmentVariable(
-                            Name="ACCOUNT_ID",
                             Type="PLAINTEXT",
+                            Name="ACCOUNT_ID",
                             Value=t.Sub("${AWS::AccountId}"),
+                        ),
+                        codebuild.EnvironmentVariable(
+                            Type="PLAINTEXT",
+                            Name="REGION",
+                            Value=t.Sub("${AWS::Region}"),
+                        ),
+                        codebuild.EnvironmentVariable(
+                            Name="PIPELINE_NAME", Type="PLAINTEXT", Value="CHANGE_ME"
+                        ),
+                        codebuild.EnvironmentVariable(
+                            Name="CODEPIPELINE_ID", Type="PLAINTEXT", Value="CHANGE_ME"
                         ),
                         codebuild.EnvironmentVariable(
                             Name="SOURCE_PATH", Type="PLAINTEXT", Value=".",
@@ -712,79 +768,81 @@ class StackTemplateBuilder(CFNCombinedTemplateBuilder):
                     ],
                 ),
                 Source=codebuild.Source(
-                    BuildSpec=yaml.safe_dump(
-                        {
-                            "version": "0.2",
-                            "phases": {
-                                "build": {
-                                    "commands": [
-                                        "cd $SOURCE_PATH",
-                                        f'aws s3 cp . s3://sc-puppet-stacks-repository-$ACCOUNT_ID/$CATEGORY/{name}/{version}/ --recursive --exclude "*" --include "$CATEGORY.template.$TEMPLATE_FORMAT" --include "$CATEGORY.template-*.$TEMPLATE_FORMAT"',
-                                    ],
-                                }
-                            },
-                            "artifacts": {"files": ["*", "**/*"],},
-                        }
-                    ),
-                    Type="CODEPIPELINE",
+                    BuildSpec=package_build_spec, Type="CODEPIPELINE",
                 ),
-                Description=t.Sub("deploy project"),
+                Description=t.Sub("build project"),
             )
         )
 
-        pipeline_stages.append(
-            codepipeline.Stages(
-                Name="Deploy",
-                Actions=[
-                    codepipeline.Actions(
-                        Name="Deploy",
-                        RunOrder=1,
-                        RoleArn=t.Sub(
-                            "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/SourceRole"
-                        ),
-                        InputArtifacts=[
-                            codepipeline.InputArtifacts(
-                                Name=deploy_input_artifact_name
-                            ),
-                        ],
-                        ActionTypeId=codepipeline.ActionTypeId(
-                            Category="Build",
-                            Owner="AWS",
-                            Version="1",
-                            Provider="CodeBuild",
-                        ),
-                        OutputArtifacts=[
-                            codepipeline.OutputArtifacts(
-                                Name=base_template.DEPLOY_OUTPUT_ARTIFACT
+        return codepipeline.Stages(
+            Name="Deploy",
+            Actions=[
+                codepipeline.Actions(
+                    Name="Deploy",
+                    RunOrder=1,
+                    RoleArn=t.Sub(
+                        "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/SourceRole"
+                    ),
+                    InputArtifacts=input_artifacts,
+                    ActionTypeId=codebuild_troposphere_constants.ACTION_TYPE_ID_FOR_BUILD,
+                    OutputArtifacts=output_artifacts,
+                    Configuration={
+                        "ProjectName": t.Ref("DeployProject"),
+                        "PrimarySource": f"{input_artifact_name}_{versions[0].get('Name')}",
+                        "EnvironmentVariables": t.Sub(
+                            json.dumps(
+                                [
+                                    dict(
+                                        name="CATEGORY",
+                                        type="PLAINTEXT",
+                                        value=self.category,
+                                    ),
+                                    dict(
+                                        name="TEMPLATE_FORMAT",
+                                        type="PLAINTEXT",
+                                        value="yaml",
+                                    ),
+                                    dict(
+                                        name="PROVISIONER",
+                                        value="cloudformation",
+                                        type="PLAINTEXT",
+                                    ),
+                                    dict(
+                                        name="PIPELINE_NAME",
+                                        value="${AWS::StackName}-pipeline",
+                                        type="PLAINTEXT",
+                                    ),
+                                    dict(
+                                        name="CODEPIPELINE_ID",
+                                        value="#{codepipeline.PipelineExecutionId}",
+                                        type="PLAINTEXT",
+                                    ),
+                                    dict(
+                                        name="TRIGGERING_SOURCE",
+                                        type="PLAINTEXT",
+                                        value="#{BuildVariables.TRIGGERING_SOURCE}",
+                                    ),
+                                    dict(
+                                        name="SOURCE_PATH",
+                                        type="PLAINTEXT",
+                                        value="#{BuildVariables.SOURCE_PATH}",
+                                    ),
+                                    dict(
+                                        name="NAME",
+                                        type="PLAINTEXT",
+                                        value="#{BuildVariables.NAME}",
+                                    ),
+                                    dict(
+                                        name="VERSION",
+                                        type="PLAINTEXT",
+                                        value="#{BuildVariables.VERSION}",
+                                    ),
+                                ]
                             )
-                        ],
-                        Configuration={
-                            "ProjectName": deploy_project_name,
-                            "EnvironmentVariables": t.Sub(
-                                json.dumps(
-                                    [
-                                        dict(
-                                            name="TEMPLATE_FORMAT",
-                                            value="yaml",
-                                            type="PLAINTEXT",
-                                        ),
-                                        dict(
-                                            name="CATEGORY",
-                                            value=self.category,
-                                            type="PLAINTEXT",
-                                        ),
-                                        dict(
-                                            name="SOURCE_PATH",
-                                            value=path,
-                                            type="PLAINTEXT",
-                                        ),
-                                    ]
-                                )
-                            ),
-                        },
-                    )
-                ],
-            )
+                        ),
+                    },
+                )
+            ],
         )
 
 
@@ -917,6 +975,11 @@ class ProductTemplateBuilder(CFNCombinedTemplateBuilder):
                         "EnvironmentVariables": t.Sub(
                             json.dumps(
                                 [
+                                    dict(
+                                        name="CATEGORY",
+                                        type="PLAINTEXT",
+                                        value=self.category,
+                                    ),
                                     dict(
                                         name="TEMPLATE_FORMAT",
                                         type="PLAINTEXT",

@@ -43,6 +43,7 @@ def generate(path, item_collection_name, category, factory_version):
 
 def create_task_for_combined_pipeline(category, item, name, versions):
     return create_generic_version_pipeline_task.CreateGenericCombinedPipelineTask(
+        pipeline_type=constants.PIPELINE_MODE_COMBINED,
         category=category,
         name=name,
         item=item,
@@ -54,11 +55,12 @@ def create_task_for_combined_pipeline(category, item, name, versions):
 
 
 def create_task_for_split_pipeline(category, item, name, version):
-    return create_generic_version_pipeline_task.CreateGenericVersionPipelineTask(
+    return create_generic_version_pipeline_task.CreateGenericCombinedPipelineTask(
+        pipeline_type=constants.PIPELINE_MODE_SPILT,
         category=category,
         name=name,
-        version=version.get("Name"),
-        source=always_merger.merge(item.get("Source", {}), version.get("Source", {})),
+        item=item,
+        versions=[version],
         options=always_merger.merge(
             item.get("Options", {}), version.get("Options", {})
         ),
