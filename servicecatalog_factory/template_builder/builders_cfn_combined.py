@@ -170,7 +170,9 @@ class CFNCombinedTemplateBuilder(builders_base.BaseTemplateBuilder):
             common_commands.append(f'echo "{path}" > {output}/path.txt')
             common_commands.append(f'echo "{item_name}" > {output}/item_name.txt')
             common_commands.append(f'echo "{version_name}" > {output}/version_name.txt')
-            common_commands.append(f'echo "{description}" > {output}/{path}/description.txt')
+            common_commands.append(
+                f'echo "{description}" > {output}/{path}/description.txt'
+            )
             secondary_artifacts["Validate"][f"Validate_{version_name}"] = {
                 "base-directory": base_directory,
                 "files": "**/*",
@@ -366,7 +368,7 @@ class CFNCombinedTemplateBuilder(builders_base.BaseTemplateBuilder):
                 base_directory = (
                     "$CODEBUILD_SRC_DIR"
                     if count == 0
-                    else f"$CODEBUILD_SRC_DIR_Source_{version_name}"
+                    else f"$CODEBUILD_SRC_DIR_Validate_{version_name}"
                 )
                 input_artifacts.append(
                     codepipeline.InputArtifacts(
@@ -405,14 +407,6 @@ class CFNCombinedTemplateBuilder(builders_base.BaseTemplateBuilder):
                         ],
                     },
                     "phases": {
-                        "install": {
-                            "runtime-versions": {"python": "3.7"},
-                            "commands": [
-                                f"pip install {constants.VERSION}"
-                                if "http" in constants.VERSION
-                                else f"pip install aws-service-catalog-factory=={constants.VERSION}",
-                            ],
-                        },
                         "build": {
                             "commands": common_commands
                             + [
@@ -623,16 +617,16 @@ class CFNCombinedTemplateBuilder(builders_base.BaseTemplateBuilder):
 
         build_input_artifact_name = base_template.SOURCE_OUTPUT_ARTIFACT
         test_input_artifact_name = base_template.SOURCE_OUTPUT_ARTIFACT
-        package_input_artifact_name = base_template.SOURCE_OUTPUT_ARTIFACT
+        package_input_artifact_name = base_template.VALIDATE_OUTPUT_ARTIFACT
 
         if options.get("ShouldParseAsJinja2Template"):
             build_input_artifact_name = base_template.PARSE_OUTPUT_ARTIFACT
             test_input_artifact_name = base_template.PARSE_OUTPUT_ARTIFACT
-            package_input_artifact_name = base_template.PARSE_OUTPUT_ARTIFACT
+            # package_input_artifact_name = base_template.PARSE_OUTPUT_ARTIFACT
 
         if stages.get("Build", {}).get("BuildSpec"):
             test_input_artifact_name = base_template.BUILD_OUTPUT_ARTIFACT
-            package_input_artifact_name = base_template.BUILD_OUTPUT_ARTIFACT
+            # package_input_artifact_name = base_template.BUILD_OUTPUT_ARTIFACT
 
         deploy_input_artifact_name = "Package"
 

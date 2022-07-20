@@ -91,7 +91,7 @@ def set_template_url_for_codepipeline_id(
             io.BytesIO(s3.get_object(Bucket=bucket, Key=key).get("Body").read())
         )
         template = zipped_file.open(template_file_path, "r").read()
-        description = zipped_file.open(description_file_path, "r").read()
+        description = str(zipped_file.open(description_file_path, "r").read())
         s3.put_object(
             Bucket=bucket, Key=return_key, Body=template,
         )
