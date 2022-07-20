@@ -806,7 +806,7 @@ class ProductTemplateBuilder(CFNCombinedTemplateBuilder):
             base_directory = (
                 "$CODEBUILD_SRC_DIR"
                 if count == 0
-                else f"$CODEBUILD_SRC_DIR_Source_{version_name}"
+                else f"$CODEBUILD_SRC_DIR_Package_{version_name}"
             )
             input_artifacts.append(
                 codepipeline.InputArtifacts(
