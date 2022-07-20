@@ -76,23 +76,26 @@ def set_template_url_for_codepipeline_id(
 
     source_path = action_configuration.get("SOURCE_PATH")
 
-    file_path = f"{source_path}/product.template-{region}.{template_format}"
-    if file_path[0:2] == "./":
-        file_path = file_path[2:]
+    template_file_path = f"{source_path}/product.template-{region}.{template_format}"
+    if template_file_path[0:2] == "./":
+        template_file_path = template_file_path[2:]
 
-    print(f"file_path is {file_path}")
+    description_file_path = f"{source_path}/description.txt"
+    if description_file_path[0:2] == "./":
+        description_file_path = description_file_path[2:]
+
+    print(f"template_file_path is {template_file_path}")
 
     with betterboto_client.ClientContextManager("s3") as s3:
-        template = (
-            zipfile.ZipFile(
-                io.BytesIO(s3.get_object(Bucket=bucket, Key=key).get("Body").read())
-            )
-            .open(file_path, "r")
-            .read()
+        zipped_file = zipfile.ZipFile(
+            io.BytesIO(s3.get_object(Bucket=bucket, Key=key).get("Body").read())
         )
+        template = zipped_file.open(template_file_path, "r").read()
+        description = zipped_file.open(description_file_path, "r").read()
         s3.put_object(
             Bucket=bucket, Key=return_key, Body=template,
         )
+    action_configuration["DESCRIPTION"] = description
     action_configuration["BUCKET"] = bucket
     action_configuration["TEMPLATE_URL"] = return_key
     return action_configuration

@@ -195,7 +195,6 @@ class CFNCombinedTemplateBuilder(builders_base.BaseTemplateBuilder):
                 "export NAME=$(cat item_name.txt)",
                 "export VERSION=$(cat version_name.txt)",
                 "export SOURCE_PATH=$(cat path.txt)",
-                "export DESCRIPTION=$(cat description.txt)",
                 "cd $SOURCE_PATH",
                 "pwd",
             ]
