@@ -1,7 +1,7 @@
 #  Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from servicecatalog_factory import constants
-from servicecatalog_factory.template_builder import product_template_factory
+from servicecatalog_factory.template_builder import pipeline_template_builder
 from servicecatalog_factory.workflow import tasks
 import luigi
 from luigi.util import inherits
@@ -18,19 +18,22 @@ class CreateGenericCombinedPipelineTemplateTask(tasks.FactoryTask):
     tags = luigi.ListParameter()
 
     def params_for_results_display(self):
+        versions = ",".join([version.get("Name") for version in self.versions])
         return {
             "category": self.category,
             "name": self.name,
+            "versions": versions,
         }
 
     def output(self):
+        versions = ",".join([version.get("Name") for version in self.versions])
         return luigi.LocalTarget(
             f"output/{self.__class__.__name__}/"
-            f"{self.category}-{self.name}.template.json"
+            f"{self.category}-{self.name}-{versions}.template.json"
         )
 
     def run(self):
-        template = product_template_factory.get_v2(
+        template = pipeline_template_builder.PipelineTemplate(
             self.category, constants.PIPELINE_MODE_COMBINED
         )
         builder = template.build(
@@ -51,10 +54,8 @@ class CreateGenericCombinedPipelineTask(tasks.FactoryTask):
     tags = luigi.ListParameter()
 
     def params_for_results_display(self):
-        return {
-            "category": self.category,
-            "name": self.name,
-        }
+        versions = ",".join([version.get("Name") for version in self.versions])
+        return {"category": self.category, "name": self.name, "versions": versions}
 
     def requires(self):
         return self.clone(CreateGenericCombinedPipelineTemplateTask)

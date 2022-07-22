@@ -23,105 +23,101 @@ from servicecatalog_factory.template_builder.troposphere_contstants import (
 class CFNCombinedTemplateBuilder(builders_base.BaseTemplateBuilder):
     category = "notset"
 
-    def build_build_stage(
-        self, tpl, pipeline_stages, path, options, stages, build_input_artifact_name
-    ):
-        if stages.get("Build", {}).get("BuildSpec"):
-            tpl.add_resource(
-                codebuild.Project(
-                    "BuildProject",
-                    Name=t.Sub("${AWS::StackName}-BuildProject"),
-                    ServiceRole=t.Sub(
-                        "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodeRole"
-                    ),
-                    Tags=t.Tags.from_dict(
-                        **{"ServiceCatalogPuppet:Actor": "Framework"}
-                    ),
-                    Artifacts=codebuild.Artifacts(Type="CODEPIPELINE"),
-                    TimeoutInMinutes=60,
-                    Environment=codebuild.Environment(
-                        ComputeType=stages.get("Build", {}).get(
-                            "BuildEnvironmentComputeType",
-                            constants.ENVIRONMENT_COMPUTE_TYPE_DEFAULT,
-                        ),
-                        Image=stages.get("Build", {}).get(
-                            "BuildSpecImage", constants.ENVIRONMENT_IMAGE_DEFAULT
-                        ),
-                        Type=constants.ENVIRONMENT_TYPE_DEFAULT,
-                        PrivilegedMode=stages.get("Build", {}).get(
-                            "PrivilegedMode",
-                            constants.GENERIC_BUILD_PROJECT_PRIVILEGED_MODE_DEFAULT,
-                        ),
-                        EnvironmentVariables=[
-                            codebuild.EnvironmentVariable(
-                                Name="TEMPLATE_FORMAT", Type="PLAINTEXT", Value="yaml",
-                            ),
-                            codebuild.EnvironmentVariable(
-                                Name="CATEGORY", Type="PLAINTEXT", Value=self.category,
-                            ),
-                            codebuild.EnvironmentVariable(
-                                Name="SOURCE_PATH", Type="PLAINTEXT", Value=".",
-                            ),
-                        ],
-                    ),
-                    Source=codebuild.Source(
-                        BuildSpec=stages.get("Build", {}).get("BuildSpec"),
-                        Type="CODEPIPELINE",
-                    ),
-                    Description=t.Sub("build project"),
-                )
-            )
+    def build_build_stage(self, tpl, item, versions, input_artifact_name):
+        stages = item.get("Stages", {})
+        build_stage = stages.get("Build", {})
+        version = versions[0]
+        version_name = version.get("Name")
+        path = version.get("Source", {}).get("Path", ".")
 
-            pipeline_stages.append(
-                codepipeline.Stages(
+        tpl.add_resource(
+            codebuild.Project(
+                "BuildProject",
+                Name=t.Sub("${AWS::StackName}-BuildProject"),
+                ServiceRole=t.Sub(
+                    "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodeRole"
+                ),
+                Tags=t.Tags.from_dict(**{"ServiceCatalogPuppet:Actor": "Framework"}),
+                Artifacts=codebuild.Artifacts(Type="CODEPIPELINE"),
+                TimeoutInMinutes=60,
+                Environment=codebuild.Environment(
+                    ComputeType=build_stage.get(
+                        "BuildEnvironmentComputeType",
+                        constants.ENVIRONMENT_COMPUTE_TYPE_DEFAULT,
+                    ),
+                    Image=build_stage.get(
+                        "BuildSpecImage", constants.ENVIRONMENT_IMAGE_DEFAULT
+                    ),
+                    Type=constants.ENVIRONMENT_TYPE_DEFAULT,
+                    PrivilegedMode=build_stage.get(
+                        "PrivilegedMode",
+                        constants.GENERIC_BUILD_PROJECT_PRIVILEGED_MODE_DEFAULT,
+                    ),
+                    EnvironmentVariables=[
+                        codebuild.EnvironmentVariable(
+                            Name="TEMPLATE_FORMAT", Type="PLAINTEXT", Value="yaml",
+                        ),
+                        codebuild.EnvironmentVariable(
+                            Name="CATEGORY", Type="PLAINTEXT", Value=self.category,
+                        ),
+                        codebuild.EnvironmentVariable(
+                            Name="SOURCE_PATH", Type="PLAINTEXT", Value=".",
+                        ),
+                    ],
+                ),
+                Source=codebuild.Source(
+                    BuildSpec=build_stage.get("BuildSpec"), Type="CODEPIPELINE",
+                ),
+                Description=t.Sub("build project"),
+            )
+        )
+
+        return codepipeline.Stages(
+            Name="Build",
+            Actions=[
+                codepipeline.Actions(
                     Name="Build",
-                    Actions=[
-                        codepipeline.Actions(
-                            Name="Build",
-                            RunOrder=1,
-                            RoleArn=t.Sub(
-                                "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/SourceRole"
-                            ),
-                            InputArtifacts=[
-                                codepipeline.InputArtifacts(
-                                    Name=build_input_artifact_name
-                                ),
-                            ],
-                            ActionTypeId=codebuild_troposphere_constants.ACTION_TYPE_ID_FOR_BUILD,
-                            OutputArtifacts=[
-                                codepipeline.OutputArtifacts(
-                                    Name=base_template.BUILD_OUTPUT_ARTIFACT
-                                )
-                            ],
-                            Configuration={
-                                "ProjectName": t.Sub("${AWS::StackName}-BuildProject"),
-                                "PrimarySource": build_input_artifact_name,
-                                "EnvironmentVariables": t.Sub(
-                                    json.dumps(
-                                        [
-                                            dict(
-                                                name="TEMPLATE_FORMAT",
-                                                value="yaml",
-                                                type="PLAINTEXT",
-                                            ),
-                                            dict(
-                                                name="CATEGORY",
-                                                value=self.category,
-                                                type="PLAINTEXT",
-                                            ),
-                                            dict(
-                                                name="SOURCE_PATH",
-                                                value=path,
-                                                type="PLAINTEXT",
-                                            ),
-                                        ]
-                                    )
-                                ),
-                            },
+                    RunOrder=1,
+                    RoleArn=t.Sub(
+                        "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/SourceRole"
+                    ),
+                    InputArtifacts=[
+                        codepipeline.InputArtifacts(Name=input_artifact_name),
+                    ],
+                    ActionTypeId=codebuild_troposphere_constants.ACTION_TYPE_ID_FOR_BUILD,
+                    OutputArtifacts=[
+                        codepipeline.OutputArtifacts(
+                            Name=f"{base_template.BUILD_OUTPUT_ARTIFACT}_{version_name}"
                         )
                     ],
+                    Configuration={
+                        "ProjectName": t.Sub("${AWS::StackName}-BuildProject"),
+                        "PrimarySource": input_artifact_name,
+                        "EnvironmentVariables": t.Sub(
+                            json.dumps(
+                                [
+                                    dict(
+                                        name="TEMPLATE_FORMAT",
+                                        value="yaml",
+                                        type="PLAINTEXT",
+                                    ),
+                                    dict(
+                                        name="CATEGORY",
+                                        value=self.category,
+                                        type="PLAINTEXT",
+                                    ),
+                                    dict(
+                                        name="SOURCE_PATH",
+                                        value=path,
+                                        type="PLAINTEXT",
+                                    ),
+                                ]
+                            )
+                        ),
+                    },
                 )
-            )
+            ],
+        )
 
     def build_test_stage(self, tpl, item, versions, test_input_artifact_name):
         options = item.get("Options", {})
@@ -261,6 +257,8 @@ class CFNCombinedTemplateBuilder(builders_base.BaseTemplateBuilder):
             versions,
         )
 
+        del common_args["Namespace"]
+
         if options.get("ShouldCFNNag"):
             common_args["OutputArtifacts"] = output_artifacts.get("CFNNag")
             actions.extend(
@@ -345,14 +343,37 @@ class CFNCombinedTemplateBuilder(builders_base.BaseTemplateBuilder):
                 )
             )
 
+        custom_test_stages = item.get("Stages", {}).get("Tests", {})
+        for test_stage_name, test_stage_details in custom_test_stages.items():
+            test_output_artifacts = list()
+            for version in versions:
+                version_name = version.get("Name")
+                test_output_artifacts.append(
+                    codepipeline.OutputArtifacts(
+                        Name=f"{test_stage_name}_{version_name}"
+                    ),
+                )
+            common_args["OutputArtifacts"] = test_output_artifacts
+            actions.extend(
+                self.build_test_stage_action_for(
+                    test_stage_name,
+                    yaml.safe_load(test_stage_details.get("BuildSpec")),
+                    common_args,
+                    test_input_artifact_name,
+                    tpl,
+                    versions,
+                )
+            )
+
         return codepipeline.Stages(Name="Tests", Actions=actions)
 
     def build_package_stage(self, tpl, item, versions, input_artifact_name):
         all_regions = config.get_regions()
         stages = item.get("Stages", {})
+        package_stage = stages.get("Package", {})
 
-        if stages.get("Package", {}).get("BuildSpec"):
-            package_build_spec = stages.get("Package", {}).get("BuildSpec")
+        if package_stage.get("BuildSpec"):
+            package_build_spec = package_stage.get("BuildSpec")
             package_build_spec = jinja2.Template(package_build_spec).render(
                 ALL_REGIONS=all_regions
             )
@@ -434,7 +455,7 @@ class CFNCombinedTemplateBuilder(builders_base.BaseTemplateBuilder):
                 TimeoutInMinutes=60,
                 Environment=codebuild.Environment(
                     ComputeType=constants.ENVIRONMENT_COMPUTE_TYPE_DEFAULT,
-                    Image=stages.get("Build", {}).get(
+                    Image=package_stage.get(
                         "BuildSpecImage", constants.ENVIRONMENT_IMAGE_DEFAULT
                     ),
                     Type=constants.ENVIRONMENT_TYPE_DEFAULT,
@@ -615,7 +636,9 @@ class CFNCombinedTemplateBuilder(builders_base.BaseTemplateBuilder):
         template_description = f'{{"version": "{factory_version}", "framework": "servicecatalog-factory", "role": "product-pipeline", "type": "cloudformation", "category": "{self.category}"}}'
         tpl = t.Template(Description=template_description)
 
-        build_input_artifact_name = base_template.SOURCE_OUTPUT_ARTIFACT
+        build_input_artifact_name = (
+            f"{base_template.SOURCE_OUTPUT_ARTIFACT}_{versions[0].get('Name')}"
+        )
         test_input_artifact_name = base_template.SOURCE_OUTPUT_ARTIFACT
         package_input_artifact_name = base_template.VALIDATE_OUTPUT_ARTIFACT
 
@@ -626,32 +649,29 @@ class CFNCombinedTemplateBuilder(builders_base.BaseTemplateBuilder):
 
         if stages.get("Build", {}).get("BuildSpec"):
             test_input_artifact_name = base_template.BUILD_OUTPUT_ARTIFACT
+            test_input_artifact_name = f"{base_template.BUILD_OUTPUT_ARTIFACT}"
             # package_input_artifact_name = base_template.BUILD_OUTPUT_ARTIFACT
 
         deploy_input_artifact_name = "Package"
 
         pipeline_stages = [
             self.build_source_stage(tpl, item, versions),
-            ## build_build_stage would go here
-            self.build_test_stage(tpl, item, versions, test_input_artifact_name),
-            self.build_package_stage(tpl, item, versions, package_input_artifact_name),
-            self.build_deploy_stage(tpl, item, versions, deploy_input_artifact_name),
         ]
-
-        # self.build_build_stage(
-        #     tpl, pipeline_stages, path, options, stages, build_input_artifact_name
-        # )
-        #
-        # all_regions = config.get_regions()
-        # self.build_deploy_stage(
-        #     tpl,
-        #     pipeline_stages,
-        #     path,
-        #     deploy_input_artifact_name,
-        #     name,
-        #     version,
-        # )
-
+        if stages.get("Build"):
+            pipeline_stages.append(
+                self.build_build_stage(tpl, item, versions, build_input_artifact_name),
+            )
+        pipeline_stages.extend(
+            [
+                self.build_test_stage(tpl, item, versions, test_input_artifact_name),
+                self.build_package_stage(
+                    tpl, item, versions, package_input_artifact_name
+                ),
+                self.build_deploy_stage(
+                    tpl, item, versions, deploy_input_artifact_name
+                ),
+            ]
+        )
         tpl.add_resource(
             codepipeline.Pipeline(
                 "Pipeline",
@@ -669,7 +689,6 @@ class CFNCombinedTemplateBuilder(builders_base.BaseTemplateBuilder):
                 RestartExecutionOnUpdate=False,
             ),
         )
-
         return tpl
 
 

@@ -37,7 +37,6 @@ def generate(path, item_collection_name, category, factory_version):
                 )
             else:
                 raise Exception(f"Unsupported pipeline_mode: {pipeline_mode}")
-
     return tasks
 
 

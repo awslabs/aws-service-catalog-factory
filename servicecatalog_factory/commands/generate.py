@@ -46,8 +46,8 @@ def generate(p):
         workspaces_path, "Workspaces", "workspace", factory_version
     )
 
-    workspaces_path = os.path.sep.join([p, "apps"])
-    tasks += generic_commands.generate(workspaces_path, "Apps", "app", factory_version)
+    apps_path = os.path.sep.join([p, "apps"])
+    tasks += generic_commands.generate(apps_path, "Apps", "app", factory_version)
 
     for type in [
         "failure",
