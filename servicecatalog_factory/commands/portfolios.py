@@ -878,7 +878,7 @@ def print_source_directory(pipeline_name, execution_id):
         if action.get("stageName") == "Source":
             source_actions.append(action)
 
-    source_actions.sort(key=lambda x: x.get("lastUpdateTime"))
+    source_actions.sort(key=lambda x: x.get("lastUpdateTime"), reverse=True)
     first_source_name = source_actions[0].get("actionName")
 
     if len(source_actions) > 1:
