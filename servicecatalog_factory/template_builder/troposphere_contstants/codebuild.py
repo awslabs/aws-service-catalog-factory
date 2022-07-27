@@ -9,3 +9,5 @@ ACTION_TYPE_ID_FOR_BUILD = codepipeline.ActionTypeId(
 ACTION_TYPE_ID_FOR_TEST = codepipeline.ActionTypeId(
     Category="Test", Owner="AWS", Version="1", Provider="CodeBuild",
 )
+ACTION_TYPE_ID_FOR_PACKAGE = ACTION_TYPE_ID_FOR_BUILD
+ACTION_TYPE_ID_FOR_DEPLOY = ACTION_TYPE_ID_FOR_BUILD

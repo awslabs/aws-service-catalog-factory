@@ -10,7 +10,7 @@ from troposphere import codepipeline, codebuild
 
 from servicecatalog_factory import config, utils
 from servicecatalog_factory import constants
-from servicecatalog_factory.template_builder import base_template
+from servicecatalog_factory.template_builder import base_template, shared_resources
 from servicecatalog_factory.template_builder.troposphere_contstants import (
     codebuild as codebuild_troposphere_constants,
 )
@@ -704,6 +704,29 @@ class PackageTemplateMixin:
             }
             count += 1
 
+        environmental_variables = [
+            dict(name="TEMPLATE_FORMAT", type="PLAINTEXT", value="yaml",),
+            dict(
+                name="CATEGORY",
+                type="PLAINTEXT",
+                value=translate_category(self.category),
+            ),
+            dict(name="PROVISIONER", type="PLAINTEXT", value="cloudformation",),
+            dict(name="ACCOUNT_ID", type="PLAINTEXT", value="${AWS::AccountId}",),
+            dict(name="STACK_NAME", type="PLAINTEXT", value="${AWS::StackName}",),
+            dict(
+                name="PIPELINE_NAME",
+                type="PLAINTEXT",
+                value="${AWS::StackName}-pipeline",
+            ),
+            dict(
+                name="CODEPIPELINE_ID",
+                type="PLAINTEXT",
+                value="#{codepipeline.PipelineExecutionId}",
+            ),
+            dict(name="ALL_REGIONS", type="PLAINTEXT", value=" ".join(all_regions),),
+        ]
+
         if package_stage.get("BuildSpec"):
             package_build_spec = package_stage.get("BuildSpec")
             package_build_spec = jinja2.Template(package_build_spec).render(
@@ -713,7 +736,6 @@ class PackageTemplateMixin:
             package_build_spec = self.generate_build_spec(
                 all_regions, secondary_artifacts, options
             )
-
         tpl.add_resource(
             codebuild.Project(
                 "PackageProject",
@@ -734,7 +756,7 @@ class PackageTemplateMixin:
                 Source=codebuild.Source(
                     BuildSpec=yaml.safe_dump(package_build_spec), Type="CODEPIPELINE",
                 ),
-                Description=t.Sub("build project"),
+                Description=t.Sub("package project"),
             )
         )
 
@@ -748,57 +770,14 @@ class PackageTemplateMixin:
                         "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/SourceRole"
                     ),
                     InputArtifacts=input_artifacts,
-                    ActionTypeId=codebuild_troposphere_constants.ACTION_TYPE_ID_FOR_BUILD,
+                    ActionTypeId=codebuild_troposphere_constants.ACTION_TYPE_ID_FOR_PACKAGE,
                     Namespace="BuildVariables",
                     OutputArtifacts=output_artifacts,
                     Configuration={
                         "ProjectName": t.Ref("PackageProject"),
-                        "PrimarySource": f"{input_artifact_name}_{versions[0].get('Name')}",
+                        "PrimarySource": input_artifacts[0].Name,
                         "EnvironmentVariables": t.Sub(
-                            json.dumps(
-                                [
-                                    dict(
-                                        name="TEMPLATE_FORMAT",
-                                        type="PLAINTEXT",
-                                        value="yaml",
-                                    ),
-                                    dict(
-                                        name="CATEGORY",
-                                        type="PLAINTEXT",
-                                        value=translate_category(self.category),
-                                    ),
-                                    dict(
-                                        name="PROVISIONER",
-                                        type="PLAINTEXT",
-                                        value="cloudformation",
-                                    ),
-                                    dict(
-                                        name="ACCOUNT_ID",
-                                        type="PLAINTEXT",
-                                        value="${AWS::AccountId}",
-                                    ),
-                                    dict(
-                                        name="STACK_NAME",
-                                        type="PLAINTEXT",
-                                        value="${AWS::StackName}",
-                                    ),
-                                    dict(
-                                        name="PIPELINE_NAME",
-                                        type="PLAINTEXT",
-                                        value="${AWS::StackName}-pipeline",
-                                    ),
-                                    dict(
-                                        name="CODEPIPELINE_ID",
-                                        type="PLAINTEXT",
-                                        value="#{codepipeline.PipelineExecutionId}",
-                                    ),
-                                    dict(
-                                        name="ALL_REGIONS",
-                                        type="PLAINTEXT",
-                                        value=" ".join(all_regions),
-                                    ),
-                                ]
-                            )
+                            json.dumps(environmental_variables)
                         ),
                     },
                 )
@@ -871,6 +850,7 @@ class PackageTemplateMixin:
                     },
                     "build": {
                         "commands": [
+                            "env",
                             "export TRIGGERING_SOURCE=$(servicecatalog-factory print-source-directory ${AWS::StackName}-pipeline $EXECUTION_ID Source)",
                             "cd $TRIGGERING_SOURCE",
                             "pwd",
@@ -880,7 +860,7 @@ class PackageTemplateMixin:
                             "cd $SOURCE_PATH",
                             "pwd",
                             f"echo '{json.dumps(utils.unwrap(options))}' > options.json",
-                            f"zip -r $CATEGORY.zip .",
+                            f"zip -r $CATEGORY.zip $PWD/*",
                         ]
                     },
                 },
@@ -953,7 +933,7 @@ class PackageTemplateMixin:
                 Source=codebuild.Source(
                     BuildSpec=yaml.safe_dump(package_build_spec), Type="CODEPIPELINE",
                 ),
-                Description=t.Sub("build project"),
+                Description=t.Sub("package project"),
             )
         )
 
@@ -967,7 +947,7 @@ class PackageTemplateMixin:
                         "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/SourceRole"
                     ),
                     InputArtifacts=input_artifacts,
-                    ActionTypeId=codebuild_troposphere_constants.ACTION_TYPE_ID_FOR_BUILD,
+                    ActionTypeId=codebuild_troposphere_constants.ACTION_TYPE_ID_FOR_PACKAGE,
                     OutputArtifacts=output_artifacts,
                     Configuration={
                         "ProjectName": t.Ref("PackageProject"),
@@ -1034,19 +1014,23 @@ class PackageTemplateMixin:
         )
 
 
+def is_for_single_version(versions):
+    return len(versions) == 1
+
+
 class DeployTemplateMixin:
-    def generate_deploy_stage(self, tpl, versions, stages, input_artifact_name):
+    def generate_deploy_stage(self, tpl, item, versions, stages, input_artifact_name):
         if self.category == "products":
             return self.generate_deploy_stage_for_products(
-                tpl, versions, stages, input_artifact_name
+                tpl, item, versions, stages, input_artifact_name
             )
         else:
             return self.generate_deploy_stage_for_non_products(
-                tpl, versions, stages, input_artifact_name
+                tpl, item, versions, stages, input_artifact_name
             )
 
     def generate_deploy_stage_for_products(
-        self, tpl, versions, stages, input_artifact_name
+        self, tpl, item, versions, stages, input_artifact_name
     ):
         all_regions = config.get_regions()
 
@@ -1227,20 +1211,16 @@ class DeployTemplateMixin:
         )
 
     def generate_deploy_stage_for_non_products(
-        self, tpl, versions, stages, input_artifact_name
+        self, tpl, item, versions, stages, input_artifact_name
     ):
-        command = dict(
-            stack='aws s3 cp . s3://sc-puppet-stacks-repository-$ACCOUNT_ID/$CATEGORY/$NAME/$VERSION/ --recursive --exclude "*" --include "$CATEGORY.template.$TEMPLATE_FORMAT" --include "$CATEGORY.template-*.$TEMPLATE_FORMAT"',
-            app="aws s3 cp $CATEGORY.zip s3://sc-puppet-stacks-repository-$ACCOUNT_ID/$CATEGORY/$NAME/$VERSION/$CATEGORY.zip",
-            workspace="aws s3 cp $CATEGORY.zip s3://sc-puppet-stacks-repository-$ACCOUNT_ID/$CATEGORY/$NAME/$VERSION/$CATEGORY.zip",
-        )[self.category]
+
+        environment_variables = list()
 
         input_artifacts = list()
         output_artifacts = list()
-        common_commands = list()
         secondary_artifacts = dict()
+
         count = 0
-        common_commands.append("env")
         for version in versions:
             version_name = version.get("Name")
             base_directory = (
@@ -1264,64 +1244,115 @@ class DeployTemplateMixin:
             }
             count += 1
 
-        common_commands.extend(
-            ["cd ${TRIGGERING_SOURCE}", "pwd", "cd ${SOURCE_PATH}", "pwd", command]
-        )
-        package_build_spec = yaml.safe_dump(
-            {
-                "version": "0.2",
-                "phases": {"build": {"commands": common_commands},},
-                "artifacts": {
-                    "files": ["*", "**/*"],
-                    "secondary-artifacts": secondary_artifacts,
-                },
-            }
-        )
-
-        tpl.add_resource(
-            codebuild.Project(
-                "DeployProject",
-                Name=t.Sub("${AWS::StackName}-DeployProject"),
-                ServiceRole=t.Sub(
-                    "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodeRole"
-                ),
-                Tags=t.Tags.from_dict(**{"ServiceCatalogPuppet:Actor": "Framework"}),
-                Artifacts=codebuild.Artifacts(Type="CODEPIPELINE"),
-                TimeoutInMinutes=60,
-                Environment=codebuild.Environment(
-                    ComputeType=constants.ENVIRONMENT_COMPUTE_TYPE_DEFAULT,
-                    Image=stages.get("Build", {}).get(
-                        "BuildSpecImage", constants.ENVIRONMENT_IMAGE_DEFAULT
-                    ),
-                    Type=constants.ENVIRONMENT_TYPE_DEFAULT,
-                    EnvironmentVariables=[
-                        codebuild.EnvironmentVariable(
-                            Type="PLAINTEXT",
-                            Name="ACCOUNT_ID",
-                            Value=t.Sub("${AWS::AccountId}"),
-                        ),
-                        codebuild.EnvironmentVariable(
-                            Type="PLAINTEXT",
-                            Name="REGION",
-                            Value=t.Sub("${AWS::Region}"),
-                        ),
-                        codebuild.EnvironmentVariable(
-                            Name="PIPELINE_NAME", Type="PLAINTEXT", Value="CHANGE_ME"
-                        ),
-                        codebuild.EnvironmentVariable(
-                            Name="CODEPIPELINE_ID", Type="PLAINTEXT", Value="CHANGE_ME"
-                        ),
-                        codebuild.EnvironmentVariable(
-                            Name="SOURCE_PATH", Type="PLAINTEXT", Value=".",
-                        ),
-                    ],
-                ),
-                Source=codebuild.Source(
-                    BuildSpec=package_build_spec, Type="CODEPIPELINE",
-                ),
-                Description=t.Sub("build project"),
+        if is_for_single_version(versions):
+            project_name = shared_resources.SINGLE_PROJECTS_BY_CATEGORY[self.category]
+            version = versions[0]
+            name = item.get("Name")
+            version_name = version.get("Name")
+            source_path = item.get("Source", {}).get(
+                "Path", version.get("Source", {}).get("Path", ".")
             )
-        )
+            environment_variables.extend(
+                [
+                    dict(name="SOURCE_PATH", type="PLAINTEXT", value=source_path,),
+                    dict(name="NAME", type="PLAINTEXT", value=name,),
+                    dict(name="VERSION", type="PLAINTEXT", value=version_name,),
+                ]
+            )
+            if self.category == "stack":
+                environment_variables.append(
+                    dict(
+                        name="TEMPLATE_FORMAT",
+                        type="PLAINTEXT",
+                        value=version.get("Provisioner", {}).get(
+                            "Format", item.get("Provisioner", {}).get("Format", "yaml")
+                        ),
+                    ),
+                )
+
+        else:
+            if self.category == "stack":
+                environment_variables.append(
+                    dict(
+                        name="TEMPLATE_FORMAT",
+                        type="PLAINTEXT",
+                        value=item.get("Provisioner", {}).get("Format", "yaml"),
+                    ),
+                )
+
+            raise Exception("NOT DONE YET")
+
+        # source_path = dict(name="SOURCE_PATH", type="PLAINTEXT", value=source_path, )
+        # package_build_spec = yaml.safe_dump(
+        #     {
+        #         "version": "0.2",
+        #         "phases": {
+        #             "install": {
+        #                 "runtime-versions": dict(python="3.7", ),
+        #                 "commands": [
+        #                     f"pip install {constants.VERSION}"
+        #                     if "http" in constants.VERSION
+        #                     else f"pip install aws-service-catalog-factory=={constants.VERSION}",
+        #                 ],
+        #             },
+        #             "build": {"commands": common_commands},
+        #         },
+        #         "artifacts": {
+        #             "files": ["*", "**/*"],
+        #             "secondary-artifacts": secondary_artifacts,
+        #         },
+        #     }
+        # )
+        #
+        # sct = [
+        #     dict(
+        #         name="TEMPLATE_FORMAT",
+        #         type="PLAINTEXT",
+        #         value="yaml",
+        #     ),
+        #     dict(
+        #         name="PROVISIONER",
+        #         value="cloudformation",
+        #         type="PLAINTEXT",
+        #     ),
+        #     dict(
+        #         name="PIPELINE_NAME",
+        #         value="${AWS::StackName}-pipeline",
+        #         type="PLAINTEXT",
+        #     ),
+        #     dict(
+        #         name="CODEPIPELINE_ID",
+        #         value="#{codepipeline.PipelineExecutionId}",
+        #         type="PLAINTEXT",
+        #     ),
+        #     dict(
+        #         name="TRIGGERING_SOURCE",
+        #         type="PLAINTEXT",
+        #         value="#{BuildVariables.TRIGGERING_SOURCE}",
+        #     ),
+        #     source_path,
+        #     dict(
+        #         name="NAME",
+        #         type="PLAINTEXT",
+        #         value="#{BuildVariables.NAME}",
+        #     ),
+        #     dict(
+        #         name="VERSION",
+        #         type="PLAINTEXT",
+        #         value="#{BuildVariables.VERSION}",
+        #     ),
+        # ]
+
+        # [
+        #     "pwd",
+        #     # TODO FIXME Source on the next line is incorrect!
+        #     "export TRIGGERING_SOURCE=$(servicecatalog-factory print-source-directory ${AWS::StackName}-pipeline $EXECUTION_ID Source)",
+        #     "cd $TRIGGERING_SOURCE",
+        #     "pwd",
+        #     "cd ${SOURCE_PATH}",
+        #     "pwd",
+        #     command,
+        # ]
 
         return codepipeline.Stages(
             Name="Deploy",
@@ -1333,11 +1364,11 @@ class DeployTemplateMixin:
                         "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/SourceRole"
                     ),
                     InputArtifacts=input_artifacts,
-                    ActionTypeId=codebuild_troposphere_constants.ACTION_TYPE_ID_FOR_BUILD,
+                    ActionTypeId=codebuild_troposphere_constants.ACTION_TYPE_ID_FOR_DEPLOY,
                     OutputArtifacts=output_artifacts,
                     Configuration={
-                        "ProjectName": t.Ref("DeployProject"),
-                        "PrimarySource": f"{input_artifact_name}_{versions[0].get('Name')}",
+                        "ProjectName": project_name,
+                        "PrimarySource": input_artifacts[0].Name,
                         "EnvironmentVariables": t.Sub(
                             json.dumps(
                                 [
@@ -1345,48 +1376,9 @@ class DeployTemplateMixin:
                                         name="CATEGORY",
                                         type="PLAINTEXT",
                                         value=translate_category(self.category),
-                                    ),
-                                    dict(
-                                        name="TEMPLATE_FORMAT",
-                                        type="PLAINTEXT",
-                                        value="yaml",
-                                    ),
-                                    dict(
-                                        name="PROVISIONER",
-                                        value="cloudformation",
-                                        type="PLAINTEXT",
-                                    ),
-                                    dict(
-                                        name="PIPELINE_NAME",
-                                        value="${AWS::StackName}-pipeline",
-                                        type="PLAINTEXT",
-                                    ),
-                                    dict(
-                                        name="CODEPIPELINE_ID",
-                                        value="#{codepipeline.PipelineExecutionId}",
-                                        type="PLAINTEXT",
-                                    ),
-                                    dict(
-                                        name="TRIGGERING_SOURCE",
-                                        type="PLAINTEXT",
-                                        value="#{BuildVariables.TRIGGERING_SOURCE}",
-                                    ),
-                                    dict(
-                                        name="SOURCE_PATH",
-                                        type="PLAINTEXT",
-                                        value="#{BuildVariables.SOURCE_PATH}",
-                                    ),
-                                    dict(
-                                        name="NAME",
-                                        type="PLAINTEXT",
-                                        value="#{BuildVariables.NAME}",
-                                    ),
-                                    dict(
-                                        name="VERSION",
-                                        type="PLAINTEXT",
-                                        value="#{BuildVariables.VERSION}",
-                                    ),
+                                    )
                                 ]
+                                + environment_variables
                             )
                         ),
                     },
@@ -1446,7 +1438,7 @@ class PipelineTemplate(
         )
         pipeline_stages.append(
             self.generate_deploy_stage(
-                tpl, versions, stages, deploy_stage_input_artifact_name
+                tpl, item, versions, stages, deploy_stage_input_artifact_name
             )
         )
 

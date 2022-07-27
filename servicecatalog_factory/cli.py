@@ -475,9 +475,8 @@ def deploy_launch_constraints(partition):
 @cli.command()
 @click.argument("pipeline-name")
 @click.argument("execution-id")
-@click.argument("artifact")
-def print_source_directory(pipeline_name, execution_id, artifact):
-    portfolios.print_source_directory(pipeline_name, execution_id, artifact)
+def print_source_directory(pipeline_name, execution_id):
+    portfolios.print_source_directory(pipeline_name, execution_id)
 
 
 @cli.command()

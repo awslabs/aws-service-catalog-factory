@@ -16,6 +16,15 @@ RSPEC_PROJECT_NAME = "ServiceCatalog-Factory-SharedRSpec"
 JINJA_PROJECT_NAME = "ServiceCatalog-Factory-SharedJINJA"
 DEPLOY_VIA_CODEBUILD_PROJECT_NAME = "ServiceCatalog-Factory-SharedDeployViaCodeBuild"
 
+DEPLOY_PROJECT_SHARED_FOR_SINGLE_NON_CFN = "DeployProjectSharedForSingleNonCFN"
+DEPLOY_PROJECT_SHARED_FOR_SINGLE_STACK = "DeployProjectSharedForSingleStack"
+
+SINGLE_PROJECTS_BY_CATEGORY = dict(
+    app=DEPLOY_PROJECT_SHARED_FOR_SINGLE_NON_CFN,
+    workspace=DEPLOY_PROJECT_SHARED_FOR_SINGLE_NON_CFN,
+    stack=DEPLOY_PROJECT_SHARED_FOR_SINGLE_STACK,
+)
+
 
 def get_commands_for_deploy() -> list:
     commands = [
@@ -317,5 +326,176 @@ def get_resources() -> list:
                 Type="CODEPIPELINE",
             ),
             Description=t.Sub("Run cfn nag"),
+        ),
+        codebuild.Project(
+            DEPLOY_PROJECT_SHARED_FOR_SINGLE_NON_CFN,
+            Name=DEPLOY_PROJECT_SHARED_FOR_SINGLE_NON_CFN,
+            ServiceRole=t.Sub(
+                "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodeRole"
+            ),
+            Tags=t.Tags.from_dict(**{"ServiceCatalogPuppet:Actor": "Framework"}),
+            Artifacts=codebuild.Artifacts(Type="CODEPIPELINE"),
+            TimeoutInMinutes=60,
+            Environment=codebuild.Environment(
+                ComputeType=constants.ENVIRONMENT_COMPUTE_TYPE_DEFAULT,
+                Image=constants.ENVIRONMENT_IMAGE_DEFAULT,
+                Type=constants.ENVIRONMENT_TYPE_DEFAULT,
+                EnvironmentVariables=[
+                    codebuild.EnvironmentVariable(
+                        Type="PLAINTEXT",
+                        Name="ACCOUNT_ID",
+                        Value=t.Sub("${AWS::AccountId}"),
+                    ),
+                    codebuild.EnvironmentVariable(
+                        Name="SOURCE_PATH", Type="PLAINTEXT", Value="NOT_SET",
+                    ),
+                    codebuild.EnvironmentVariable(
+                        Name="CATEGORY", Type="PLAINTEXT", Value="NOT_SET",
+                    ),
+                    codebuild.EnvironmentVariable(
+                        Name="NAME", Type="PLAINTEXT", Value="NOT_SET",
+                    ),
+                    codebuild.EnvironmentVariable(
+                        Name="VERSION", Type="PLAINTEXT", Value="NOT_SET",
+                    ),
+                ],
+            ),
+            Source=codebuild.Source(
+                BuildSpec=yaml.safe_dump(
+                    {
+                        "version": "0.2",
+                        "phases": {
+                            "build": {
+                                "commands": [
+                                    "env",
+                                    "pwd",
+                                    "cd ${SOURCE_PATH}",
+                                    "pwd",
+                                    "aws s3 cp $CATEGORY.zip s3://sc-puppet-stacks-repository-$ACCOUNT_ID/$CATEGORY/$NAME/$VERSION/$CATEGORY.zip",
+                                ]
+                            },
+                        },
+                        "artifacts": {"files": ["*", "**/*"],},
+                    }
+                ),
+                Type="CODEPIPELINE",
+            ),
+            Description=t.Sub("build project"),
+        ),
+        codebuild.Project(
+            DEPLOY_PROJECT_SHARED_FOR_SINGLE_STACK,
+            Name=DEPLOY_PROJECT_SHARED_FOR_SINGLE_STACK,
+            ServiceRole=t.Sub(
+                "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodeRole"
+            ),
+            Tags=t.Tags.from_dict(**{"ServiceCatalogPuppet:Actor": "Framework"}),
+            Artifacts=codebuild.Artifacts(Type="CODEPIPELINE"),
+            TimeoutInMinutes=60,
+            Environment=codebuild.Environment(
+                ComputeType=constants.ENVIRONMENT_COMPUTE_TYPE_DEFAULT,
+                Image=constants.ENVIRONMENT_IMAGE_DEFAULT,
+                Type=constants.ENVIRONMENT_TYPE_DEFAULT,
+                EnvironmentVariables=[
+                    codebuild.EnvironmentVariable(
+                        Type="PLAINTEXT",
+                        Name="ACCOUNT_ID",
+                        Value=t.Sub("${AWS::AccountId}"),
+                    ),
+                    codebuild.EnvironmentVariable(
+                        Name="SOURCE_PATH", Type="PLAINTEXT", Value="NOT_SET",
+                    ),
+                    codebuild.EnvironmentVariable(
+                        Name="CATEGORY", Type="PLAINTEXT", Value="NOT_SET",
+                    ),
+                    codebuild.EnvironmentVariable(
+                        Name="NAME", Type="PLAINTEXT", Value="NOT_SET",
+                    ),
+                    codebuild.EnvironmentVariable(
+                        Name="VERSION", Type="PLAINTEXT", Value="NOT_SET",
+                    ),
+                    codebuild.EnvironmentVariable(
+                        Name="TEMPLATE_FORMAT", Type="PLAINTEXT", Value="NOT_SET",
+                    ),
+                ],
+            ),
+            Source=codebuild.Source(
+                BuildSpec=yaml.safe_dump(
+                    {
+                        "version": "0.2",
+                        "phases": {
+                            "build": {
+                                "commands": [
+                                    "env",
+                                    "pwd",
+                                    "cd ${SOURCE_PATH}",
+                                    "pwd",
+                                    'aws s3 cp . s3://sc-puppet-stacks-repository-$ACCOUNT_ID/$CATEGORY/$NAME/$VERSION/ --recursive --exclude "*" --include "$CATEGORY.template.$TEMPLATE_FORMAT" --include "$CATEGORY.template-*.$TEMPLATE_FORMAT"',
+                                ]
+                            },
+                        },
+                        "artifacts": {"files": ["*", "**/*"],},
+                    }
+                ),
+                Type="CODEPIPELINE",
+            ),
+            Description=t.Sub("Deploy project"),
+        ),
+        codebuild.Project(
+            DEPLOY_PROJECT_SHARED_FOR_SINGLE_STACK,
+            Name=DEPLOY_PROJECT_SHARED_FOR_SINGLE_STACK,
+            ServiceRole=t.Sub(
+                "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodeRole"
+            ),
+            Tags=t.Tags.from_dict(**{"ServiceCatalogPuppet:Actor": "Framework"}),
+            Artifacts=codebuild.Artifacts(Type="CODEPIPELINE"),
+            TimeoutInMinutes=60,
+            Environment=codebuild.Environment(
+                ComputeType=constants.ENVIRONMENT_COMPUTE_TYPE_DEFAULT,
+                Image=constants.ENVIRONMENT_IMAGE_DEFAULT,
+                Type=constants.ENVIRONMENT_TYPE_DEFAULT,
+                EnvironmentVariables=[
+                    codebuild.EnvironmentVariable(
+                        Type="PLAINTEXT",
+                        Name="ACCOUNT_ID",
+                        Value=t.Sub("${AWS::AccountId}"),
+                    ),
+                    codebuild.EnvironmentVariable(
+                        Name="SOURCE_PATH", Type="PLAINTEXT", Value="NOT_SET",
+                    ),
+                    codebuild.EnvironmentVariable(
+                        Name="CATEGORY", Type="PLAINTEXT", Value="NOT_SET",
+                    ),
+                    codebuild.EnvironmentVariable(
+                        Name="NAME", Type="PLAINTEXT", Value="NOT_SET",
+                    ),
+                    codebuild.EnvironmentVariable(
+                        Name="VERSION", Type="PLAINTEXT", Value="NOT_SET",
+                    ),
+                    codebuild.EnvironmentVariable(
+                        Name="TEMPLATE_FORMAT", Type="PLAINTEXT", Value="NOT_SET",
+                    ),
+                ],
+            ),
+            Source=codebuild.Source(
+                BuildSpec=yaml.safe_dump(
+                    {
+                        "version": "0.2",
+                        "phases": {
+                            "build": {
+                                "commands": [
+                                    "env",
+                                    "pwd",
+                                    "cd ${SOURCE_PATH}",
+                                    "pwd",
+                                    'aws s3 cp . s3://sc-puppet-stacks-repository-$ACCOUNT_ID/$CATEGORY/$NAME/$VERSION/ --recursive --exclude "*" --include "$CATEGORY.template.$TEMPLATE_FORMAT" --include "$CATEGORY.template-*.$TEMPLATE_FORMAT"',
+                                ]
+                            },
+                        },
+                        "artifacts": {"files": ["*", "**/*"],},
+                    }
+                ),
+                Type="CODEPIPELINE",
+            ),
+            Description=t.Sub("Deploy project"),
         ),
     ]
