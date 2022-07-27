@@ -686,7 +686,7 @@ class PackageTemplateMixin:
             base_directory = (
                 "$CODEBUILD_SRC_DIR"
                 if count == 0
-                else f"$CODEBUILD_SRC_DIR_Validate_{version_name}"
+                else f"$CODEBUILD_SRC_DIR_Source_{version_name}"
             )
             input_artifacts.append(
                 codepipeline.InputArtifacts(
@@ -865,6 +865,41 @@ class PackageTemplateMixin:
                     "artifacts": {"files": ["*", "**/*"],},
                 }
             else:
+
+                common_commands = list()
+                input_artifacts = list()
+                count = 0
+                common_commands.append("env")
+                item_name = item.get("Name")
+                for version in versions:
+                    version_name = version.get("Name")
+                    triggering_source = (
+                        "CODEBUILD_SRC_DIR"
+                        if count == 0
+                        else f"CODEBUILD_SRC_DIR_Package_{version_name}"
+                    )
+                    base_directory_path = (
+                        "CODEBUILD_SRC_DIR"
+                        if count == 0
+                        else f"CODEBUILD_SRC_DIR_Source_{version_name}"
+                    )
+                    base_directory = f"${base_directory_path}"
+                    input_artifacts.append(
+                        codepipeline.InputArtifacts(Name=f"Source_{version_name}"),
+                    )
+                    path = version.get("Source", {}).get("Path", ".")
+                    common_commands.append(
+                        f'echo "{triggering_source}" > {base_directory}/triggering_source.txt'
+                    )
+                    common_commands.append(f'echo "{path}" > {base_directory}/path.txt')
+                    common_commands.append(
+                        f'echo "{item_name}" > {base_directory}/item_name.txt'
+                    )
+                    common_commands.append(
+                        f'echo "{version_name}" > {base_directory}/version_name.txt'
+                    )
+                    count += 1
+
                 return {
                     "version": "0.2",
                     "env": {
@@ -891,11 +926,13 @@ class PackageTemplateMixin:
                             ],
                         },
                         "build": {
-                            "commands": [
-                                "env",
-                                "export TRIGGERING_SOURCE=$(servicecatalog-factory print-source-directory ${AWS::StackName}-pipeline $PIPELINE_EXECUTION_ID)",
-                                "cd $TRIGGERING_SOURCE",
+                            "commands": common_commands
+                            + [
                                 "pwd",
+                                "export TRIGGERING_SOURCE_PATH=$(servicecatalog-factory print-source-directory ${AWS::StackName}-pipeline $PIPELINE_EXECUTION_ID)",
+                                'eval "cd $TRIGGERING_SOURCE_PATH"',
+                                "pwd",
+                                "export TRIGGERING_SOURCE=$(cat triggering_source.txt)",
                                 "export NAME=$(cat item_name.txt)",
                                 "export VERSION=$(cat version_name.txt)",
                                 "export SOURCE_PATH=$(cat path.txt)",
@@ -908,7 +945,7 @@ class PackageTemplateMixin:
                     },
                     "artifacts": {
                         "files": ["*", "**/*"],
-                        "secondary-artifacts": secondary_artifacts,
+                        "secondary-artifacts": secondary_artifacts,  # EPF
                     },
                 }
 
@@ -1317,7 +1354,76 @@ class DeployTemplateMixin:
                 )
 
         else:
-            project_name = shared_resources.SINGLE_PROJECTS_BY_CATEGORY[self.category]
+            project_name = t.Ref("DeployProject")
+            tpl.add_resource(
+                codebuild.Project(
+                    "DeployProject",
+                    Name=t.Sub("${AWS::StackName}-DeployProject"),
+                    ServiceRole=t.Sub(
+                        "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodeRole"
+                    ),
+                    Tags=t.Tags.from_dict(
+                        **{"ServiceCatalogPuppet:Actor": "Framework"}
+                    ),
+                    Artifacts=codebuild.Artifacts(Type="CODEPIPELINE"),
+                    TimeoutInMinutes=60,
+                    Environment=codebuild.Environment(
+                        ComputeType=constants.ENVIRONMENT_COMPUTE_TYPE_DEFAULT,
+                        Image=constants.ENVIRONMENT_IMAGE_DEFAULT,
+                        Type=constants.ENVIRONMENT_TYPE_DEFAULT,
+                        EnvironmentVariables=[
+                            codebuild.EnvironmentVariable(
+                                Type="PLAINTEXT",
+                                Name="ACCOUNT_ID",
+                                Value=t.Sub("${AWS::AccountId}"),
+                            ),
+                            codebuild.EnvironmentVariable(
+                                Name="SOURCE_PATH", Type="PLAINTEXT", Value="NOT_SET",
+                            ),
+                            codebuild.EnvironmentVariable(
+                                Name="TRIGGERING_SOURCE",
+                                Type="PLAINTEXT",
+                                Value="NOT_SET",
+                            ),
+                            codebuild.EnvironmentVariable(
+                                Name="CATEGORY", Type="PLAINTEXT", Value="NOT_SET",
+                            ),
+                            codebuild.EnvironmentVariable(
+                                Name="NAME", Type="PLAINTEXT", Value="NOT_SET",
+                            ),
+                            codebuild.EnvironmentVariable(
+                                Name="VERSION", Type="PLAINTEXT", Value="NOT_SET",
+                            ),
+                        ],
+                    ),
+                    Source=codebuild.Source(
+                        BuildSpec=yaml.safe_dump(
+                            {
+                                "version": "0.2",
+                                "phases": {
+                                    "build": {
+                                        "commands": [
+                                            "env",
+                                            "pwd",
+                                            'eval "cd \$$TRIGGERING_SOURCE"',
+                                            "pwd",
+                                            "cd ${SOURCE_PATH}",
+                                            "pwd",
+                                            "aws s3 cp $CATEGORY.zip s3://sc-puppet-stacks-repository-$ACCOUNT_ID/$CATEGORY/$NAME/$VERSION/$CATEGORY.zip",
+                                        ]
+                                    },
+                                },
+                                "artifacts": {
+                                    "files": ["*", "**/*"],
+                                    "secondary-artifacts": secondary_artifacts,
+                                },
+                            }
+                        ),
+                        Type="CODEPIPELINE",
+                    ),
+                    Description=t.Sub("build project"),
+                )
+            )
             if self.category == "stack":
                 environment_variables.append(
                     dict(
