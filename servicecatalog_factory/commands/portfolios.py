@@ -868,10 +868,6 @@ def get_pipeline_execution_for(pipeline_name, execution_id):
 
 
 def print_source_directory(pipeline_name, execution_id):
-    # if os.getenv("TRIGGERING_SOURCE"):
-    #     click.echo(os.getenv("TRIGGERING_SOURCE"))
-    #     return
-    #
     actions = get_action_executions_for(pipeline_name, execution_id)
     source_actions = list()
     for action in actions:

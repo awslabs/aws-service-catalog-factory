@@ -316,11 +316,17 @@ class TestTemplateMixin:
         item_name = item.get("Name")
         for version in versions:
             version_name = version.get("Name")
-            base_directory = (
-                "$CODEBUILD_SRC_DIR"
+            triggering_source = (
+                "CODEBUILD_SRC_DIR"
                 if count == 0
-                else f"$CODEBUILD_SRC_DIR_Source_{version_name}"
+                else f"CODEBUILD_SRC_DIR_Source_{version_name}"
             )
+            base_directory_path = (
+                "CODEBUILD_SRC_DIR"
+                if count == 0
+                else f"CODEBUILD_SRC_DIR_Source_{version_name}"
+            )
+            base_directory = f"${base_directory_path}"
             input_artifacts.append(
                 codepipeline.InputArtifacts(
                     Name=f"{input_artifact_name}_{version_name}"
@@ -345,6 +351,9 @@ class TestTemplateMixin:
             description = version.get("Description", item.get("Description", "Not set"))
             output = base_directory
             common_commands.append(f'echo "{path}" > {output}/path.txt')
+            common_commands.append(
+                f'echo "{triggering_source}" > {base_directory}/triggering_source.txt'
+            )
             common_commands.append(f'echo "{item_name}" > {output}/item_name.txt')
             common_commands.append(f'echo "{version_name}" > {output}/version_name.txt')
             common_commands.append(
@@ -368,9 +377,10 @@ class TestTemplateMixin:
 
         common_commands.extend(
             [
-                "export TRIGGERING_SOURCE=$(servicecatalog-factory print-source-directory ${AWS::StackName}-pipeline $PIPELINE_EXECUTION_ID)",
-                "cd $TRIGGERING_SOURCE",
+                "export TRIGGERING_SOURCE_PATH=$(servicecatalog-factory print-source-directory ${AWS::StackName}-pipeline $PIPELINE_EXECUTION_ID)",
+                "cd $TRIGGERING_SOURCE_PATH",
                 "pwd",
+                "export TRIGGERING_SOURCE=$(cat triggering_source.txt)",
                 "export NAME=$(cat item_name.txt)",
                 "export VERSION=$(cat version_name.txt)",
                 "export SOURCE_PATH=$(cat path.txt)",
@@ -791,25 +801,11 @@ class PackageTemplateMixin:
         if self.is_cloudformation_based():
             return {
                 "version": "0.2",
-                "env": {
-                    "variables": {
-                        "TRIGGERING_SOURCE": "NOT_SET",
-                        "NAME": "NOT_SET",
-                        "VERSION": "NOT_SET",
-                        "SOURCE_PATH": "NOT_SET",
-                    },
-                    "exported-variables": [
-                        "TRIGGERING_SOURCE",
-                        "NAME",
-                        "VERSION",
-                        "SOURCE_PATH",
-                    ],
-                },
                 "phases": {
                     "build": {
                         "commands": [
                             "env",
-                            'eval "echo cd \$CODEBUILD_SRC_DIR_Validate_$VERSION" | sh',
+                            'eval "cd \$$TRIGGERING_SOURCE"',
                             "pwd",
                             "cd ${SOURCE_PATH}",
                             "pwd",
@@ -1143,7 +1139,7 @@ class DeployTemplateMixin:
             count += 1
 
         common_commands.extend(
-            ["cd ${TRIGGERING_SOURCE}", "pwd", "cd ${SOURCE_PATH}", "pwd",]
+            ['eval "cd \$$TRIGGERING_SOURCE"', "pwd", "cd ${SOURCE_PATH}", "pwd",]
         )
 
         common_commands.extend(
