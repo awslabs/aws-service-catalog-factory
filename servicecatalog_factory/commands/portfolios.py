@@ -72,7 +72,7 @@ def generate_portfolios(portfolios_file_path):
 
 
 def check_for_external_definitions_for(
-        portfolio, portfolio_file_name, type, portfolio_file_base_path
+    portfolio, portfolio_file_name, type, portfolio_file_base_path
 ):
     # Looks and checks for products in ignored/src/ServiceCatalogFactory/portfolios/portfolio<without.yaml>/Portfolios/<portfolio-display-name>/Products
     portfolio_products_path = os.path.sep.join(
@@ -97,7 +97,7 @@ def check_for_external_definitions_for(
         for external_product in external_products:
 
             external_product_spec_file_path = os.path.sep.join(
-                [portfolio_products_path, external_product, f"{external_product}.yaml", ]
+                [portfolio_products_path, external_product, f"{external_product}.yaml",]
             )
 
             # Only append products defined in spec files as products could have been defined in the portfolio
@@ -148,7 +148,7 @@ def check_for_external_definitions_for(
 
 
 def generate_for_portfolios_versions(
-        all_regions, all_tasks, factory_version, pipeline_versions, products_by_region,
+    all_regions, all_tasks, factory_version, pipeline_versions, products_by_region,
 ):
     for version_pipeline_to_build in pipeline_versions:
         version_details = version_pipeline_to_build.get("version")
@@ -224,7 +224,7 @@ def generate_for_portfolios_versions(
 
 
 def generate_for_products_versions(
-        all_regions, all_tasks, factory_version, products_versions, products_by_region,
+    all_regions, all_tasks, factory_version, products_versions, products_by_region,
 ):
     for product_name, pipeline_details in products_versions.items():
 
@@ -246,7 +246,7 @@ def generate_for_products_versions(
                 )
                 if version_status == constants.STATUS_TERMINATED:
                     for region, product_args in products_by_region.get(
-                            product_name
+                        product_name
                     ).items():
                         task_id = f"pipeline_template_{product_name}-{version.get('version').get('Name')}-{region}"
                         all_tasks[task_id] = delete_a_version_task.DeleteAVersionTask(
@@ -268,7 +268,7 @@ def generate_for_products_versions(
 
 
 def generate_for_products(
-        all_tasks, p_name, portfolios, products_by_region, region, products_versions: dict,
+    all_tasks, p_name, portfolios, products_by_region, region, products_versions: dict,
 ):
     for product in portfolios.get("Products", []):
         product_uid = f"{product.get('Name')}"
@@ -337,13 +337,13 @@ def generate_for_products(
 
 
 def generate_for_portfolios(
-        all_tasks,
-        factory_version,
-        p_name,
-        portfolios,
-        products_by_region,
-        region,
-        pipeline_versions,
+    all_tasks,
+    factory_version,
+    p_name,
+    portfolios,
+    products_by_region,
+    region,
+    pipeline_versions,
 ):
     for portfolio in portfolios.get("Portfolios", []):
         create_portfolio_task_args = {
@@ -455,8 +455,8 @@ def put_portfolios_by_file_name(portfolio_file_name, portfolios):
                 repositoryName=constants.SERVICE_CATALOG_FACTORY_REPO_NAME,
                 branchName="master",
             )
-                .get("branch")
-                .get("commitId")
+            .get("branch")
+            .get("commitId")
         )
         codecommit.put_file(
             repositoryName=constants.SERVICE_CATALOG_FACTORY_REPO_NAME,
@@ -527,8 +527,8 @@ def ensure_code_commit_repo(details):
                         codecommit.get_branch(
                             repositoryName=repository_name, branchName="master",
                         )
-                            .get("branch")
-                            .get("commitId")
+                        .get("branch")
+                        .get("commitId")
                     )
 
                 logger.info(f"Creating the branch: {branch_name}")
@@ -560,7 +560,7 @@ def add_product_to_portfolio(portfolio_file_name, portfolio_display_name, produc
 
 
 def remove_product_from_portfolio(
-        portfolio_file_name, portfolio_display_name, product_name
+    portfolio_file_name, portfolio_display_name, product_name
 ):
     logger.info(
         f"removing product: {product_name} to portfolio: {portfolio_display_name} in: {portfolio_file_name}"
@@ -597,7 +597,7 @@ def get_product_from_portfolio(portfolio, product_name):
 
 
 def add_version_to_product(
-        portfolio_file_name, portfolio_display_name, product_name, version
+    portfolio_file_name, portfolio_display_name, product_name, version
 ):
     logger.info(
         f"adding version: {version.get('Name')} to product: {product_name} portfolio: {portfolio_display_name} in: {portfolio_file_name}"
@@ -625,7 +625,7 @@ def add_version_to_product(
 
 
 def remove_version_from_product(
-        portfolio_file_name, portfolio_display_name, product_name, version_name
+    portfolio_file_name, portfolio_display_name, product_name, version_name
 ):
     logger.info(
         f"removing version: {version_name} from product: {product_name} portfolio: {portfolio_display_name} in: {portfolio_file_name}"
@@ -681,35 +681,35 @@ def generate_launch_constraints(p):
                 )
                 for product in products:
                     if (
-                            product.get("Constraints", {})
-                                    .get("Launch", {})
-                                    .get("LocalRoleName")
-                            is not None
+                        product.get("Constraints", {})
+                        .get("Launch", {})
+                        .get("LocalRoleName")
+                        is not None
                     ):
                         products_by_portfolio[portfolio_name].append(
                             {
                                 "product_name": product.get("Name"),
                                 "local_role_name": product.get("Constraints", {})
-                                    .get("Launch", {})
-                                    .get("LocalRoleName"),
+                                .get("Launch", {})
+                                .get("LocalRoleName"),
                             }
                         )
 
             products = portfolios.get("Products", []) + portfolios.get("Components", [])
             for product in products:
                 if (
-                        product.get("Constraints", {})
-                                .get("Launch", {})
-                                .get("LocalRoleName")
-                        is not None
+                    product.get("Constraints", {})
+                    .get("Launch", {})
+                    .get("LocalRoleName")
+                    is not None
                 ):
                     for portfolio_name in product.get("Portfolios"):
                         products_by_portfolio[f"{p_name}-{portfolio_name}"].append(
                             {
                                 "product_name": product.get("Name"),
                                 "local_role_name": product.get("Constraints", {})
-                                    .get("Launch", {})
-                                    .get("LocalRoleName"),
+                                .get("Launch", {})
+                                .get("LocalRoleName"),
                             }
                         )
 
@@ -732,27 +732,27 @@ def generate_launch_constraints(p):
         for portfolios_name, launch_role_constraints in products_by_portfolio.items():
             nested_template_context = []
             with open(
-                    os.path.sep.join(
-                        [
-                            "output",
-                            "CreatePortfolioTask",
-                            f"{region}-{portfolios_name}.json",
-                        ]
-                    ),
-                    "r",
+                os.path.sep.join(
+                    [
+                        "output",
+                        "CreatePortfolioTask",
+                        f"{region}-{portfolios_name}.json",
+                    ]
+                ),
+                "r",
             ) as portfolio_json_file:
                 portfolio_json = json.loads(portfolio_json_file.read())
                 portfolio_id = portfolio_json.get("Id")
             for launch_role_constraint in launch_role_constraints:
                 with open(
-                        os.path.sep.join(
-                            [
-                                "output",
-                                "CreateProductTask",
-                                f'{region}-{launch_role_constraint.get("product_name")}.json',
-                            ]
-                        ),
-                        "r",
+                    os.path.sep.join(
+                        [
+                            "output",
+                            "CreateProductTask",
+                            f'{region}-{launch_role_constraint.get("product_name")}.json',
+                        ]
+                    ),
+                    "r",
                 ) as product_json_file:
                     product_json = json.loads(product_json_file.read())
                     product_id = product_json.get("ProductId")
@@ -807,7 +807,7 @@ def generate_launch_constraints(p):
         )
         if os.path.exists(f"output/constraints/launch-role/{region}.template.yaml"):
             with open(
-                    f"output/constraints/launch-role/{region}.template.yaml", "w"
+                f"output/constraints/launch-role/{region}.template.yaml", "w"
             ) as cfn:
                 main_template = Template(parent_template).render(
                     VERSION=constants.VERSION,
@@ -826,7 +826,7 @@ def deploy_launch_constraints(partition):
     for region in all_regions:
         if os.path.exists(f"output/constraints/launch-role/{region}.template.yaml"):
             with betterboto_client.ClientContextManager(
-                    "cloudformation", region_name=region
+                "cloudformation", region_name=region
             ) as cfn:
                 cfn.ensure_deleted(
                     StackName=f"servicecatalog-factory-constraints-launch-role-{region}"
@@ -842,29 +842,27 @@ def deploy_launch_constraints(partition):
 
 
 def get_action_executions_for(pipeline_name, execution_id):
-    with betterboto_client.ClientContextManager("codepipeline", ) as codepipeline:
+    with betterboto_client.ClientContextManager("codepipeline",) as codepipeline:
         result = codepipeline.list_action_executions(
             pipelineName=pipeline_name,
-            filter={
-                'pipelineExecutionId': execution_id
-            },
+            filter={"pipelineExecutionId": execution_id},
             maxResults=100,
         )
-        return result.get('actionExecutionDetails')
+        return result.get("actionExecutionDetails")
 
 
 def get_pipeline_execution_for(pipeline_name, execution_id):
-    with betterboto_client.ClientContextManager("codepipeline", ) as codepipeline:
+    with betterboto_client.ClientContextManager("codepipeline",) as codepipeline:
         paginator = codepipeline.get_paginator("list_pipeline_executions")
         pages = paginator.paginate(
-            pipelineName=pipeline_name, PaginationConfig={"PageSize": 100, },
+            pipelineName=pipeline_name, PaginationConfig={"PageSize": 100,},
         )
         for page in pages:
             for pipeline_execution_summary in page.get(
-                    "pipelineExecutionSummaries", []
+                "pipelineExecutionSummaries", []
             ):
                 if execution_id == pipeline_execution_summary.get(
-                        "pipelineExecutionId"
+                    "pipelineExecutionId"
                 ):
                     return pipeline_execution_summary
 
@@ -890,12 +888,8 @@ def print_source_directory(pipeline_name, execution_id):
         if trigger_type in ["CreatePipeline", "StartPipelineExecution"]:
             source = first_source_name
         elif trigger_type == "CloudWatchEvent":
-            with betterboto_client.ClientContextManager(
-                "events",
-            ) as events:
-                rule = events.describe_rule(
-                    Name=trigger_detail.split("/")[-1]
-                )
+            with betterboto_client.ClientContextManager("events",) as events:
+                rule = events.describe_rule(Name=trigger_detail.split("/")[-1])
                 source = rule.get("Description")
         elif trigger_type == "Webhook":
             raise Exception(f"NOT IMPLEMENTED YET: {trigger_type}: {trigger_detail}")
@@ -907,14 +901,16 @@ def print_source_directory(pipeline_name, execution_id):
     else:
         source = first_source_name
 
-    codebuild_src_dir = os.getenv(f"CODEBUILD_SRC_DIR_{source}", os.getenv("CODEBUILD_SRC_DIR", "."))
+    codebuild_src_dir = os.getenv(
+        f"CODEBUILD_SRC_DIR_{source}", os.getenv("CODEBUILD_SRC_DIR", ".")
+    )
     click.echo(codebuild_src_dir)
     return
 
 
 def update_provisioned_product(region, name, product_id, description, template_url):
     with betterboto_client.ClientContextManager(
-            "servicecatalog", region_name=region
+        "servicecatalog", region_name=region
     ) as servicecatalog:
         response = servicecatalog.create_provisioning_artifact(
             ProductId=product_id,
@@ -946,9 +942,9 @@ def update_provisioned_product(region, name, product_id, description, template_u
         provisioning_artifact_details = response.get("ProvisioningArtifactDetails", [])
         for provisioning_artifact_detail in provisioning_artifact_details:
             if (
-                    provisioning_artifact_detail.get("Name") == name
-                    and provisioning_artifact_detail.get("Id")
-                    != new_provisioning_artifact_id
+                provisioning_artifact_detail.get("Name") == name
+                and provisioning_artifact_detail.get("Id")
+                != new_provisioning_artifact_id
             ):
                 servicecatalog.delete_provisioning_artifact(
                     ProductId=product_id,
@@ -975,7 +971,7 @@ def fix_issues_for_portfolio(p):
                         )
                         logger.info("looking at stack: {}".format(stack_name))
                         with betterboto_client.ClientContextManager(
-                                "cloudformation"
+                            "cloudformation"
                         ) as cloudformation:
                             response = {"Stacks": []}
                             try:
@@ -984,7 +980,7 @@ def fix_issues_for_portfolio(p):
                                 )
                             except cloudformation.exceptions.ClientError as e:
                                 if "Stack with id {} does not exist".format(
-                                        stack_name
+                                    stack_name
                                 ) in str(e):
                                     click.echo(
                                         "There is no pipeline for: {}".format(
@@ -997,8 +993,8 @@ def fix_issues_for_portfolio(p):
                             for stack in response.get("Stacks"):
                                 if stack.get("StackStatus") == "ROLLBACK_COMPLETE":
                                     if click.confirm(
-                                            'Found a stack: {} in status: "ROLLBACK_COMPLETE".  '
-                                            "Should it be deleted?".format(stack_name)
+                                        'Found a stack: {} in status: "ROLLBACK_COMPLETE".  '
+                                        "Should it be deleted?".format(stack_name)
                                     ):
                                         cloudformation.delete_stack(
                                             StackName=stack_name
@@ -1105,7 +1101,7 @@ def nuke_product_version(portfolio_name, product, version):
 
                 version_id = None
                 for provisioning_artifact_detail in response.get(
-                        "ProvisioningArtifactDetails"
+                    "ProvisioningArtifactDetails"
                 ):
                     if provisioning_artifact_detail.get("Name") == version:
                         version_id = provisioning_artifact_detail.get("Id")
@@ -1130,7 +1126,7 @@ def nuke_product_version(portfolio_name, product, version):
 
 
 def generate_template(
-        provisioner_name, provisioner_version, product_name, product_version, p
+    provisioner_name, provisioner_version, product_name, product_version, p
 ) -> str:
     with betterboto_client.ClientContextManager("s3") as s3:
         body = (
@@ -1138,8 +1134,8 @@ def generate_template(
                 Bucket=f"sc-factory-artifacts-{os.environ.get('ACCOUNT_ID')}-{os.environ.get('REGION')}",
                 Key=f"{provisioner_name}/{provisioner_version}/{product_name}/{product_version}/template.json",
             )
-                .get("Body")
-                .read()
+            .get("Body")
+            .read()
         )
         template = json.loads(body)
         if provisioner_name == "CDK" and provisioner_version == "1.0.0":

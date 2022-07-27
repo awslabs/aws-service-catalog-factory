@@ -278,7 +278,7 @@ Resources:
                   {% else %}
                 - pip install aws-service-catalog-factory=={{ VERSION }}
                   {% endif %}
-                - cd $(servicecatalog-factory print-source-directory {{friendly_uid}}-pipeline $EXECUTION_ID Source)
+                - cd $(servicecatalog-factory print-source-directory {{friendly_uid}}-pipeline $EXECUTION_ID)
                 - export FactoryTemplateValidateBucket=$(aws cloudformation list-stack-resources --stack-name servicecatalog-factory --query 'StackResourceSummaries[?LogicalResourceId==`FactoryTemplateValidateBucket`].PhysicalResourceId' --output text)
                 - aws s3 cp product.template.{{ template_format }} s3://$FactoryTemplateValidateBucket/$CODEBUILD_BUILD_ID.{{ template_format }}
                 - aws cloudformation validate-template --template-url https://$FactoryTemplateValidateBucket.s3.$AWS_REGION.amazonaws.com/$CODEBUILD_BUILD_ID.{{ template_format }}
@@ -355,7 +355,7 @@ Resources:
                     {% else %}
                   - pip install aws-service-catalog-factory=={{ VERSION }}
                     {% endif %}
-                  - cd $(servicecatalog-factory print-source-directory {{friendly_uid}}-pipeline $EXECUTION_ID Source)
+                  - cd $(servicecatalog-factory print-source-directory {{friendly_uid}}-pipeline $EXECUTION_ID)
                 {% for region in ALL_REGIONS %}
                   - aws cloudformation package --region {{ region }} --template $(pwd)/product.template.{{ template_format }} --s3-bucket sc-factory-artifacts-${ACCOUNT_ID}-{{ region }} --s3-prefix ${STACK_NAME} --output-template-file product.template-{{ region }}.{{ template_format }}
                 {% endfor %}
@@ -486,7 +486,7 @@ Resources:
                 - echo "{{version.Description}}" > {% if loop.first %}$CODEBUILD_SRC_DIR{% else %}$CODEBUILD_SRC_DIR_Package{{ version.Name }}{% endif %}/description.txt
               {% endif %}{% endfor %}
 
-                - cd $(servicecatalog-factory print-source-directory {{friendly_uid}}-pipeline $EXECUTION_ID Package)
+                - cd $(servicecatalog-factory print-source-directory {{friendly_uid}}-pipeline $EXECUTION_ID)
               {% for region in ALL_REGIONS %}
                 - export FactoryTemplateValidateBucket=$(aws cloudformation list-stack-resources --stack-name servicecatalog-factory --query 'StackResourceSummaries[?LogicalResourceId==`FactoryTemplateValidateBucket`].PhysicalResourceId' --output text)
                 - aws s3 cp product.template-{{ region }}.{{ template_format }} s3://$FactoryTemplateValidateBucket/$CODEBUILD_BUILD_ID/product.template-{{ region }}.{{ template_format }}

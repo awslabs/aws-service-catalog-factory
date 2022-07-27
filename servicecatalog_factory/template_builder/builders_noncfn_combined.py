@@ -167,7 +167,7 @@ class NonCFNCombinedTemplateBuilder(builders_cfn_combined.CFNCombinedTemplateBui
 
             common_commands.extend(
                 [
-                    "export TRIGGERING_SOURCE=$(servicecatalog-factory print-source-directory ${AWS::StackName}-pipeline $EXECUTION_ID Source)",
+                    "export TRIGGERING_SOURCE=$(servicecatalog-factory print-source-directory ${AWS::StackName}-pipeline $EXECUTION_ID)",
                     "cd $TRIGGERING_SOURCE",
                     "pwd",
                     "export NAME=$(cat item_name.txt)",

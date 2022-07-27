@@ -368,7 +368,7 @@ class TestTemplateMixin:
 
         common_commands.extend(
             [
-                "export TRIGGERING_SOURCE=$(servicecatalog-factory print-source-directory ${AWS::StackName}-pipeline $EXECUTION_ID Source)",
+                "export TRIGGERING_SOURCE=$(servicecatalog-factory print-source-directory ${AWS::StackName}-pipeline $EXECUTION_ID)",
                 "cd $TRIGGERING_SOURCE",
                 "pwd",
                 "export NAME=$(cat item_name.txt)",
@@ -851,7 +851,7 @@ class PackageTemplateMixin:
                     "build": {
                         "commands": [
                             "env",
-                            "export TRIGGERING_SOURCE=$(servicecatalog-factory print-source-directory ${AWS::StackName}-pipeline $EXECUTION_ID Source)",
+                            "export TRIGGERING_SOURCE=$(servicecatalog-factory print-source-directory ${AWS::StackName}-pipeline $EXECUTION_ID)",
                             "cd $TRIGGERING_SOURCE",
                             "pwd",
                             "export NAME=$(cat item_name.txt)",
@@ -1346,7 +1346,7 @@ class DeployTemplateMixin:
         # [
         #     "pwd",
         #     # TODO FIXME Source on the next line is incorrect!
-        #     "export TRIGGERING_SOURCE=$(servicecatalog-factory print-source-directory ${AWS::StackName}-pipeline $EXECUTION_ID Source)",
+        #     "export TRIGGERING_SOURCE=$(servicecatalog-factory print-source-directory ${AWS::StackName}-pipeline $EXECUTION_ID)",
         #     "cd $TRIGGERING_SOURCE",
         #     "pwd",
         #     "cd ${SOURCE_PATH}",
