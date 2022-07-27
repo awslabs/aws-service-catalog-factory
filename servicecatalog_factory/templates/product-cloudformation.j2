@@ -227,7 +227,7 @@ Resources:
                 Provider: CodeBuild
               Configuration:
                 ProjectName: !Ref PackageProject
-                EnvironmentVariables: !Sub '[{"name":"PROVISIONER","value":"cloudformation","type":"PLAINTEXT"},{"name":"PIPELINE_NAME","value":"${AWS::StackName}-pipeline","type":"PLAINTEXT"},{"name":"TEMPLATE_FORMAT","value":"{{ template_format }}","type":"PLAINTEXT"},{"name":"CODEPIPELINE_ID","value":"#{codepipeline.PipelineExecutionId}","type":"PLAINTEXT"},{"name":"NAME","value":"{{ product.Name }}","type":"PLAINTEXT"},{"name":"VERSION","value":"{{ version.Name }}","type":"PLAINTEXT"},{"name":"DESCRIPTION","value":"{{ version.Description | replace("'", "\'") }}","type":"PLAINTEXT"},{"name":"SOURCE_PATH","value":"{{ Source.get("Path", ".") }}","type":"PLAINTEXT"}]'
+                EnvironmentVariables: !Sub '[{"name":"PROVISIONER","value":"cloudformation","type":"PLAINTEXT"},{"name":"PIPELINE_NAME","value":"${AWS::StackName}-pipeline","type":"PLAINTEXT"},{"name":"TEMPLATE_FORMAT","value":"{{ template_format }}","type":"PLAINTEXT"},{"name":"PIPELINE_EXECUTION_ID","value":"#{codepipeline.PipelineExecutionId}","type":"PLAINTEXT"},{"name":"NAME","value":"{{ product.Name }}","type":"PLAINTEXT"},{"name":"VERSION","value":"{{ version.Name }}","type":"PLAINTEXT"},{"name":"DESCRIPTION","value":"{{ version.Description | replace("'", "\'") }}","type":"PLAINTEXT"},{"name":"SOURCE_PATH","value":"{{ Source.get("Path", ".") }}","type":"PLAINTEXT"}]'
 
               RunOrder: 1
               InputArtifacts:
@@ -274,7 +274,7 @@ Resources:
                 Version: '1'
               Configuration:
                 ProjectName: ServiceCatalog-Factory-SharedDeployViaCodeBuild
-                EnvironmentVariables: !Sub '[{"name":"PIPELINE_NAME","value":"${AWS::StackName}-pipeline","type":"PLAINTEXT"},{"name":"CODEPIPELINE_ID","value":"#{codepipeline.PipelineExecutionId}","type":"PLAINTEXT"}, {"name":"SOURCE_PATH","value":"{{ Source.get("Path", ".") }}","type":"PLAINTEXT"}]'
+                EnvironmentVariables: !Sub '[{"name":"PIPELINE_NAME","value":"${AWS::StackName}-pipeline","type":"PLAINTEXT"},{"name":"PIPELINE_EXECUTION_ID","value":"#{codepipeline.PipelineExecutionId}","type":"PLAINTEXT"}, {"name":"SOURCE_PATH","value":"{{ Source.get("Path", ".") }}","type":"PLAINTEXT"}]'
             {% endif %}
 
   {% if Source.Provider.lower() == 'github' %}Webhook:
@@ -336,7 +336,7 @@ Resources:
           - Name: ACCOUNT_ID
             Type: PLAINTEXT
             Value: !Sub "${AWS::AccountId}"
-          - Name: CODEPIPELINE_ID
+          - Name: PIPELINE_EXECUTION_ID
             Type: PLAINTEXT
             Value: "CHANGE_ME"
           - Name: PROVISIONER

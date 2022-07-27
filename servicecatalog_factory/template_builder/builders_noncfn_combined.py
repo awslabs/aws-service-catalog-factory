@@ -167,7 +167,7 @@ class NonCFNCombinedTemplateBuilder(builders_cfn_combined.CFNCombinedTemplateBui
 
             common_commands.extend(
                 [
-                    "export TRIGGERING_SOURCE=$(servicecatalog-factory print-source-directory ${AWS::StackName}-pipeline $EXECUTION_ID)",
+                    "export TRIGGERING_SOURCE=$(servicecatalog-factory print-source-directory ${AWS::StackName}-pipeline $PIPELINE_EXECUTION_ID)",
                     "cd $TRIGGERING_SOURCE",
                     "pwd",
                     "export NAME=$(cat item_name.txt)",
@@ -292,7 +292,7 @@ class NonCFNCombinedTemplateBuilder(builders_cfn_combined.CFNCombinedTemplateBui
                                         value="${AWS::StackName}-pipeline",
                                     ),
                                     dict(
-                                        name="CODEPIPELINE_ID",
+                                        name="PIPELINE_EXECUTION_ID",
                                         type="PLAINTEXT",
                                         value="#{codepipeline.PipelineExecutionId}",
                                     ),
@@ -403,7 +403,9 @@ class NonCFNCombinedTemplateBuilder(builders_cfn_combined.CFNCombinedTemplateBui
                             Name="PIPELINE_NAME", Type="PLAINTEXT", Value="CHANGE_ME"
                         ),
                         codebuild.EnvironmentVariable(
-                            Name="CODEPIPELINE_ID", Type="PLAINTEXT", Value="CHANGE_ME"
+                            Name="PIPELINE_EXECUTION_ID",
+                            Type="PLAINTEXT",
+                            Value="CHANGE_ME",
                         ),
                         codebuild.EnvironmentVariable(
                             Name="SOURCE_PATH", Type="PLAINTEXT", Value=".",
@@ -456,7 +458,7 @@ class NonCFNCombinedTemplateBuilder(builders_cfn_combined.CFNCombinedTemplateBui
                                         type="PLAINTEXT",
                                     ),
                                     dict(
-                                        name="CODEPIPELINE_ID",
+                                        name="PIPELINE_EXECUTION_ID",
                                         value="#{codepipeline.PipelineExecutionId}",
                                         type="PLAINTEXT",
                                     ),

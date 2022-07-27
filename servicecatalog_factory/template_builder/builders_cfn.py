@@ -457,7 +457,7 @@ class CFNSplitTemplateBuilder(builders_base.BaseTemplateBuilder):
                                             value="${AWS::StackName}-pipeline",
                                         ),
                                         dict(
-                                            name="CODEPIPELINE_ID",
+                                            name="PIPELINE_EXECUTION_ID",
                                             type="PLAINTEXT",
                                             value="#{codepipeline.PipelineExecutionId}",
                                         ),
@@ -703,7 +703,7 @@ class ProductTemplateBuilder(CFNSplitTemplateBuilder):
                                             type="PLAINTEXT",
                                         ),
                                         dict(
-                                            name="CODEPIPELINE_ID",
+                                            name="PIPELINE_EXECUTION_ID",
                                             value="#{codepipeline.PipelineExecutionId}",
                                             type="PLAINTEXT",
                                         ),

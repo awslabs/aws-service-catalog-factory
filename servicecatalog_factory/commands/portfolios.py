@@ -887,6 +887,8 @@ def print_source_directory(pipeline_name, execution_id):
 
         if trigger_type in ["CreatePipeline", "StartPipelineExecution"]:
             source = first_source_name
+        elif trigger_type == "PollForSourceChanges":
+            source = trigger_detail
         elif trigger_type == "CloudWatchEvent":
             with betterboto_client.ClientContextManager("events",) as events:
                 rule = events.describe_rule(Name=trigger_detail.split("/")[-1])

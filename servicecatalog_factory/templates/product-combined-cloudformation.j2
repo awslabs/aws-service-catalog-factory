@@ -153,7 +153,7 @@ Resources:
               Configuration:
                 ProjectName: !Ref ValidateProject
                 PrimarySource: Source{{Versions[0].Name}}
-                EnvironmentVariables: '[{"name":"EXECUTION_ID","value":"#{codepipeline.PipelineExecutionId}","type":"PLAINTEXT"}]'
+                EnvironmentVariables: '[{"name":"PIPELINE_EXECUTION_ID","value":"#{codepipeline.PipelineExecutionId}","type":"PLAINTEXT"}]'
               RunOrder: 1
               InputArtifacts:
               {% if ShouldParseAsJinja2Template %}
@@ -184,7 +184,7 @@ Resources:
               Configuration:
                 ProjectName: !Ref PackageProject
                 PrimarySource: Source{{Versions[0].Name}}
-                EnvironmentVariables: '[{"name":"EXECUTION_ID","value":"#{codepipeline.PipelineExecutionId}","type":"PLAINTEXT"}]'
+                EnvironmentVariables: '[{"name":"PIPELINE_EXECUTION_ID","value":"#{codepipeline.PipelineExecutionId}","type":"PLAINTEXT"}]'
               RunOrder: 1
               InputArtifacts:
               {% if Options.ShouldParseAsJinja2Template %}
@@ -210,7 +210,7 @@ Resources:
               Configuration:
                 ProjectName: !Ref DeployProject
                 PrimarySource: Package{{Versions[0].Name}}
-                EnvironmentVariables: '[{"name":"EXECUTION_ID","value":"#{codepipeline.PipelineExecutionId}","type":"PLAINTEXT"}]'
+                EnvironmentVariables: '[{"name":"PIPELINE_EXECUTION_ID","value":"#{codepipeline.PipelineExecutionId}","type":"PLAINTEXT"}]'
               RunOrder: 1
               InputArtifacts:
               {% if Options.ShouldParseAsJinja2Template %}
@@ -259,7 +259,7 @@ Resources:
         ComputeType: BUILD_GENERAL1_SMALL
         Image: aws/codebuild/standard:4.0
         EnvironmentVariables:
-          - Name: EXECUTION_ID
+          - Name: PIPELINE_EXECUTION_ID
             Type: PLAINTEXT
             Value: CHANGE_ME
       Source:
@@ -278,7 +278,7 @@ Resources:
                   {% else %}
                 - pip install aws-service-catalog-factory=={{ VERSION }}
                   {% endif %}
-                - cd $(servicecatalog-factory print-source-directory {{friendly_uid}}-pipeline $EXECUTION_ID)
+                - cd $(servicecatalog-factory print-source-directory {{friendly_uid}}-pipeline $PIPELINE_EXECUTION_ID)
                 - export FactoryTemplateValidateBucket=$(aws cloudformation list-stack-resources --stack-name servicecatalog-factory --query 'StackResourceSummaries[?LogicalResourceId==`FactoryTemplateValidateBucket`].PhysicalResourceId' --output text)
                 - aws s3 cp product.template.{{ template_format }} s3://$FactoryTemplateValidateBucket/$CODEBUILD_BUILD_ID.{{ template_format }}
                 - aws cloudformation validate-template --template-url https://$FactoryTemplateValidateBucket.s3.$AWS_REGION.amazonaws.com/$CODEBUILD_BUILD_ID.{{ template_format }}
@@ -327,7 +327,7 @@ Resources:
         Image: aws/codebuild/standard:4.0
           {% endif %}
         EnvironmentVariables:
-          - Name: EXECUTION_ID
+          - Name: PIPELINE_EXECUTION_ID
             Type: PLAINTEXT
             Value: CHANGE_ME
           - Name: STACK_NAME
@@ -355,7 +355,7 @@ Resources:
                     {% else %}
                   - pip install aws-service-catalog-factory=={{ VERSION }}
                     {% endif %}
-                  - cd $(servicecatalog-factory print-source-directory {{friendly_uid}}-pipeline $EXECUTION_ID)
+                  - cd $(servicecatalog-factory print-source-directory {{friendly_uid}}-pipeline $PIPELINE_EXECUTION_ID)
                 {% for region in ALL_REGIONS %}
                   - aws cloudformation package --region {{ region }} --template $(pwd)/product.template.{{ template_format }} --s3-bucket sc-factory-artifacts-${ACCOUNT_ID}-{{ region }} --s3-prefix ${STACK_NAME} --output-template-file product.template-{{ region }}.{{ template_format }}
                 {% endfor %}
@@ -450,7 +450,7 @@ Resources:
         Image: aws/codebuild/standard:4.0
           {% endif %}
         EnvironmentVariables:
-          - Name: EXECUTION_ID
+          - Name: PIPELINE_EXECUTION_ID
             Type: PLAINTEXT
             Value: CHANGE_ME
           - Name: STACK_NAME
@@ -486,7 +486,7 @@ Resources:
                 - echo "{{version.Description}}" > {% if loop.first %}$CODEBUILD_SRC_DIR{% else %}$CODEBUILD_SRC_DIR_Package{{ version.Name }}{% endif %}/description.txt
               {% endif %}{% endfor %}
 
-                - cd $(servicecatalog-factory print-source-directory {{friendly_uid}}-pipeline $EXECUTION_ID)
+                - cd $(servicecatalog-factory print-source-directory {{friendly_uid}}-pipeline $PIPELINE_EXECUTION_ID)
               {% for region in ALL_REGIONS %}
                 - export FactoryTemplateValidateBucket=$(aws cloudformation list-stack-resources --stack-name servicecatalog-factory --query 'StackResourceSummaries[?LogicalResourceId==`FactoryTemplateValidateBucket`].PhysicalResourceId' --output text)
                 - aws s3 cp product.template-{{ region }}.{{ template_format }} s3://$FactoryTemplateValidateBucket/$CODEBUILD_BUILD_ID/product.template-{{ region }}.{{ template_format }}

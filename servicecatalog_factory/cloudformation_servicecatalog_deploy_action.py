@@ -50,7 +50,7 @@ def set_template_url_for_codepipeline_id(
             environment_variable.get("name")
         ] = environment_variable.get("value")
 
-    return_key = "{PROVISIONER}/{region}/{NAME}/{VERSION}/{CODEPIPELINE_ID}/product.template.{TEMPLATE_FORMAT}".format(
+    return_key = "{PROVISIONER}/{region}/{NAME}/{VERSION}/{PIPELINE_EXECUTION_ID}/product.template.{TEMPLATE_FORMAT}".format(
         region=region, **action_configuration
     )
 

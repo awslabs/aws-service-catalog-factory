@@ -187,7 +187,7 @@ class CFNCombinedTemplateBuilder(builders_base.BaseTemplateBuilder):
 
         common_commands.extend(
             [
-                "export TRIGGERING_SOURCE=$(servicecatalog-factory print-source-directory ${AWS::StackName}-pipeline $EXECUTION_ID)",
+                "export TRIGGERING_SOURCE=$(servicecatalog-factory print-source-directory ${AWS::StackName}-pipeline $PIPELINE_EXECUTION_ID)",
                 "cd $TRIGGERING_SOURCE",
                 "pwd",
                 "export NAME=$(cat item_name.txt)",
@@ -517,7 +517,7 @@ class CFNCombinedTemplateBuilder(builders_base.BaseTemplateBuilder):
                                         value="${AWS::StackName}-pipeline",
                                     ),
                                     dict(
-                                        name="CODEPIPELINE_ID",
+                                        name="PIPELINE_EXECUTION_ID",
                                         type="PLAINTEXT",
                                         value="#{codepipeline.PipelineExecutionId}",
                                     ),
@@ -604,7 +604,7 @@ class CFNCombinedTemplateBuilder(builders_base.BaseTemplateBuilder):
                                     type="PLAINTEXT",
                                 ),
                                 dict(
-                                    name="EXECUTION_ID",
+                                    name="PIPELINE_EXECUTION_ID",
                                     value="#{codepipeline.PipelineExecutionId}",
                                     type="PLAINTEXT",
                                 ),
@@ -779,7 +779,9 @@ class StackTemplateBuilder(CFNCombinedTemplateBuilder):
                             Name="PIPELINE_NAME", Type="PLAINTEXT", Value="CHANGE_ME"
                         ),
                         codebuild.EnvironmentVariable(
-                            Name="CODEPIPELINE_ID", Type="PLAINTEXT", Value="CHANGE_ME"
+                            Name="PIPELINE_EXECUTION_ID",
+                            Type="PLAINTEXT",
+                            Value="CHANGE_ME",
                         ),
                         codebuild.EnvironmentVariable(
                             Name="SOURCE_PATH", Type="PLAINTEXT", Value=".",
@@ -832,7 +834,7 @@ class StackTemplateBuilder(CFNCombinedTemplateBuilder):
                                         type="PLAINTEXT",
                                     ),
                                     dict(
-                                        name="CODEPIPELINE_ID",
+                                        name="PIPELINE_EXECUTION_ID",
                                         value="#{codepipeline.PipelineExecutionId}",
                                         type="PLAINTEXT",
                                     ),
@@ -919,7 +921,7 @@ class ProductTemplateBuilder(CFNCombinedTemplateBuilder):
                     "build": {
                         "commands": common_commands
                         + [
-                            f"servicecatalog-factory create-or-update-provisioning-artifact-from-codepipeline-id $PIPELINE_NAME $AWS_REGION $CODEPIPELINE_ID {region}"
+                            f"servicecatalog-factory create-or-update-provisioning-artifact-from-codepipeline-id $PIPELINE_NAME $AWS_REGION $PIPELINE_EXECUTION_ID {region}"
                             for region in all_regions
                         ],
                     },
@@ -962,7 +964,9 @@ class ProductTemplateBuilder(CFNCombinedTemplateBuilder):
                             Name="PIPELINE_NAME", Type="PLAINTEXT", Value="CHANGE_ME"
                         ),
                         codebuild.EnvironmentVariable(
-                            Name="CODEPIPELINE_ID", Type="PLAINTEXT", Value="CHANGE_ME"
+                            Name="PIPELINE_EXECUTION_ID",
+                            Type="PLAINTEXT",
+                            Value="CHANGE_ME",
                         ),
                         codebuild.EnvironmentVariable(
                             Name="SOURCE_PATH", Type="PLAINTEXT", Value=".",
@@ -1015,7 +1019,7 @@ class ProductTemplateBuilder(CFNCombinedTemplateBuilder):
                                         type="PLAINTEXT",
                                     ),
                                     dict(
-                                        name="CODEPIPELINE_ID",
+                                        name="PIPELINE_EXECUTION_ID",
                                         value="#{codepipeline.PipelineExecutionId}",
                                         type="PLAINTEXT",
                                     ),
