@@ -1,0 +1,254 @@
+# Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
+# SPDX-License-Identifier: Apache-2.0
+
+AWSTemplateFormatVersion: "2010-09-09"
+Description: |
+  Bootstrap template used to bring up the main ServiceCatalog-Factory AWS CodePipeline with dependencies
+  {"version": "{{ VERSION }}", "framework": "servicecatalog-factory", "role": "bootstrap-secondary"}
+
+Parameters:
+  Version:
+    Type: String
+    Default: "{{ VERSION }}"
+
+Resources:
+  Param:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: service-catalog-factory-secondary-version
+      Type: String
+      Value: !Ref Version
+      Tags:
+        "ServiceCatalogFactory:Actor": "Framework"
+
+
+  {% if Source.Provider.lower() == 'codecommit' %}
+  CodeRepo:
+    Type: AWS::CodeCommit::Repository
+    Properties:
+      RepositoryDescription: Repo to store the product factory config
+      RepositoryName: {{ Source['Configuration']['RepositoryName'] }}
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Framework"
+  {% endif %}
+
+  {% if Source.Provider.lower() == 's3' and create_repo %}
+  S3Repo:
+    Type: AWS::S3::Bucket
+    Properties:
+      BucketEncryption:
+        ServerSideEncryptionConfiguration:
+          - ServerSideEncryptionByDefault:
+              SSEAlgorithm: AES256
+      BucketName: {{ Source.Configuration.S3Bucket }}
+      PublicAccessBlockConfiguration:
+        BlockPublicAcls: 'true'
+        BlockPublicPolicy: 'true'
+        IgnorePublicAcls: 'true'
+        RestrictPublicBuckets: 'true'
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: Framework
+      VersioningConfiguration:
+        Status: Enabled
+  {% endif %}
+
+  Pipeline:
+    Type: AWS::CodePipeline::Pipeline
+    Properties:
+      RoleArn: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/DeliveryCodePipelineRole"
+      Name: !Sub "${AWS::StackName}-pipeline"
+      ArtifactStore:
+        Type: S3
+        Location: !Sub "sc-factory-pipeline-artifacts-${AWS::AccountId}-${AWS::Region}"
+      RestartExecutionOnUpdate: true
+      Stages:
+        - Name: Source
+          Actions:
+
+            {% if Source.Provider.lower() == 'codestarsourceconnection' %}
+
+            - Name: Source
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Provider: CodeStarSourceConnection
+                Version: '1'
+              Configuration:
+                BranchName: {{ Source.Configuration.BranchName }}
+                ConnectionArn: {{ Source.Configuration.ConnectionArn }}
+                FullRepositoryId: {{ Source.Configuration.FullRepositoryId }}
+                OutputArtifactFormat: {{ Source.Configuration.OutputArtifactFormat }}
+              OutputArtifacts:
+                - Name: Source
+              RunOrder: '1'
+
+            {% elif Source.Provider.lower() == 's3' %}
+
+            - Name: Source
+              ActionTypeId:
+                Category: Source
+                Owner: AWS
+                Provider: S3
+                Version: '1'
+              Configuration:
+                S3Bucket: !Sub "{{ Source.Configuration.S3Bucket }}"
+                S3ObjectKey: !Sub "{{ Source.Configuration.S3ObjectKey }}"
+                PollForSourceChanges: {{ Source.Configuration.PollForSourceChanges }}
+              OutputArtifacts:
+                - Name: Source
+              RunOrder: '1'
+            
+            {% elif Source.Provider.lower() == 'custom' %}
+              
+            - Name: Source
+              ActionTypeId:
+                Category: Source
+                Owner: Custom
+                Version: {{ Source['Configuration']['CustomActionTypeVersion'] }}
+                Provider: {{ Source['Configuration']['CustomActionTypeProvider'] }}
+              Configuration:
+                GitUrl: {{ Source['Configuration']['GitUrl'] }}
+                Branch: {{ Source['Configuration']['Branch'] }}
+                PipelineName: !Sub "${AWS::StackName}-pipeline"
+              OutputArtifacts:
+                - Name: Source
+              RunOrder: 1
+
+            {% else %}
+
+            - Name: Source
+              ActionTypeId:
+                Category: Source
+                Owner: {% if Source.Provider.lower() == 'codecommit' %}AWS{% else %}ThirdParty{% endif %}
+                Version: 1
+                Provider: {{ Source.Provider }}
+              {% if Source.Provider.lower() == 'codecommit' %}
+              Configuration:
+                RepositoryName: {{ Source.Configuration.RepositoryName }}
+                BranchName: {{ Source.Configuration.BranchName }}
+                PollForSourceChanges: {{ Source.Configuration.PollForSourceChanges or 'true' }}
+              {% endif %}
+              {% if Source.Provider.lower() == 'github' %}
+              Configuration:
+                Owner: {{ Source['Configuration']['Owner'] }}
+                Repo: {{ Source['Configuration']['Repo'] }}
+                Branch: {{ Source['Configuration']['Branch'] }}
+                OAuthToken: !Sub '{{ '{% raw %}{{{% endraw %}' }}resolve:secretsmanager:{{ Source['Configuration']['SecretsManagerSecret'] }}:SecretString:OAuthToken{{ '{% raw %}}}{% endraw %}' }}'
+                PollForSourceChanges: {{ Source['Configuration']['PollForSourceChanges'] }}
+              {% endif %}
+              OutputArtifacts:
+                - Name: Source
+              RunOrder: 1
+              {% if Source.Provider.lower() == 'codecommit' %}RoleArn: !Sub "arn:${AWS::Partition}:iam::${AWS::AccountId}:role/servicecatalog-product-factory/SourceRole"{% endif %}
+
+            {% endif %}
+        {% if should_validate %}
+        - Name: Validate
+          Actions:
+            - Name: Validate
+              ActionTypeId:
+                Category: Test
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: servicecatalog-product-factory-validate
+              RunOrder: 1
+              InputArtifacts:
+                - Name: Source
+              OutputArtifacts:
+                - Name: ValidateOutput
+        {% endif %}
+
+        - Name: Build
+          Actions:
+            - Name: Build
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: servicecatalog-product-factory-build
+              RunOrder: 1
+              InputArtifacts:
+                - Name: Source
+              OutputArtifacts:
+                - Name: BuildOutput
+        - Name: GenerateConstraints
+          Actions:
+            - Name: GenerateLaunchConstraints
+              ActionTypeId:
+                Category: Build
+                Owner: AWS
+                Version: 1
+                Provider: CodeBuild
+              Configuration:
+                ProjectName: servicecatalog-product-factory-generate-launch-constraints
+              RunOrder: 1
+              InputArtifacts:
+                - Name: BuildOutput
+              OutputArtifacts:
+                - Name: GeneratePortfolioConstraintsOutput
+      Tags:
+        - Key: "ServiceCatalogFactory:Actor"
+          Value: "Framework"
+
+
+  {% if Source.Provider.lower() == 'github' %}
+  Webhook:
+    Type: 'AWS::CodePipeline::Webhook'
+    Properties:
+      AuthenticationConfiguration:
+        SecretToken: !Sub '{{ '{% raw %}{{{% endraw %}' }}resolve:secretsmanager:{{ Source['Configuration']['SecretsManagerSecret'] }}:SecretString:SecretToken{{ '{% raw %}}}{% endraw %}' }}'
+      Filters:
+          - JsonPath: "$.ref"
+            MatchEquals: "refs/heads/{{ Source.Configuration.Branch }}"
+      Authentication: GITHUB_HMAC
+      TargetPipeline: !Ref Pipeline
+      TargetAction: Source
+      Name: !Sub "${AWS::StackName}-webhook"
+      TargetPipelineVersion: !GetAtt Pipeline.Version
+      RegisterWithThirdParty: 'true'
+  {% endif %}
+
+  {% if Source.Provider.lower() == 'custom' and Source.Configuration.GitWebHookIpAddress is defined %}
+  Webhook:
+    Type: "AWS::CodePipeline::Webhook"
+    Properties:
+      Authentication: IP
+      AuthenticationConfiguration:
+        AllowedIPRange: {{ Source['Configuration']['GitWebHookIpAddress'] }}
+      Filters:
+        - JsonPath: '$.changes[0].ref.id'
+          MatchEquals: 'refs/heads/{Branch}'     
+      TargetPipeline: !Ref Pipeline
+      TargetPipelineVersion: !GetAtt Pipeline.Version
+      TargetAction: Source
+      Name: !Sub "${AWS::StackName}-webhook"
+      RegisterWithThirdParty: false
+  {% endif %}
+
+
+
+Outputs:
+  Version:
+    Value: !GetAtt Param.Value
+
+  {% if Source.Provider.lower() == 'custom' and Source.Configuration.GitWebHookIpAddress is defined %}
+  WebhookUrl:
+    Export:
+      Name:
+        !Sub "${AWS::StackName}-pipeline"
+    Value:
+      Fn::Sub:
+        - ${GitUrl}||${WebhookUrl}
+        - GitUrl:
+            {{ Source['Configuration']['GitUrl'] }}
+          WebhookUrl:
+            Fn::GetAtt:
+              - Webhook
+              - Url
+  {% endif %}

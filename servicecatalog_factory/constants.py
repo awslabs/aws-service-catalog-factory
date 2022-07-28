@@ -115,3 +115,8 @@ CONFIG_SHOULD_PIPELINES_INHERIT_TAGS = "should_pipelines_inherit_tags"
 
 
 SERVICE_CATALOG_FACTORY_PIPELINES = "/servicecatalog-factory/pipelines"
+
+BOOTSTRAP_TYPE_SECONDARY = "SECONDARY"
+BOOTSTRAP_TYPE_PRIMARY = "PRIMARY"
+
+BOOTSTRAP_SECONDARY_TEMPLATE_NAME = "servicecatalog-factory-secondary"
