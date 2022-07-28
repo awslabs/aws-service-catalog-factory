@@ -315,7 +315,9 @@ def add_secret(secret_name, oauth_token, secret_token):
 @click.argument("name")
 @click.option("--source-provider", default="CodeCommit", envvar="SCM_SOURCE_PROVIDER")
 @click.option(
-    "--repository_name", default="ServiceCatalogFactory-Secondary", envvar="SCM_REPOSITORY_NAME"
+    "--repository_name",
+    default="ServiceCatalogFactory-Secondary",
+    envvar="SCM_REPOSITORY_NAME",
 )
 @click.option("--branch-name", default="main", envvar="SCM_BRANCH_NAME")
 @click.option("--owner")

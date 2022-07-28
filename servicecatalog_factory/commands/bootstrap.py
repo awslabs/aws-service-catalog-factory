@@ -22,24 +22,24 @@ logger.setLevel(logging.INFO)
 
 
 def bootstrap_branch(
-        branch_to_bootstrap,
-        source_provider,
-        owner,
-        repo,
-        branch,
-        poll_for_source_changes,
-        webhook_secret,
-        scm_connection_arn,
-        scm_full_repository_id,
-        scm_branch_name,
-        scm_bucket_name,
-        scm_object_key,
-        create_repo,
-        should_validate,
-        custom_source_action_git_url,
-        custom_source_action_git_web_hook_ip_address,
-        custom_source_action_custom_action_type_version,
-        custom_source_action_custom_action_type_provider,
+    branch_to_bootstrap,
+    source_provider,
+    owner,
+    repo,
+    branch,
+    poll_for_source_changes,
+    webhook_secret,
+    scm_connection_arn,
+    scm_full_repository_id,
+    scm_branch_name,
+    scm_bucket_name,
+    scm_object_key,
+    create_repo,
+    should_validate,
+    custom_source_action_git_url,
+    custom_source_action_git_web_hook_ip_address,
+    custom_source_action_custom_action_type_version,
+    custom_source_action_custom_action_type_provider,
 ):
     constants.VERSION = "https://github.com/awslabs/aws-service-catalog-factory/archive/{}.zip".format(
         branch_to_bootstrap
@@ -66,25 +66,25 @@ def bootstrap_branch(
 
 
 def bootstrap(
-        source_provider,
-        owner,
-        repo,
-        branch,
-        poll_for_source_changes,
-        webhook_secret,
-        scm_connection_arn,
-        scm_full_repository_id,
-        scm_branch_name,
-        scm_bucket_name,
-        scm_object_key,
-        create_repo,
-        should_validate,
-        custom_source_action_git_url,
-        custom_source_action_git_web_hook_ip_address,
-        custom_source_action_custom_action_type_version,
-        custom_source_action_custom_action_type_provider,
-        bootstrap_type=constants.BOOTSTRAP_TYPE_PRIMARY,
-        bootstrap_stack_name=None,
+    source_provider,
+    owner,
+    repo,
+    branch,
+    poll_for_source_changes,
+    webhook_secret,
+    scm_connection_arn,
+    scm_full_repository_id,
+    scm_branch_name,
+    scm_bucket_name,
+    scm_object_key,
+    create_repo,
+    should_validate,
+    custom_source_action_git_url,
+    custom_source_action_git_web_hook_ip_address,
+    custom_source_action_custom_action_type_version,
+    custom_source_action_custom_action_type_provider,
+    bootstrap_type=constants.BOOTSTRAP_TYPE_PRIMARY,
+    bootstrap_stack_name=None,
 ):
     click.echo("Starting bootstrap")
     click.echo("Starting regional deployments")
@@ -92,7 +92,7 @@ def bootstrap(
     all_regions = get_regions()
     if bootstrap_type == constants.BOOTSTRAP_TYPE_PRIMARY:
         with betterboto_client.MultiRegionClientContextManager(
-                "cloudformation", all_regions
+            "cloudformation", all_regions
         ) as clients:
             logger.info("Creating {}-regional".format(constants.BOOTSTRAP_STACK_NAME))
             threads = []
