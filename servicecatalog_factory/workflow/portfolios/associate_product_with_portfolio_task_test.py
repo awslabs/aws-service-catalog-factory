@@ -31,7 +31,7 @@ class AssociateProductWithPortfolioTaskTest(
         # setup
         expected_result = {
             "region": self.region,
-            "portfolio": f"{self.portfolio_args.get('portfolio_group_name')}-{self.portfolio_args.get('display_name')}",
+            "portfolio": f"{self.portfolio_args.get('portfolio_group_name')}-{self.portfolio_args.get('display_name')}-{self.portfolio_args.get('portfolio_name')}",
             "product": self.product_args.get("name"),
         }
 
