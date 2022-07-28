@@ -22,7 +22,7 @@ class AssociateProductWithPortfolioTask(FactoryTask):
     def params_for_results_display(self):
         return {
             "region": self.region,
-            "portfolio": f"{self.portfolio_args.get('portfolio_group_name')}-{self.portfolio_args.get('display_name')}",
+            "portfolio": f"{self.portfolio_args.get('portfolio_group_name')}-{self.portfolio_args.get('display_name')}-{self.portfolio_args.get('portfolio_name')}",
             "product": self.product_args.get("name"),
         }
 
@@ -32,6 +32,7 @@ class AssociateProductWithPortfolioTask(FactoryTask):
             f"{self.region}"
             f"{self.product_args.get('name')}"
             f"_{self.portfolio_args.get('portfolio_group_name')}"
+            f"_{self.portfolio_args.get('portfolio_name')}"
             f"_{self.portfolio_args.get('display_name')}.json"
         )
 
@@ -42,7 +43,7 @@ class AssociateProductWithPortfolioTask(FactoryTask):
         }
 
     def run(self):
-        logger_prefix = f"{self.region}-{self.portfolio_args.get('portfolio_group_name')}-{self.portfolio_args.get('display_name')}"
+        logger_prefix = f"{self.region}-{self.portfolio_args.get('portfolio_group_name')}-{self.portfolio_args.get('display_name')}-{self.portfolio_args.get('portfolio_name')}"
         portfolio = json.loads(
             self.input().get("create_portfolio_task").open("r").read()
         )

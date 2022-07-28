@@ -15,6 +15,7 @@ from servicecatalog_factory.workflow.tasks import FactoryTask
 class CreatePortfolioAssociationTask(FactoryTask):
     region = luigi.Parameter()
     portfolio_group_name = luigi.Parameter()
+    portfolio_name = luigi.Parameter()
     display_name = luigi.Parameter()
     description = luigi.Parameter(significant=False)
     provider_name = luigi.Parameter(significant=False)
@@ -27,6 +28,7 @@ class CreatePortfolioAssociationTask(FactoryTask):
         return CreatePortfolioTask(
             self.region,
             self.portfolio_group_name,
+            self.portfolio_name,
             self.display_name,
             self.description,
             self.provider_name,
@@ -38,6 +40,7 @@ class CreatePortfolioAssociationTask(FactoryTask):
             "region": self.region,
             "portfolio_group_name": self.portfolio_group_name,
             "display_name": self.display_name,
+            "portfolio_name": self.portfolio_name,
         }
 
     def api_calls_used(self):
@@ -46,7 +49,7 @@ class CreatePortfolioAssociationTask(FactoryTask):
         ]
 
     def output(self):
-        output_file = f"output/CreatePortfolioAssociationTask/{self.region}-{self.portfolio_group_name}-{self.display_name}.json"
+        output_file = f"output/CreatePortfolioAssociationTask/{self.region}-{self.portfolio_group_name}-{self.portfolio_name}-{self.display_name}.json"
         return luigi.LocalTarget(output_file)
 
     def run(self):
@@ -61,9 +64,12 @@ class CreatePortfolioAssociationTask(FactoryTask):
                 },
                 portfolio_id=portfolio_details.get("Id"),
             )
-            stack_name = "-".join(
-                [self.portfolio_group_name, self.display_name, "associations"]
-            )
+            if self.display_name:
+                stack_name = "-".join(
+                    [self.portfolio_group_name, self.display_name, "associations"]
+                )
+            else:
+                stack_name = "-".join([self.portfolio_name, "associations"])
             tags = [dict(Key="ServiceCatalogFactory:Actor", Value="Generated",)]
             if self.should_pipelines_inherit_tags:
                 tags += list(self.initialiser_stack_tags)

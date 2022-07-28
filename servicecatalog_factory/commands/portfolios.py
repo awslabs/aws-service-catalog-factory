@@ -80,7 +80,7 @@ def check_for_external_definitions_for(
             portfolio_file_base_path,
             portfolio_file_name,
             "Portfolios",
-            portfolio.get("DisplayName"),
+            portfolio.get("DisplayName", portfolio.get("PortfolioName")),
             type,
         ]
     )
@@ -116,7 +116,7 @@ def check_for_external_definitions_for(
                 portfolio_file_base_path,
                 portfolio_file_name,
                 "Portfolios",
-                portfolio.get("DisplayName"),
+                portfolio.get("DisplayName", portfolio.get("PortfolioName")),
                 type,
                 component.get("Name"),
                 "Versions",
@@ -270,12 +270,15 @@ def generate_for_products_versions(
 def generate_for_products(
     all_tasks, p_name, portfolios, products_by_region, region, products_versions: dict,
 ):
+    if not all_tasks.get(region):
+        all_tasks[region] = dict()
+    tasks_for_region = all_tasks[region]
     for product in portfolios.get("Products", []):
         product_uid = f"{product.get('Name')}"
 
         if product.get("Status", None) == "terminated":
-            all_tasks[
-                f"delete_product_{p_name}_{product.get('Name')}-{region}"
+            tasks_for_region[
+                f"delete_product_{p_name}_{product.get('Name')}"
             ] = delete_product_task.DeleteProductTask(
                 region=region,
                 name=product.get("Name"),
@@ -303,11 +306,11 @@ def generate_for_products(
         products_by_region[product_uid][region] = create_product_task_args
 
         for portfolio in product.get("Portfolios", []):
-            create_portfolio_task_args = all_tasks[
-                f"portfolio_{p_name}_{portfolio}-{region}"
+            create_portfolio_task_args = tasks_for_region[
+                f"portfolio_{p_name}_{portfolio}"
             ].param_kwargs
-            all_tasks[
-                f"association_{portfolio}_{product.get('Name')}-{region}"
+            tasks_for_region[
+                f"association_{portfolio}_{product.get('Name')}"
             ] = associate_product_with_portfolio_task.AssociateProductWithPortfolioTask(
                 region=region,
                 portfolio_args=create_portfolio_task_args,
@@ -325,13 +328,13 @@ def generate_for_products(
                     "version": version,
                 }
             )
-            all_tasks[
-                f"version_{product.get('Name')}_{version.get('Name')}-{region}"
+            tasks_for_region[
+                f"version_{product.get('Name')}_{version.get('Name')}"
             ] = ensure_product_version_details_correct_task.EnsureProductVersionDetailsCorrect(
                 region=region, version=version, product_args=create_product_task_args,
             )
 
-        all_tasks[f"product_{p_name}-{region}"] = create_product_task.CreateProductTask(
+        tasks_for_region[f"product_{p_name}"] = create_product_task.CreateProductTask(
             **create_product_task_args
         )
 
@@ -345,20 +348,28 @@ def generate_for_portfolios(
     region,
     pipeline_versions,
 ):
+    if not all_tasks.get(region):
+        all_tasks[region] = dict()
+    tasks_for_region = all_tasks[region]
     for portfolio in portfolios.get("Portfolios", []):
         create_portfolio_task_args = {
             "region": region,
             "portfolio_group_name": p_name,
-            "display_name": portfolio.get("DisplayName"),
+            "display_name": portfolio.get("DisplayName", ""),
             "description": portfolio.get("Description"),
             "provider_name": portfolio.get("ProviderName"),
+            "portfolio_name": portfolio.get("PortfolioName", ""),
             "tags": portfolio.get("Tags", []),
         }
-        all_tasks[
-            f"portfolio_{p_name}_{portfolio.get('DisplayName')}-{region}"
-        ] = create_portfolio_task.CreatePortfolioTask(**create_portfolio_task_args)
-        all_tasks[
-            f"portfolio_associations_{p_name}_{portfolio.get('DisplayName')}-{region}"
+        if portfolio.get("DisplayName", "") != "":
+            k = f"portfolio_{p_name}_{portfolio.get('DisplayName')}"
+        else:
+            k = f"portfolio_{portfolio.get('PortfolioName')}"
+        tasks_for_region[k] = create_portfolio_task.CreatePortfolioTask(
+            **create_portfolio_task_args
+        )
+        tasks_for_region[
+            f"portfolio_associations_{p_name}_{portfolio.get('DisplayName')}"
         ] = create_portfolio_association_task.CreatePortfolioAssociationTask(
             **create_portfolio_task_args,
             associations=portfolio.get("Associations", []),
@@ -371,8 +382,8 @@ def generate_for_portfolios(
             product_uid = f"{product.get('Name')}"
 
             if product.get("Status", None) == "terminated":
-                all_tasks[
-                    f"delete_product_{p_name}_{portfolio.get('DisplayName')}_{product.get('Name')}-{region}"
+                tasks_for_region[
+                    f"delete_product_{p_name}_{portfolio.get('DisplayName')}_{product.get('Name')}"
                 ] = delete_product_task.DeleteProductTask(
                     region=region,
                     name=product.get("Name"),
@@ -410,12 +421,11 @@ def generate_for_portfolios(
             }
             products_by_region[product_uid][region] = create_product_task_args
 
-            all_tasks[
-                f"product_{p_name}_{portfolio.get('DisplayName')}_{product.get('Name')}-{region}"
+            tasks_for_region[
+                f"product_{p_name}_{portfolio.get('DisplayName')}_{product.get('Name')}"
             ] = create_product_task.CreateProductTask(**create_product_task_args)
-
-            all_tasks[
-                f"association_{p_name}_{portfolio.get('DisplayName')}_{product.get('Name')}-{region}"
+            tasks_for_region[
+                f"association_{p_name}_{portfolio.get('DisplayName')}_{product.get('Name')}"
             ] = associate_product_with_portfolio_task.AssociateProductWithPortfolioTask(
                 region=region,
                 portfolio_args=create_portfolio_task_args,
@@ -429,8 +439,8 @@ def generate_for_portfolios(
                         "version": version,
                     }
                 )
-                all_tasks[
-                    f"version_{p_name}_{portfolio.get('Name')}_{product.get('Name')}_{version.get('Name')}-{region}"
+                tasks_for_region[
+                    f"version_{p_name}_{portfolio.get('Name')}_{product.get('Name')}_{version.get('Name')}"
                 ] = ensure_product_version_details_correct_task.EnsureProductVersionDetailsCorrect(
                     region=region,
                     version=version,
@@ -1200,4 +1210,4 @@ def generate(portfolios_path, factory_version):
             products_by_region,
         )
 
-    return list(all_tasks.values())
+    return all_tasks

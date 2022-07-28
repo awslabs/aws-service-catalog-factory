@@ -7,6 +7,7 @@ from servicecatalog_factory.workflow import tasks_unit_tests_helper
 
 class CreatePortfolioTaskTest(tasks_unit_tests_helper.FactoryTaskUnitTest):
     region = "region"
+    portfolio_name = "portfolio_name"
     portfolio_group_name = "portfolio_group_name"
     display_name = "display_name"
     description = "description"
@@ -20,6 +21,7 @@ class CreatePortfolioTaskTest(tasks_unit_tests_helper.FactoryTaskUnitTest):
 
         self.sut = self.module.CreatePortfolioTask(
             region=self.region,
+            portfolio_name=self.portfolio_name,
             portfolio_group_name=self.portfolio_group_name,
             display_name=self.display_name,
             description=self.description,
@@ -35,6 +37,7 @@ class CreatePortfolioTaskTest(tasks_unit_tests_helper.FactoryTaskUnitTest):
             "region": self.region,
             "portfolio_group_name": self.portfolio_group_name,
             "display_name": self.display_name,
+            "portfolio_name": self.portfolio_name,
         }
 
         # exercise
