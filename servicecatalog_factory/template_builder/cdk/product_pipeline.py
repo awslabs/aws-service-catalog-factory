@@ -346,7 +346,7 @@ class CDK100Template(BaseTemplate):
                                         type="PLAINTEXT",
                                     ),
                                     dict(
-                                        name="CODEPIPELINE_ID",
+                                        name="PIPELINE_EXECUTION_ID",
                                         value="#{codepipeline.PipelineExecutionId}",
                                         type="PLAINTEXT",
                                     ),
@@ -417,7 +417,7 @@ class CDK100Template(BaseTemplate):
                                         type="PLAINTEXT",
                                     ),
                                     dict(
-                                        name="CODEPIPELINE_ID",
+                                        name="PIPELINE_EXECUTION_ID",
                                         value="#{codepipeline.PipelineExecutionId}",
                                         type="PLAINTEXT",
                                     ),

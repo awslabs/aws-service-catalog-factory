@@ -18,7 +18,7 @@ def get_commands_for_deploy() -> list:
     commands = []
     for region in config.get_regions():
         commands.append(
-            f"servicecatalog-factory create-or-update-provisioning-artifact-from-codepipeline-id $PIPELINE_NAME $AWS_REGION $CODEPIPELINE_ID {region}"
+            f"servicecatalog-factory create-or-update-provisioning-artifact-from-codepipeline-id $PIPELINE_NAME $AWS_REGION $PIPELINE_EXECUTION_ID {region}"
         )
     return commands
 
@@ -49,7 +49,7 @@ def get_resources() -> list:
                     {"Type": "PLAINTEXT", "Name": "VERSION", "Value": "CHANGE_ME"},
                     {
                         "Type": "PLAINTEXT",
-                        "Name": "CODEPIPELINE_ID",
+                        "Name": "PIPELINE_EXECUTION_ID",
                         "Value": "CHANGE_ME",
                     },
                     {
@@ -118,7 +118,9 @@ def get_resources() -> list:
                         Name="PIPELINE_NAME", Type="PLAINTEXT", Value="CHANGE_ME"
                     ),
                     codebuild.EnvironmentVariable(
-                        Name="CODEPIPELINE_ID", Type="PLAINTEXT", Value="CHANGE_ME"
+                        Name="PIPELINE_EXECUTION_ID",
+                        Type="PLAINTEXT",
+                        Value="CHANGE_ME",
                     ),
                 ],
             ),

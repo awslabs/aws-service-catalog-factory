@@ -13,6 +13,7 @@ from servicecatalog_factory.commands import portfolios
 from servicecatalog_factory.commands import seed as seed_commands
 from servicecatalog_factory.commands import show_pipelines as show_pipelines_commands
 from servicecatalog_factory.commands import stacks
+from servicecatalog_factory import constants
 from servicecatalog_factory.commands import validate as validate_commands
 from servicecatalog_factory.commands import version as version_commands
 from servicecatalog_factory.commands import management as management_commands
@@ -277,6 +278,162 @@ def bootstrap(
     custom_source_action_custom_action_type_version,
     custom_source_action_custom_action_type_provider,
 ):
+    args = get_parameters_for_bootstrap(
+        branch,
+        branch_name,
+        create_repo,
+        custom_source_action_custom_action_type_provider,
+        custom_source_action_custom_action_type_version,
+        custom_source_action_git_url,
+        custom_source_action_git_web_hook_ip_address,
+        owner,
+        poll_for_source_changes,
+        repo,
+        repository_name,
+        scm_branch_name,
+        scm_bucket_name,
+        scm_connection_arn,
+        scm_full_repository_id,
+        scm_object_key,
+        should_validate,
+        source_provider,
+        webhook_secret,
+    )
+
+    bootstrap_commands.bootstrap(**args)
+
+
+@cli.command()
+@click.argument("secret-name")
+@click.argument("oauth-token")
+@click.argument("secret-token", default=False)
+def add_secret(secret_name, oauth_token, secret_token):
+    configuration_management.add_secret(secret_name, oauth_token, secret_token)
+
+
+@cli.command()
+@click.argument("name")
+@click.option("--source-provider", default="CodeCommit", envvar="SCM_SOURCE_PROVIDER")
+@click.option(
+    "--repository_name",
+    default="ServiceCatalogFactory-Secondary",
+    envvar="SCM_REPOSITORY_NAME",
+)
+@click.option("--branch-name", default="main", envvar="SCM_BRANCH_NAME")
+@click.option("--owner")
+@click.option("--repo")
+@click.option("--branch")
+@click.option("--poll-for-source-changes", default=True)
+@click.option("--webhook-secret")
+@click.option("--scm-connection-arn", envvar="SCM_CONNECTION_ARN")
+@click.option(
+    "--scm-full-repository-id",
+    default="ServiceCatalogFactory",
+    envvar="SCM_FULL_REPOSITORY_ID",
+)
+@click.option("--scm-branch-name", default="main", envvar="SCM_BRANCH_NAME")
+@click.option("--scm-bucket-name", envvar="SCM_BUCKET_NAME")
+@click.option(
+    "--scm-object-key", default="ServiceCatalogFactory.zip", envvar="SCM_OBJECT_KEY"
+)
+@click.option(
+    "--create-repo/--no-create-repo", default=False, envvar="SCM_SHOULD_CREATE_REPO"
+)
+@click.option(
+    "--should-validate/--no-should-validate",
+    default=False,
+    envvar="SCT_SHOULD_VALIDATE",
+)
+@click.option(
+    "--custom-source-action-git-url", envvar="SCM_CUSTOM_SOURCE_ACTION_GIT_URL",
+)
+@click.option(
+    "--custom-source-action-git-web-hook-ip-address",
+    default="0.0.0.0/0",
+    envvar="SCM_CUSTOM_SOURCE_ACTION_GIT_WEB_HOOK_IP_ADDRESS",
+)
+@click.option(
+    "--custom-source-action-custom-action-type-version",
+    default="CustomVersion1",
+    envvar="SCM_CUSTOM_SOURCE_ACTION_CUSTOM_ACTION_TYPE_VERSION",
+)
+@click.option(
+    "--custom-source-action-custom-action-type-provider",
+    default="CustomProvider1",
+    envvar="SCM_CUSTOM_SOURCE_ACTION_CUSTOM_ACTION_TYPE_PROVIDER",
+)
+def bootstrap_secondary(
+    name,
+    source_provider,
+    repository_name,
+    branch_name,
+    owner,
+    repo,
+    branch,
+    poll_for_source_changes,
+    webhook_secret,
+    scm_connection_arn,
+    scm_full_repository_id,
+    scm_branch_name,
+    scm_bucket_name,
+    scm_object_key,
+    create_repo,
+    should_validate,
+    custom_source_action_git_url,
+    custom_source_action_git_web_hook_ip_address,
+    custom_source_action_custom_action_type_version,
+    custom_source_action_custom_action_type_provider,
+):
+    args = get_parameters_for_bootstrap(
+        branch,
+        branch_name,
+        create_repo,
+        custom_source_action_custom_action_type_provider,
+        custom_source_action_custom_action_type_version,
+        custom_source_action_git_url,
+        custom_source_action_git_web_hook_ip_address,
+        owner,
+        poll_for_source_changes,
+        repo,
+        repository_name,
+        scm_branch_name,
+        scm_bucket_name,
+        scm_connection_arn,
+        scm_full_repository_id,
+        scm_object_key,
+        should_validate,
+        source_provider,
+        webhook_secret,
+    )
+
+    bootstrap_commands.bootstrap(
+        **args,
+        bootstrap_type=constants.BOOTSTRAP_TYPE_SECONDARY,
+        bootstrap_stack_name=name,
+    )
+
+
+def get_parameters_for_bootstrap(
+    branch,
+    branch_name,
+    create_repo,
+    custom_source_action_custom_action_type_provider,
+    custom_source_action_custom_action_type_version,
+    custom_source_action_git_url,
+    custom_source_action_git_web_hook_ip_address,
+    owner,
+    poll_for_source_changes,
+    repo,
+    repository_name,
+    scm_branch_name,
+    scm_bucket_name,
+    scm_connection_arn,
+    scm_full_repository_id,
+    scm_object_key,
+    should_validate,
+    source_provider,
+    webhook_secret,
+):
     args = dict(
         source_provider=source_provider,
         owner=None,
@@ -296,7 +453,6 @@ def bootstrap(
         custom_source_action_custom_action_type_version=custom_source_action_custom_action_type_version,
         custom_source_action_custom_action_type_provider=custom_source_action_custom_action_type_provider,
     )
-
     if source_provider == "CodeCommit":
         args.update(
             dict(
@@ -341,8 +497,7 @@ def bootstrap(
         )
     else:
         raise Exception(f"Unsupported source provider: {source_provider}")
-
-    bootstrap_commands.bootstrap(**args)
+    return args
 
 
 @cli.command()
@@ -475,9 +630,8 @@ def deploy_launch_constraints(partition):
 @cli.command()
 @click.argument("pipeline-name")
 @click.argument("execution-id")
-@click.argument("artifact")
-def print_source_directory(pipeline_name, execution_id, artifact):
-    portfolios.print_source_directory(pipeline_name, execution_id, artifact)
+def print_source_directory(pipeline_name, execution_id):
+    portfolios.print_source_directory(pipeline_name, execution_id)
 
 
 @cli.command()

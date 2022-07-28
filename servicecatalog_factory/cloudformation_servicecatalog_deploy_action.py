@@ -20,7 +20,7 @@ def deploy(pipeline_name, pipeline_region, codepipeline_id, region, source_path)
     )
 
 
-def get_package_action_from(pipeline_name, codepipeline_id):
+def get_deploy_action_from(pipeline_name, codepipeline_id):
     with betterboto_client.ClientContextManager("codepipeline") as codepipeline:
         paginator = codepipeline.get_paginator("list_action_executions")
         pages = paginator.paginate(
@@ -31,7 +31,7 @@ def get_package_action_from(pipeline_name, codepipeline_id):
                 if (
                     action_execution_detail.get("stageName")
                     == action_execution_detail.get("actionName")
-                    == "Package"
+                    == "Deploy"
                 ):
                     return action_execution_detail
         raise Exception(f"Could not find Package action for {codepipeline_id}")
@@ -40,7 +40,7 @@ def get_package_action_from(pipeline_name, codepipeline_id):
 def set_template_url_for_codepipeline_id(
     pipeline_name, codepipeline_id, region, source_path
 ):
-    action = get_package_action_from(pipeline_name, codepipeline_id)
+    action = get_deploy_action_from(pipeline_name, codepipeline_id)
     environment_variables = json.loads(
         action["input"]["resolvedConfiguration"]["EnvironmentVariables"]
     )
@@ -50,22 +50,23 @@ def set_template_url_for_codepipeline_id(
             environment_variable.get("name")
         ] = environment_variable.get("value")
 
-    #
-    #
-    # THIS NEEDS TO BE PASSED IN OR MADE THE SAME!!!  current error is that the template is not in the zip file
-    #
-    #
-    return_key = "{PROVISIONER}/{region}/{NAME}/{VERSION}/{CODEPIPELINE_ID}/product.template.{TEMPLATE_FORMAT}".format(
+    return_key = "{PROVISIONER}/{region}/{NAME}/{VERSION}/{PIPELINE_EXECUTION_ID}/product.template.{TEMPLATE_FORMAT}".format(
         region=region, **action_configuration
     )
 
     print(return_key)
 
-    output_artifacts = action.get("output").get("outputArtifacts")
-    assert len(output_artifacts) == 1
-    output_artifacts = output_artifacts[0]
-    bucket = output_artifacts.get("s3location").get("bucket")
-    key = output_artifacts.get("s3location").get("key")
+    input_artifacts = action.get("input").get("inputArtifacts")
+    if len(input_artifacts) == 1:
+        input_artifacts = input_artifacts[0]
+    else:
+        for i in input_artifacts:
+            if i.get("name") == f"Package_{action_configuration.get('VERSION')}":
+                input_artifacts = i
+                break
+
+    bucket = input_artifacts.get("s3location").get("bucket")
+    key = input_artifacts.get("s3location").get("key")
 
     template_format = action_configuration.get("TEMPLATE_FORMAT")
 
@@ -73,21 +74,28 @@ def set_template_url_for_codepipeline_id(
     print(f"key is {key}")
     print(f"source_path is {source_path}")
 
-    file_path = f"{source_path}/product.template-{region}.{template_format}"
-    if file_path[0:2] == "./":
-        file_path = file_path[2:]
+    source_path = action_configuration.get("SOURCE_PATH")
+
+    template_file_path = f"{source_path}/product.template-{region}.{template_format}"
+    if template_file_path[0:2] == "./":
+        template_file_path = template_file_path[2:]
+
+    description_file_path = f"{source_path}/description.txt"
+    if description_file_path[0:2] == "./":
+        description_file_path = description_file_path[2:]
+
+    print(f"template_file_path is {template_file_path}")
 
     with betterboto_client.ClientContextManager("s3") as s3:
-        template = (
-            zipfile.ZipFile(
-                io.BytesIO(s3.get_object(Bucket=bucket, Key=key).get("Body").read())
-            )
-            .open(file_path, "r")
-            .read()
+        zipped_file = zipfile.ZipFile(
+            io.BytesIO(s3.get_object(Bucket=bucket, Key=key).get("Body").read())
         )
+        template = zipped_file.open(template_file_path, "r").read()
+        description = str(zipped_file.open(description_file_path, "r").read())
         s3.put_object(
             Bucket=bucket, Key=return_key, Body=template,
         )
+    action_configuration["DESCRIPTION"] = description
     action_configuration["BUCKET"] = bucket
     action_configuration["TEMPLATE_URL"] = return_key
     return action_configuration
@@ -115,7 +123,7 @@ def create_or_update_provisioning_artifact(
         "servicecatalog", region_name=region
     ) as servicecatalog:
         click.echo(
-            f"Creating: {version_name} in: {region} for {product}: using: {template_url}"
+            f"Creating: {version_name} in: {region} for {product} ({product_id}): using: {template_url}"
         )
 
         response = servicecatalog.create_provisioning_artifact(

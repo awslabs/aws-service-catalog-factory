@@ -9,6 +9,7 @@ class CreatePortfolioAssociationTaskTest(tasks_unit_tests_helper.FactoryTaskUnit
     region = "region"
     portfolio_group_name = "portfolio_group_name"
     display_name = "display_name"
+    portfolio_name = "portfolio_name"
     description = "description"
     provider_name = "provider_name"
     tags = []
@@ -25,6 +26,7 @@ class CreatePortfolioAssociationTaskTest(tasks_unit_tests_helper.FactoryTaskUnit
         self.sut = self.module.CreatePortfolioAssociationTask(
             region=self.region,
             portfolio_group_name=self.portfolio_group_name,
+            portfolio_name=self.portfolio_name,
             display_name=self.display_name,
             description=self.description,
             provider_name=self.provider_name,
@@ -50,6 +52,7 @@ class CreatePortfolioAssociationTaskTest(tasks_unit_tests_helper.FactoryTaskUnit
             "region": self.region,
             "portfolio_group_name": self.portfolio_group_name,
             "display_name": self.display_name,
+            "portfolio_name": self.portfolio_name,
         }
 
         # exercise
