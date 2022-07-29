@@ -1,0 +1,67 @@
+Schema: factory-2019-04-01
+Products:
+  - Name: "product-a"
+    Owner: central-it@customer.com
+    Description: template used to interact with custom resources in the shared projects
+    Distributor: central-it-team
+    SupportDescription: Contact us on Chime for help #central-it-team
+    PipelineMode: combined
+    SupportEmail: test@test.com
+    SupportUrl: http://test
+    Tags:
+      - Key: product-type
+        Value: iam
+    Versions:
+      - Name: "v1"
+        Description: template used to interact with custom resources in the shared projects.
+        Active: True
+        Source:
+          Provider: CodeCommit
+          Configuration:
+            RepositoryName: product-a
+            BranchName: v1
+      - Name: "v2"
+        Description: template used to interact with custom resources in the shared projects.
+        Active: True
+        Source:
+          Provider: CodeCommit
+          Configuration:
+            RepositoryName: product-a
+            BranchName: v2
+    Portfolios:
+      - "central-it-team-portfolio"
+  - Name: "product-b"
+    Owner: central-it@customer.com
+    Description: template used to interact with custom resources in the shared projects
+    Distributor: central-it-team
+    SupportDescription: Contact us on Chime for help #central-it-team
+    SupportEmail: test@test.com
+    SupportUrl: http://test
+    Tags:
+      - Key: product-type
+        Value: iam
+    Versions:
+      - Name: "v1"
+        Description: template used to interact with custom resources in the shared projects.
+        Active: True
+        Source:
+          Provider: CodeCommit
+          Configuration:
+            RepositoryName: product-b
+            BranchName: v1
+      - Name: "v2"
+        Description: template used to interact with custom resources in the shared projects.
+        Active: True
+        Source:
+          Provider: CodeCommit
+          Configuration:
+            RepositoryName: product-a
+            BranchName: v2
+    Portfolios:
+      - "central-it-team-portfolio"
+Portfolios:
+  - DisplayName: central-it-team-portfolio
+    Description: A place for self service products ready for your account
+    ProviderName: central-it-team
+    Associations:
+      - arn:aws:iam::${AWS::AccountId}:role/AccountVendorRole

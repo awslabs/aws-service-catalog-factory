@@ -1,0 +1,32 @@
+Schema: factory-2019-04-01
+Products:
+- Description: template used to interact with custom resources in the shared projects
+  Distributor: central-it-team
+  Name: product-a
+  Owner: central-it@customer.com
+  PipelineMode: combined
+  Portfolios:
+  - central-it-team-portfolio
+  SupportDescription: Contact us on Chime for help
+  SupportEmail: test@test.com
+  SupportUrl: http://test
+  Tags:
+  - Key: product-type
+    Value: iam
+  Versions:
+  - Active: true
+    Description: template used to interact with custom resources in the shared projects.
+    Name: v1
+    Source:
+      Configuration:
+        BranchName: v1
+        RepositoryName: product-a
+      Provider: CodeCommit
+  - Active: true
+    Description: template used to interact with custom resources in the shared projects.
+    Name: v2
+    Source:
+      Configuration:
+        BranchName: v2
+        RepositoryName: product-a
+      Provider: CodeCommit

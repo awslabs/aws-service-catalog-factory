@@ -1,0 +1,10 @@
+Owner: central-it@customer.com
+Description: template used to interact with custom resources in the shared projects
+Distributor: central-it-team
+SupportDescription: Contact us on Chime for help #central-it-team
+PipelineMode: combined
+SupportEmail: test@test.com
+SupportUrl: http://test
+Tags:
+  - Key: product-type
+    Value: iam

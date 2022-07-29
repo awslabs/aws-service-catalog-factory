@@ -23,3 +23,5 @@ reports
 product.template.yaml
 coverage.xml
 htmlcov
+#include sample portfolios
+!sample-portfolios/**/*
