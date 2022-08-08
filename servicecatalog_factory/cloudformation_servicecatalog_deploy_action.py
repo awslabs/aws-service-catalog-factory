@@ -108,14 +108,6 @@ def create_or_update_provisioning_artifact(
     description = action_configuration.get("DESCRIPTION")
     product = action_configuration.get("NAME")
 
-    # bucket = f"sc-factory-artifacts-{os.environ.get('ACCOUNT_ID')}-{os.environ.get('REGION')}"
-    # key = f"{provisioner}/{product}/product_ids.json"
-    # with betterboto_client.ClientContextManager("s3") as s3:
-    #     body = s3.get_object(Bucket=bucket, Key=key,).get("Body").read()
-    #     product_ids_by_region = json.loads(body)
-    #     product_id = product_ids_by_region[region]
-
-
     bucket = action_configuration.get("BUCKET")
     template_url = f"https://{bucket}.s3.{pipeline_region}.amazonaws.com/{action_configuration.get('TEMPLATE_URL')}"
 
