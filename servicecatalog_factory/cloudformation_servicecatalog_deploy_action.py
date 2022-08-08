@@ -122,7 +122,7 @@ def create_or_update_provisioning_artifact(
     with betterboto_client.ClientContextManager(
         "servicecatalog", region_name=region
     ) as servicecatalog:
-        product_details = servicecatalog.describe_product(Name=product)
+        product_details = servicecatalog.describe_product_as_admin(Name=product)
         product_id = product_details.get("ProductViewSummary").get("ProductId")
 
         click.echo(
