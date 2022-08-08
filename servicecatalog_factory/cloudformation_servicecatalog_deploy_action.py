@@ -107,14 +107,14 @@ def create_or_update_provisioning_artifact(
     version_name = action_configuration.get("VERSION")
     description = action_configuration.get("DESCRIPTION")
     product = action_configuration.get("NAME")
-    provisioner = action_configuration.get("PROVISIONER")
 
-    bucket = f"sc-factory-artifacts-{os.environ.get('ACCOUNT_ID')}-{os.environ.get('REGION')}"
-    key = f"{provisioner}/{product}/product_ids.json"
-    with betterboto_client.ClientContextManager("s3") as s3:
-        body = s3.get_object(Bucket=bucket, Key=key,).get("Body").read()
-        product_ids_by_region = json.loads(body)
-        product_id = product_ids_by_region[region]
+    # bucket = f"sc-factory-artifacts-{os.environ.get('ACCOUNT_ID')}-{os.environ.get('REGION')}"
+    # key = f"{provisioner}/{product}/product_ids.json"
+    # with betterboto_client.ClientContextManager("s3") as s3:
+    #     body = s3.get_object(Bucket=bucket, Key=key,).get("Body").read()
+    #     product_ids_by_region = json.loads(body)
+    #     product_id = product_ids_by_region[region]
+
 
     bucket = action_configuration.get("BUCKET")
     template_url = f"https://{bucket}.s3.{pipeline_region}.amazonaws.com/{action_configuration.get('TEMPLATE_URL')}"
@@ -122,6 +122,9 @@ def create_or_update_provisioning_artifact(
     with betterboto_client.ClientContextManager(
         "servicecatalog", region_name=region
     ) as servicecatalog:
+        product_details = servicecatalog.describe_product(Name=product)
+        product_id = product_details.get("ProductViewSummary").get("ProductId")
+
         click.echo(
             f"Creating: {version_name} in: {region} for {product} ({product_id}): using: {template_url}"
         )
