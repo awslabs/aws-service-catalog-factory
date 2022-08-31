@@ -193,7 +193,9 @@ class TestTemplateMixin:
                     Type=constants.ENVIRONMENT_TYPE_DEFAULT,
                     EnvironmentVariables=[
                         codebuild.EnvironmentVariable(
-                            Name="AWS_URLSUFFIX", Type="PLAINTEXT", Value=t.Ref("AWS::URLSuffix"),
+                            Name="AWS_URLSUFFIX",
+                            Type="PLAINTEXT",
+                            Value=t.Ref("AWS::URLSuffix"),
                         ),
                         codebuild.EnvironmentVariable(
                             Name="TEMPLATE_FORMAT", Type="PLAINTEXT", Value="yaml",
@@ -736,7 +738,7 @@ class PackageTemplateMixin:
                 type="PLAINTEXT",
                 value="#{codepipeline.PipelineExecutionId}",
             ),
-            dict(name="ALL_REGIONS", type="PLAINTEXT", value=" ".join(all_regions),),
+            # dict(name="ALL_REGIONS", type="PLAINTEXT", value=" ".join(all_regions),),
         ]
 
         if package_stage.get("BuildSpec"):
@@ -1077,11 +1079,11 @@ class PackageTemplateMixin:
                                         type="PLAINTEXT",
                                         value="#{BuildVariables.SOURCE_PATH}",
                                     ),
-                                    dict(
-                                        name="ALL_REGIONS",
-                                        type="PLAINTEXT",
-                                        value=" ".join(all_regions),
-                                    ),
+                                    # dict(
+                                    #     name="ALL_REGIONS",
+                                    #     type="PLAINTEXT",
+                                    #     value=" ".join(all_regions),
+                                    # ),
                                 ]
                             )
                         ),

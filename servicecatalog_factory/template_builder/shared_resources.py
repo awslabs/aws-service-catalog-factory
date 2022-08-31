@@ -55,7 +55,9 @@ def get_resources() -> list:
                 Type=constants.ENVIRONMENT_TYPE_DEFAULT,
                 EnvironmentVariables=[
                     codebuild.EnvironmentVariable(
-                        Name="AWS_URLSUFFIX", Type="PLAINTEXT", Value=t.Ref("AWS::URLSuffix"),
+                        Name="AWS_URLSUFFIX",
+                        Type="PLAINTEXT",
+                        Value=t.Ref("AWS::URLSuffix"),
                     ),
                     codebuild.EnvironmentVariable(
                         Name="TEMPLATE_FORMAT", Type="PLAINTEXT", Value="yaml",
