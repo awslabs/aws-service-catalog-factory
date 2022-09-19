@@ -3,5 +3,5 @@ Active: True
 Source:
   Provider: CodeCommit
   Configuration:
-    RepositoryName: product-b
+    RepositoryName: product-a
     BranchName: v2

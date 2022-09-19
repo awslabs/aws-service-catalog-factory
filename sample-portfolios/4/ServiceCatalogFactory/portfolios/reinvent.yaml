@@ -55,7 +55,7 @@ Products:
         Source:
           Provider: CodeCommit
           Configuration:
-            RepositoryName: product-a
+            RepositoryName: product-b
             BranchName: v2
     Portfolios:
       - "central-it-team-portfolio"
