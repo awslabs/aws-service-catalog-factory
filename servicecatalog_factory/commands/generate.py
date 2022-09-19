@@ -99,7 +99,7 @@ def rewrite_products(p):
                 del portfolio["Products"]
             if portfolio.get("Components"):
                 del portfolio["Components"]
-            external_portfolio_definition_path = f"{p}/portfolios/{p_name}/{portfolio.get('DisplayName', portfolio.get('PortfolioName'))}"
+            external_portfolio_definition_path = f"{p}/portfolios/{p_name}/Portfolios/{portfolio.get('DisplayName', portfolio.get('PortfolioName'))}"
             if os.path.exists(external_portfolio_definition_path):
                 shutil.rmtree(external_portfolio_definition_path)
         open(portfolio_yaml_file, "w").write(yaml.safe_dump(portfolio_yaml))
