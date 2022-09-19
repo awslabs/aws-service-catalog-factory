@@ -5,6 +5,7 @@ import json
 import logging
 import os
 import traceback
+import re
 from pathlib import Path
 
 import luigi
@@ -72,7 +73,12 @@ class FactoryTask(luigi.Task):
             f.write(content)
 
     def output(self):
-        return luigi.LocalTarget(f"output/{self.uid}.json")
+        def get_valid_filename(s):
+            s = str(s).strip().replace(' ', '_')
+            return re.sub(r'(?u)[^-\w./]', '', s)
+
+        valid_filename = get_valid_filename(self.uid)
+        return luigi.LocalTarget(f"output/{valid_filename}.json")
 
     @property
     def uid(self):
