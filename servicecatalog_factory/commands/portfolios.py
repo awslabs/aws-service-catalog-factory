@@ -741,16 +741,14 @@ def generate_launch_constraints(p):
         parent_template_context = []
         for portfolios_name, launch_role_constraints in products_by_portfolio.items():
             nested_template_context = []
-            with open(
-                os.path.sep.join(
-                    [
-                        "output",
-                        "CreatePortfolioTask",
-                        f"{region}-{portfolios_name}.json",
-                    ]
-                ),
-                "r",
-            ) as portfolio_json_file:
+            file_looking_for = os.path.sep.join(
+                [
+                    "output",
+                    "CreatePortfolioTask",
+                    f"{region}-{portfolios_name}-.json",  # this is the name format for portfolios created via the portfolio directory
+                ]
+            )
+            with open(file_looking_for, "r",) as portfolio_json_file:
                 portfolio_json = json.loads(portfolio_json_file.read())
                 portfolio_id = portfolio_json.get("Id")
             for launch_role_constraint in launch_role_constraints:

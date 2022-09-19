@@ -193,6 +193,11 @@ class TestTemplateMixin:
                     Type=constants.ENVIRONMENT_TYPE_DEFAULT,
                     EnvironmentVariables=[
                         codebuild.EnvironmentVariable(
+                            Name="AWS_URLSUFFIX",
+                            Type="PLAINTEXT",
+                            Value=t.Ref("AWS::URLSuffix"),
+                        ),
+                        codebuild.EnvironmentVariable(
                             Name="TEMPLATE_FORMAT", Type="PLAINTEXT", Value="yaml",
                         ),
                         codebuild.EnvironmentVariable(
@@ -407,7 +412,6 @@ class TestTemplateMixin:
                 else f"pip install aws-service-catalog-factory=={constants.VERSION}",
             ],
         }
-
         actions = self.generate_test_stage_action_for(
             "Validate",
             dict(
@@ -433,7 +437,7 @@ class TestTemplateMixin:
                         + [
                             "export FactoryTemplateValidateBucket=$(aws cloudformation list-stack-resources --stack-name servicecatalog-factory --query 'StackResourceSummaries[?LogicalResourceId==`FactoryTemplateValidateBucket`].PhysicalResourceId' --output text)",
                             "aws s3 cp $CATEGORY.template.$TEMPLATE_FORMAT s3://$FactoryTemplateValidateBucket/$CODEBUILD_BUILD_ID.$TEMPLATE_FORMAT",
-                            "aws cloudformation validate-template --template-url https://$FactoryTemplateValidateBucket.s3.$AWS_REGION.amazonaws.com/$CODEBUILD_BUILD_ID.$TEMPLATE_FORMAT",
+                            "aws cloudformation validate-template --template-url https://$FactoryTemplateValidateBucket.s3.$AWS_REGION.$AWS_URLSUFFIX/$CODEBUILD_BUILD_ID.$TEMPLATE_FORMAT",
                         ]
                     },
                 ),
@@ -734,7 +738,7 @@ class PackageTemplateMixin:
                 type="PLAINTEXT",
                 value="#{codepipeline.PipelineExecutionId}",
             ),
-            dict(name="ALL_REGIONS", type="PLAINTEXT", value=" ".join(all_regions),),
+            # dict(name="ALL_REGIONS", type="PLAINTEXT", value=" ".join(all_regions),),
         ]
 
         if package_stage.get("BuildSpec"):
@@ -1075,11 +1079,11 @@ class PackageTemplateMixin:
                                         type="PLAINTEXT",
                                         value="#{BuildVariables.SOURCE_PATH}",
                                     ),
-                                    dict(
-                                        name="ALL_REGIONS",
-                                        type="PLAINTEXT",
-                                        value=" ".join(all_regions),
-                                    ),
+                                    # dict(
+                                    #     name="ALL_REGIONS",
+                                    #     type="PLAINTEXT",
+                                    #     value=" ".join(all_regions),
+                                    # ),
                                 ]
                             )
                         ),

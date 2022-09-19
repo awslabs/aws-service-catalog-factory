@@ -15,7 +15,7 @@ Resources:
   Param:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: service-catalog-factory-secondary-version
+      Name: !Sub "${AWS::StackName}-version"
       Type: String
       Value: !Ref Version
       Tags:
