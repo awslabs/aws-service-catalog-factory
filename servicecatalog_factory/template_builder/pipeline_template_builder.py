@@ -950,7 +950,7 @@ class PackageTemplateMixin:
                 }
 
     def generate_package_stage_for_cloudformation(
-        self, tpl, item, versions, stages, options, input_artifact_name
+        self, tpl, item, versions, options, stages, input_artifact_name
     ):
         all_regions = config.get_regions()
         package_stage = stages.get("Package", {})
@@ -987,6 +987,7 @@ class PackageTemplateMixin:
             package_build_spec = jinja2.Template(package_build_spec).render(
                 ALL_REGIONS=all_regions
             )
+            package_build_spec = yaml.safe_load(package_build_spec)
         else:
             package_build_spec = self.generate_build_spec(
                 item, versions, all_regions, secondary_artifacts, options
