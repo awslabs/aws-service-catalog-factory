@@ -987,11 +987,11 @@ class PackageTemplateMixin:
             package_build_spec = jinja2.Template(package_build_spec).render(
                 ALL_REGIONS=all_regions
             )
-            package_build_spec = yaml.safe_load(package_build_spec)
         else:
             package_build_spec = self.generate_build_spec(
                 item, versions, all_regions, secondary_artifacts, options
             )
+            package_build_spec = yaml.safe_dump(package_build_spec)
 
         tpl.add_resource(
             codebuild.Project(
@@ -1011,7 +1011,7 @@ class PackageTemplateMixin:
                     Type=constants.ENVIRONMENT_TYPE_DEFAULT,
                 ),
                 Source=codebuild.Source(
-                    BuildSpec=yaml.safe_dump(package_build_spec), Type="CODEPIPELINE",
+                    BuildSpec=package_build_spec, Type="CODEPIPELINE",
                 ),
                 Description=t.Sub("package project"),
             )
