@@ -950,7 +950,7 @@ class PackageTemplateMixin:
                 }
 
     def generate_package_stage_for_cloudformation(
-        self, tpl, item, versions, stages, options, input_artifact_name
+        self, tpl, item, versions, options, stages, input_artifact_name
     ):
         all_regions = config.get_regions()
         package_stage = stages.get("Package", {})
@@ -991,6 +991,7 @@ class PackageTemplateMixin:
             package_build_spec = self.generate_build_spec(
                 item, versions, all_regions, secondary_artifacts, options
             )
+            package_build_spec = yaml.safe_dump(package_build_spec)
 
         tpl.add_resource(
             codebuild.Project(
@@ -1010,7 +1011,7 @@ class PackageTemplateMixin:
                     Type=constants.ENVIRONMENT_TYPE_DEFAULT,
                 ),
                 Source=codebuild.Source(
-                    BuildSpec=yaml.safe_dump(package_build_spec), Type="CODEPIPELINE",
+                    BuildSpec=package_build_spec, Type="CODEPIPELINE",
                 ),
                 Description=t.Sub("package project"),
             )
