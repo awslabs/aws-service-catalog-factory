@@ -7,6 +7,10 @@ from servicecatalog_factory.workflow.generic import create_generic_version_pipel
 from servicecatalog_factory import constants
 from deepmerge import always_merger
 
+#
+# TODO remove delete all
+#
+
 
 def generate(path, item_collection_name, category, factory_version):
     tasks = list()

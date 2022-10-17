@@ -13,6 +13,7 @@ from servicecatalog_factory.commands import portfolios
 from servicecatalog_factory.commands import seed as seed_commands
 from servicecatalog_factory.commands import show_pipelines as show_pipelines_commands
 from servicecatalog_factory.commands import stacks
+from servicecatalog_factory.commands import task_reference as task_reference_commands
 from servicecatalog_factory import constants
 from servicecatalog_factory.commands import validate as validate_commands
 from servicecatalog_factory.commands import version as version_commands
@@ -681,6 +682,12 @@ def create_or_update_provisioning_artifact_from_codepipeline_id(
 @click.argument("value")
 def set_config_value(name, value):
     management_commands.set_config_value(name, value)
+
+
+@cli.command()
+@click.argument("p", type=click.Path())
+def generate_task_reference(p,):
+    task_reference_commands.generate_task_reference(p)
 
 
 if __name__ == "__main__":

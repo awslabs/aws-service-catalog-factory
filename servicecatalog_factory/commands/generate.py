@@ -15,6 +15,7 @@ import yaml
 from luigi import LuigiStatusCode
 
 from servicecatalog_factory.commands import portfolios as portfolios_commands
+from servicecatalog_factory.commands import task_reference as task_reference_commands
 from servicecatalog_factory.commands import generic as generic_commands
 from servicecatalog_factory import constants, config
 from servicecatalog_factory.commands.extract_from_ssm import extract_from_ssm
@@ -129,36 +130,47 @@ def rewrite(p):
 
 def generate(p):
     factory_version = constants.VERSION
+    task_reference = dict()
 
     logger.info("Generating")
     tasks = []
 
-    extract_from_ssm(p)
-    rewrite(p)
-    portfolios_path = os.path.sep.join([p, "portfolios"])
-    portfolio_tasks = portfolios_commands.generate(portfolios_path, factory_version)
-    for k, v in portfolio_tasks.items():
-        if isinstance(v, dict):
-            tasks += list(v.values())
-        else:
-            tasks.append(v)
+    # extract_from_ssm(p)
+    # rewrite(p)
+    # portfolios_path = os.path.sep.join([p, "portfolios"])
+    # portfolio_tasks = portfolios_commands.generate(portfolios_path, factory_version)
+    # for k, v in portfolio_tasks.items():
+    #     if isinstance(v, dict):
+    #         tasks += list(v.values())
+    #     else:
+    #         tasks.append(v)
 
-    products_path = os.path.sep.join([p, "products"])
-    product_tasks = generic_commands.generate(
-        products_path, "Products", "products", factory_version
+    # products_path = os.path.sep.join([p, "products"])
+    # product_tasks = generic_commands.generate(
+    #     products_path, "Products", "products", factory_version
+    # )
+    # tasks.extend(product_tasks)
+
+    enabled_regions = config.get_regions()
+
+    task_reference.update(
+        task_reference_commands.generate_task_reference(
+            p, enabled_regions, factory_version
+        )
     )
-    tasks.extend(product_tasks)
 
-    stacks_path = os.path.sep.join([p, "stacks"])
-    tasks += generic_commands.generate(stacks_path, "Stacks", "stack", factory_version)
+    raise Exception(json.dumps(task_reference, indent=4))
 
-    workspaces_path = os.path.sep.join([p, "workspaces"])
-    tasks += generic_commands.generate(
-        workspaces_path, "Workspaces", "workspace", factory_version
-    )
-
-    apps_path = os.path.sep.join([p, "apps"])
-    tasks += generic_commands.generate(apps_path, "Apps", "app", factory_version)
+    # stacks_path = os.path.sep.join([p, "stacks"])
+    # tasks += generic_commands.generate(stacks_path, "Stacks", "stack", factory_version)
+    #
+    # workspaces_path = os.path.sep.join([p, "workspaces"])
+    # tasks += generic_commands.generate(
+    #     workspaces_path, "Workspaces", "workspace", factory_version
+    # )
+    #
+    # apps_path = os.path.sep.join([p, "apps"])
+    # tasks += generic_commands.generate(apps_path, "Apps", "app", factory_version)
 
     for type in [
         "failure",
