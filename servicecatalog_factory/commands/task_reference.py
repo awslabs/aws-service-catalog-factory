@@ -6,7 +6,7 @@ import os
 import yaml
 
 from servicecatalog_factory.commands import task_reference_section_constants
-from servicecatalog_factory import constants, local_config
+from servicecatalog_factory import constants
 from deepmerge import always_merger
 
 
