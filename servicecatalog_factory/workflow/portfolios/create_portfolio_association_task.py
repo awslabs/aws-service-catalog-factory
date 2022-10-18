@@ -14,8 +14,8 @@ from servicecatalog_factory.workflow.tasks import FactoryTask
 
 class CreatePortfolioAssociationTask(FactoryTask):
     region = luigi.Parameter()
-    portfolio_group_name = luigi.Parameter() #TODO remove
-    portfolio_name = luigi.Parameter() #TODO remove
+    portfolio_group_name = luigi.Parameter()  # TODO remove
+    portfolio_name = luigi.Parameter()  # TODO remove
     display_name = luigi.Parameter()
     description = luigi.Parameter(significant=False)
     provider_name = luigi.Parameter(significant=False)

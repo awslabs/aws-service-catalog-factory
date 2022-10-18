@@ -12,10 +12,12 @@ from betterboto import client as betterboto_client
 
 from servicecatalog_factory import constants
 
+from servicecatalog_factory.waluigi import tasks as waluigi_tasks
+
 logger = logging.getLogger(__file__)
 
 
-class FactoryTask(luigi.Task):
+class FactoryTask(waluigi_tasks.WaluigiTaskMixin, luigi.Task):
     @property
     def factory_account_id(self):
         account_id = os.environ.get("ACCOUNT_ID", None)

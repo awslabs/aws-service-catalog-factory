@@ -11,7 +11,7 @@ from servicecatalog_factory.workflow.tasks import FactoryTask, logger
 
 
 class CreateProductTask(FactoryTask):
-    uid = luigi.Parameter()
+    # uid = luigi.Parameter()
     region = luigi.Parameter()
     name = luigi.Parameter()
     owner = luigi.Parameter(significant=False)
@@ -22,15 +22,14 @@ class CreateProductTask(FactoryTask):
     support_url = luigi.Parameter(significant=False)
     tags = luigi.ListParameter(default=[], significant=False)
 
+    get_bucket_task_ref = luigi.Parameter()
+
     def params_for_results_display(self):
         return {
             "region": self.region,
-            "uid": self.uid,
+            # "uid": self.uid,
             "name": self.name,
         }
-
-    def requires(self):
-        return {"s3_bucket_url": GetBucketTask()}
 
     def output(self):
         return luigi.LocalTarget(
@@ -92,9 +91,9 @@ class CreateProductTask(FactoryTask):
                         "Description": "Placeholder version, do not provision",
                         "Info": {
                             "LoadTemplateFromURL": "https://{}.s3.{}.amazonaws.com/{}".format(
-                                self.load_from_input("s3_bucket_url").get(
-                                    "s3_bucket_url"
-                                ),
+                                self.get_output_from_reference_dependency(
+                                    self.get_bucket_task_ref
+                                ).get("s3_bucket_url"),
                                 constants.HOME_REGION,
                                 "empty.template.yaml",
                             )
@@ -136,7 +135,8 @@ class CreateProductTask(FactoryTask):
             if product_view_summary is None:
                 raise Exception(f"{logger_prefix}: did not find or create a product")
 
-            product_view_summary["uid"] = self.uid
+            # TODO check why this was needed
+            # product_view_summary["uid"] = self.uid
             with self.output().open("w") as f:
                 logger.info(f"{logger_prefix}: about to write! {product_view_summary}")
                 f.write(json.dumps(product_view_summary, indent=4, default=str,))

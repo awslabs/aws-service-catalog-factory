@@ -14,16 +14,22 @@ import terminaltables
 import yaml
 from luigi import LuigiStatusCode
 
+from servicecatalog_factory.common import serialisation_utils, utils
 from servicecatalog_factory.commands import portfolios as portfolios_commands
 from servicecatalog_factory.commands import task_reference as task_reference_commands
 from servicecatalog_factory.commands import generic as generic_commands
 from servicecatalog_factory import constants, config
 from servicecatalog_factory.commands.extract_from_ssm import extract_from_ssm
 
+from servicecatalog_factory.waluigi import scheduler
+
 import logging
 
 logger = logging.getLogger()
 logger.setLevel(logging.INFO)
+
+
+TASK_REFERENCE_JSON_FILE_PATH = "task-reference.json"
 
 
 def rewrite_products(p):
@@ -130,7 +136,6 @@ def rewrite(p):
 
 def generate(p):
     factory_version = constants.VERSION
-    task_reference = dict()
 
     logger.info("Generating")
     tasks = []
@@ -153,13 +158,21 @@ def generate(p):
 
     enabled_regions = config.get_regions()
 
-    task_reference.update(
-        task_reference_commands.generate_task_reference(
-            p, enabled_regions, factory_version
-        )
+    task_reference = task_reference_commands.generate_task_reference(
+        p, enabled_regions, factory_version
     )
 
-    raise Exception(json.dumps(task_reference, indent=4))
+    open(f"{p}/{TASK_REFERENCE_JSON_FILE_PATH}", "w").write(
+        json.dumps(task_reference, indent=4)
+    )
+
+    if not os.path.exists(f"{p}/tasks"):
+        os.makedirs(f"{p}/tasks")
+    for t_name, task in task_reference.items():
+        task_output_file_path = f"{p}/tasks/{utils.escape(t_name)}.json"
+        task_output_content = serialisation_utils.dump_as_json(task)
+        open(task_output_file_path, "w").write(task_output_content)
+
 
     # stacks_path = os.path.sep.join([p, "stacks"])
     # tasks += generic_commands.generate(stacks_path, "Stacks", "stack", factory_version)
@@ -173,6 +186,7 @@ def generate(p):
     # tasks += generic_commands.generate(apps_path, "Apps", "app", factory_version)
 
     for type in [
+        "start",
         "failure",
         "success",
         "timeout",
@@ -189,13 +203,23 @@ def generate(p):
         config.get_initialiser_stack_tags()
     )
 
-    run_result = luigi.build(
-        tasks,
-        local_scheduler=True,
-        detailed_summary=True,
-        workers=10,
-        log_level="INFO",
+    scheduler.run(
+        num_workers=10,
+        tasks_to_run=task_reference,
+        manifest_files_path=p,
+        manifest_task_reference_file_path=f"{p}/{TASK_REFERENCE_JSON_FILE_PATH}",
+        puppet_account_id="012345678910",
     )
+
+    raise Exception("all done")
+
+    # run_result = luigi.build(
+    #     tasks,
+    #     local_scheduler=True,
+    #     detailed_summary=True,
+    #     workers=10,
+    #     log_level="INFO",
+    # )
 
     exit_status_codes = {
         LuigiStatusCode.SUCCESS: 0,

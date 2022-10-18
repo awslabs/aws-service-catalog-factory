@@ -1,9 +1,11 @@
 #  Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 import os
+from datetime import datetime
 
 import yaml
 
+from servicecatalog_factory import environmental_variables
 from servicecatalog_factory.commands import bootstrap as bootstrap_commands
 from servicecatalog_factory.commands import configuration_management
 from servicecatalog_factory.commands import fix_issues as fix_issues_commands
@@ -49,9 +51,19 @@ def validate(p):
     validate_commands.validate(p)
 
 
+def setup_config():
+    if os.environ.get(environmental_variables.CACHE_INVALIDATOR):
+        click.echo(
+            f"Found existing CACHE_INVALIDATOR: {os.environ.get(environmental_variables.CACHE_INVALIDATOR)}"
+        )
+    else:
+        os.environ[environmental_variables.CACHE_INVALIDATOR] = str(datetime.now())
+
+
 @cli.command()
 @click.argument("p", type=click.Path(exists=True))
 def generate(p):
+    setup_config()
     generate_commands.generate(p)
 
 
