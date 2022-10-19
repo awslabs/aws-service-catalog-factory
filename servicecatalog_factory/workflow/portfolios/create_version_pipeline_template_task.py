@@ -35,20 +35,6 @@ class CreateVersionPipelineTemplateTask(FactoryTask):
             "type": self.provisioner.get("Type"),
         }
 
-    def output(self):
-        return luigi.LocalTarget(
-            f"output/CreateVersionPipelineTemplateTask/"
-            f"{self.product.get('Name')}_{self.version.get('Name')}.template.yaml"
-        )
-
-    # def requires(self):
-    #     create_products_tasks = {}
-    #     for region, product_args_by_region in self.products_args_by_region.items():
-    #         create_products_tasks[region] = CreateProductTask(**product_args_by_region)
-    #     return {
-    #         "create_products_tasks": create_products_tasks,
-    #     }
-
     def handle_terraform_provisioner(
         self, product_ids_by_region, friendly_uid, tags, source
     ):

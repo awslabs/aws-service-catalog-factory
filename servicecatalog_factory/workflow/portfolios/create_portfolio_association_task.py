@@ -32,10 +32,6 @@ class CreatePortfolioAssociationTask(FactoryTask):
             f"cloudformation.create_or_update_{constants.HOME_REGION}",
         ]
 
-    def output(self):
-        output_file = f"output/CreatePortfolioAssociationTask/{self.region}-{self.portfolio_name}-{self.task_reference}.json"
-        return luigi.LocalTarget(output_file)
-
     def run(self):
         with self.regional_client("cloudformation") as cloudformation:
             create_portfolio_task_output = self.get_output_from_reference_dependency(self.create_portfolio_task_ref)

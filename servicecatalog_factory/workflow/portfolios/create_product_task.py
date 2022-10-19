@@ -31,11 +31,6 @@ class CreateProductTask(FactoryTask):
             "name": self.name,
         }
 
-    def output(self):
-        return luigi.LocalTarget(
-            f"output/CreateProductTask/{self.region}-{self.name}.json"
-        )
-
     def run(self):
         logger_prefix = f"{self.region}-{self.name}"
         with self.regional_client("servicecatalog") as service_catalog:

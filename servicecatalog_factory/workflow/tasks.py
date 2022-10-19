@@ -73,16 +73,9 @@ class FactoryTask(waluigi_tasks.WaluigiTaskMixin, luigi.Task):
         with self.output().open("w") as f:
             f.write(content)
 
-    def output(self):
-        return luigi.LocalTarget(f"output/{self.uid}.json")
-
     @property
     def uid(self):
-        return f"{self.__class__.__name__}/{self.node_id}"
-
-    @property
-    def node_id(self):
-        return f"{self.__class__.__name__}_{'|'.join(self.params_for_results_display().values())}"
+        return f"{self.__class__.__name__}/{self.task_reference}"
 
     def api_calls_used(self):
         resources_for_this_task = {}

@@ -26,17 +26,6 @@ class AssociateProductWithPortfolioTask(FactoryTask):
             "create_portfolio_task_ref": self.create_portfolio_task_ref,
         }
 
-    def output(self):
-        return luigi.LocalTarget(
-            f"output/AssociateProductWithPortfolioTask/"
-            f"{self.task_reference}"
-        )
-
-    # def requires(self):
-    #     return {
-    #         "create_portfolio_task": CreatePortfolioTask(**self.portfolio_args),
-    #         "create_product_task": CreateProductTask(**self.product_args),
-    #     }
 
     def run(self):
         create_portfolio_task_output = self.get_output_from_reference_dependency(self.create_portfolio_task_ref)

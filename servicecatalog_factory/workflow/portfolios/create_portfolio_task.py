@@ -25,12 +25,6 @@ class CreatePortfolioTask(FactoryTask):
             "portfolio_name": self.portfolio_name,
         }
 
-    def output(self):
-        output_file = (
-            f"output/CreatePortfolioTask/{self.region}-{self.portfolio_name}.json"
-        )
-        return luigi.LocalTarget(output_file)
-
     def run(self):
         with self.regional_client("servicecatalog") as service_catalog:
             tags = []

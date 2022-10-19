@@ -17,12 +17,6 @@ class EnsureProductVersionDetailsCorrectTask(FactoryTask):
             "task_reference": self.task_reference,
         }
 
-    def output(self):
-        return luigi.LocalTarget(
-            f"output/EnsureProductVersionDetailsCorrectTask/"
-            f"{self.task_reference}.json"
-        )
-
     def run(self):
         create_product_task_output = self.get_output_from_reference_dependency(self.create_product_task_ref)
         product_id = create_product_task_output.get("ProductId")
