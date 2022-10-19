@@ -11,7 +11,7 @@ from deepmerge import always_merger
 
 
 def create_task_for_combined_pipeline(
-    task_reference, category, item, name, versions, additional_dependencies=[]
+    task_reference, category, item, name, versions, additional_dependencies, stack_name=""
 ):
     return dict(
         section_name=section_names.CREATE_GENERIC_COMBINED_PIPELINE_TASK,
@@ -25,11 +25,12 @@ def create_task_for_combined_pipeline(
         stages=item.get("Stages", {}),
         tags=item.get("Tags", []),
         dependencies_by_reference=additional_dependencies,
+        stack_name=stack_name,
     )
 
 
 def create_task_for_split_pipeline(
-    task_reference, category, item, name, version, additional_dependencies=[]
+    task_reference, category, item, name, version, additional_dependencies, stack_name=""
 ):
     return dict(
         section_name=section_names.CREATE_GENERIC_COMBINED_PIPELINE_TASK,
@@ -45,6 +46,7 @@ def create_task_for_split_pipeline(
         stages=always_merger.merge(item.get("Stages", {}), version.get("Stages", {})),
         tags=version.get("Tags", []) + item.get("Tags", []),
         dependencies_by_reference=additional_dependencies,
+        stack_name=stack_name,
     )
 
 
@@ -289,6 +291,7 @@ def generate_tasks_for_portfolios(
                         if pipeline_mode == constants.PIPELINE_MODE_SPILT:
                             for version in product.get("Versions", []):
                                 task_ref = f"create-generic-split-pipeline-product-{product_name}-{version.get('Name')}"
+                                stack_name = f"{portfolio_name}-{product.get('Name')}-{version.get('Name')}"
                                 task_reference[
                                     task_ref
                                 ] = create_task_for_split_pipeline(
@@ -298,12 +301,14 @@ def generate_tasks_for_portfolios(
                                     product_name,
                                     version,
                                     [create_product_task_ref],
+                                    stack_name,
                                 )
                         elif pipeline_mode == constants.PIPELINE_MODE_COMBINED:
                             versions = list()
                             for version in product.get("Versions", []):
                                 versions.append(version)
                             task_ref = f"create-generic-combined-pipeline-product-{product_name}"
+                            stack_name = f"{portfolio_name}-{product.get('Name')}-{version.get('Name')}"
                             task_reference[
                                 task_ref
                             ] = create_task_for_combined_pipeline(
@@ -313,6 +318,7 @@ def generate_tasks_for_portfolios(
                                 product_name,
                                 versions,
                                 [create_product_task_ref],
+                                stack_name,
                             )
 
                         else:

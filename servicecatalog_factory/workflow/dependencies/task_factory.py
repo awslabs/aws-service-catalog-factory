@@ -77,6 +77,7 @@ def create(
                 pipeline_type=parameters_to_use.get("pipeline_type"),
                 category=parameters_to_use.get("category"),
                 name=parameters_to_use.get("name"),
+                stack_name=parameters_to_use.get("stack_name"),
                 item=parameters_to_use.get("item"),
                 versions=parameters_to_use.get("versions"),
                 options=parameters_to_use.get("options"),
