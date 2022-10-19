@@ -115,7 +115,6 @@ def generate_pipeline_task(
         raise Exception(f"Unsupported pipeline_mode: {pipeline_mode}")
 
 
-# TODO add CreateCodeRepoTask
 def generate_tasks_for_portfolios(
     enabled_regions: list,
     path: str,
