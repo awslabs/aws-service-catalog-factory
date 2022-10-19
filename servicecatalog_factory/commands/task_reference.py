@@ -308,7 +308,7 @@ def generate_tasks_for_portfolios(
                             for version in product.get("Versions", []):
                                 versions.append(version)
                             task_ref = f"create-generic-combined-pipeline-product-{product_name}"
-                            stack_name = f"{portfolio_name}-{product.get('Name')}-{version.get('Name')}"
+                            stack_name = f"{portfolio_name}-{product.get('Name')}"
                             task_reference[
                                 task_ref
                             ] = create_task_for_combined_pipeline(
