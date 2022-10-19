@@ -288,9 +288,11 @@ def generate_tasks_for_portfolios(
                         )
                         if pipeline_mode == constants.PIPELINE_MODE_SPILT:
                             for version in product.get("Versions", []):
+                                task_ref = f"create-generic-split-pipeline-product-{product_name}-{version.get('Name')}"
                                 task_reference[
-                                    f"create-generic-split-pipeline-product-{product_name}-{version.get('Name')}"
+                                    task_ref
                                 ] = create_task_for_split_pipeline(
+                                    task_ref,
                                     "product",
                                     product,
                                     product_name,

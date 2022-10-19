@@ -1099,7 +1099,7 @@ def is_for_single_version(versions):
 
 class DeployTemplateMixin:
     def generate_deploy_stage(self, tpl, item, versions, stages, input_artifact_name):
-        if self.category == "products":
+        if self.category in ["products", "product"]:
             return self.generate_deploy_stage_for_products(
                 tpl, item, versions, stages, input_artifact_name
             )
