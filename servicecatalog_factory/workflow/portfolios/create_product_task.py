@@ -39,42 +39,7 @@ class CreateProductTask(FactoryTask):
     def run(self):
         logger_prefix = f"{self.region}-{self.name}"
         with self.regional_client("servicecatalog") as service_catalog:
-            search_products_as_admin_response = service_catalog.search_products_as_admin_single_page(
-                Filters={"FullTextSearch": [self.name]}
-            )
-            found = False
-            product_view_summary = None
-            for product_view_details in search_products_as_admin_response.get(
-                "ProductViewDetails"
-            ):
-                product_view_summary = product_view_details.get("ProductViewSummary")
-                if product_view_summary.get("Name") == self.name:
-                    found = True
-                    logger.info(f"Found product: {self.name}: {product_view_summary}")
-                    things_to_change = dict()
-                    if product_view_summary.get("Owner") != self.owner:
-                        things_to_change["Owner"] = self.owner
-                    if product_view_summary.get("ShortDescription") != self.description:
-                        things_to_change["Description"] = self.description
-                    if product_view_summary.get("Distributor") != self.distributor:
-                        things_to_change["Distributor"] = self.distributor
-                    if (
-                        product_view_summary.get("SupportDescription")
-                        != self.support_description
-                    ):
-                        things_to_change[
-                            "SupportDescription"
-                        ] = self.support_description
-                    if product_view_summary.get("SupportEmail") != self.support_email:
-                        things_to_change["SupportEmail"] = self.support_email
-                    if product_view_summary.get("SupportUrl") != self.support_url:
-                        things_to_change["SupportUrl"] = self.support_url
-
-                    if len(things_to_change.keys()) > 0:
-                        service_catalog.update_product(
-                            Id=product_view_summary.get("ProductId"), **things_to_change
-                        )
-                    break
+            found, product_view_summary = self.check_and_update_product_if_product_exists(service_catalog)
 
             if not found:
                 logger.info(f"Not found product: {self.name}, creating")
@@ -135,8 +100,45 @@ class CreateProductTask(FactoryTask):
             if product_view_summary is None:
                 raise Exception(f"{logger_prefix}: did not find or create a product")
 
-            # TODO check why this was needed
-            # product_view_summary["uid"] = self.uid
             with self.output().open("w") as f:
                 logger.info(f"{logger_prefix}: about to write! {product_view_summary}")
                 f.write(json.dumps(product_view_summary, indent=4, default=str,))
+
+    def check_and_update_product_if_product_exists(self, service_catalog):
+        search_products_as_admin_response = service_catalog.search_products_as_admin_single_page(
+            Filters={"FullTextSearch": [self.name]}
+        )
+        found = False
+        product_view_summary = None
+        for product_view_details in search_products_as_admin_response.get(
+                "ProductViewDetails"
+        ):
+            product_view_summary = product_view_details.get("ProductViewSummary")
+            if product_view_summary.get("Name") == self.name:
+                found = True
+                logger.info(f"Found product: {self.name}: {product_view_summary}")
+                things_to_change = dict()
+                if product_view_summary.get("Owner") != self.owner:
+                    things_to_change["Owner"] = self.owner
+                if product_view_summary.get("ShortDescription") != self.description:
+                    things_to_change["Description"] = self.description
+                if product_view_summary.get("Distributor") != self.distributor:
+                    things_to_change["Distributor"] = self.distributor
+                if (
+                        product_view_summary.get("SupportDescription")
+                        != self.support_description
+                ):
+                    things_to_change[
+                        "SupportDescription"
+                    ] = self.support_description
+                if product_view_summary.get("SupportEmail") != self.support_email:
+                    things_to_change["SupportEmail"] = self.support_email
+                if product_view_summary.get("SupportUrl") != self.support_url:
+                    things_to_change["SupportUrl"] = self.support_url
+
+                if len(things_to_change.keys()) > 0:
+                    service_catalog.update_product(
+                        Id=product_view_summary.get("ProductId"), **things_to_change
+                    )
+                break
+        return found, product_view_summary

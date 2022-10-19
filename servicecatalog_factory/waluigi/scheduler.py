@@ -376,7 +376,6 @@ def run(
     manifest_task_reference_file_path,
     puppet_account_id,
 ):
-    num_workers = 1
     resources_file_path = f"{manifest_files_path}/resources.json"
     os.environ["SCT_START_TIME"] = str(time.time())
 

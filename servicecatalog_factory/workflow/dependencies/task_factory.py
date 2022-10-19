@@ -138,5 +138,37 @@ def create(
                 launch_role_constraints=parameters_to_use.get("launch_role_constraints"),
             )
 
+    elif section_name == section_names.ENSURE_PRODUCT_VERSION_DETAILS_CORRECT_TASK:
+        if status == "terminated":
+            raise Exception("NOT BUILT YET")
+        else:
+            from servicecatalog_factory.workflow.portfolios import (
+                ensure_product_version_details_correct_task,
+            )
+
+            return ensure_product_version_details_correct_task.EnsureProductVersionDetailsCorrectTask(
+                **minimum_common_parameters,
+
+                region=parameters_to_use.get("region"),
+                version=parameters_to_use.get("version"),
+                create_product_task_ref=parameters_to_use.get("create_product_task_ref"),
+            )
+
+    elif section_name == section_names.CREATE_CODE_REPO_TASK:
+        if status == "terminated":
+            raise Exception("NOT BUILT YET")
+        else:
+            from servicecatalog_factory.workflow.codecommit import (
+                create_code_repo_task,
+            )
+
+            return create_code_repo_task.CreateCodeRepoTask(
+                **minimum_common_parameters,
+
+                repository_name=parameters_to_use.get("repository_name"),
+                branch_name=parameters_to_use.get("branch_name"),
+                bucket=parameters_to_use.get("bucket"),
+                key=parameters_to_use.get("key"),
+            )
     else:
         raise Exception(f"Unknown section_name: {section_name}")

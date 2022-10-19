@@ -115,7 +115,6 @@ def generate_pipeline_task(
         raise Exception(f"Unsupported pipeline_mode: {pipeline_mode}")
 
 
-# TODO add EnsureProductVersionDetailsCorrect
 # TODO add CreateCodeRepoTask
 def generate_tasks_for_portfolios(
     enabled_regions: list,
@@ -279,11 +278,44 @@ def generate_tasks_for_portfolios(
                             ]
                         )
 
-                    if region == constants.HOME_REGION:
-                        # create_product_task_ref = (
-                        #     f"create-product-{product.get('Name')}-{region}"
-                        # )
+                    for version in product.get("Versions", []):
+                        # CREATE CODE REPO IF NEEDED
+                        if version.get("Source", {}).get("Configuration", {}).get("Code"):
+                            source = always_merger.merge(
+                                {}, product.get("Source", {})
+                            )
+                            always_merger.merge(
+                                source, version.get("Source", {})
+                            )
+                            configuration = source.get("Configuration")
+                            code = configuration.get("Code")
+                            t_ref = f'{section_names.CREATE_CODE_REPO_TASK}-{configuration.get("RepositoryName")}-{configuration.get("BranchName")}'
+                            task_reference[
+                                t_ref
+                            ] = dict(
+                                task_reference=t_ref,
+                                section_name=section_names.CREATE_CODE_REPO_TASK,
+                                dependencies_by_reference=[],
+                                repository_name=configuration.get("RepositoryName"),
+                                branch_name=configuration.get("BranchName"),
+                                bucket=code.get("S3").get("Bucket"),
+                                key=code.get("S3").get("Key"),
+                            )
 
+                        # ENSURE VERSIONS ARE UP TO DATE
+                        task_ref = f"{section_names.ENSURE_PRODUCT_VERSION_DETAILS_CORRECT_TASK}-{region}-{product.get('Name')}-{version.get('Name')}"
+                        task_reference[
+                            task_ref
+                        ] = dict(
+                            task_reference=task_ref,
+                            section_name=section_names.ENSURE_PRODUCT_VERSION_DETAILS_CORRECT_TASK,
+                            region=region,
+                            version=version,
+                            create_product_task_ref=create_product_task_ref,
+                            dependencies_by_reference = [create_product_task_ref],
+                        )
+
+                    if region == constants.HOME_REGION:
                         product_name = product.get("Name")
                         pipeline_mode = product.get(
                             "PipelineMode", constants.PIPELINE_MODE_DEFAULT
@@ -366,6 +398,43 @@ def generate_tasks_for_portfolios(
                     support_url=item.get("SupportUrl"),
                     tags=item.get("Tags", []),
                 )
+
+                for version in item.get("Versions", []):
+                    # CREATE CODE REPO IF NEEDED
+                    if version.get("Source", {}).get("Configuration", {}).get("Code"):
+                        source = always_merger.merge(
+                            {}, item.get("Source", {})
+                        )
+                        always_merger.merge(
+                            source, version.get("Source", {})
+                        )
+                        configuration = source.get("Configuration")
+                        code = configuration.get("Code")
+                        t_ref = f'{section_names.CREATE_CODE_REPO_TASK}-{configuration.get("RepositoryName")}-{configuration.get("BranchName")}'
+                        task_reference[
+                            t_ref
+                        ] = dict(
+                            task_reference=t_ref,
+                            section_name=section_names.CREATE_CODE_REPO_TASK,
+                            dependencies_by_reference=[],
+                            repository_name=configuration.get("RepositoryName"),
+                            branch_name=configuration.get("BranchName"),
+                            bucket=code.get("S3").get("Bucket"),
+                            key=code.get("S3").get("Key"),
+                        )
+
+                    # ENSURE VERSIONS ARE UP TO DATE
+                    task_ref = f"{section_names.ENSURE_PRODUCT_VERSION_DETAILS_CORRECT_TASK}-{region}-{item.get('Name')}-{version.get('Name')}"
+                    task_reference[
+                        task_ref
+                    ] = dict(
+                        task_reference=task_ref,
+                        section_name=section_names.ENSURE_PRODUCT_VERSION_DETAILS_CORRECT_TASK,
+                        region=region,
+                        version=version,
+                        create_product_task_ref=create_product_task_ref,
+                        dependencies_by_reference=[create_product_task_ref],
+                    )
 
                 if region == constants.HOME_REGION:
                     # create_portfolio_task_ref = (

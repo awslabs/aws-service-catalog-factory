@@ -1,39 +1,32 @@
 #  Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-import json
 
 import luigi
 
-from servicecatalog_factory.workflow.portfolios.create_product_task import (
-    CreateProductTask,
-)
 from servicecatalog_factory.workflow.tasks import FactoryTask, logger
 
 
-class EnsureProductVersionDetailsCorrect(FactoryTask):
+class EnsureProductVersionDetailsCorrectTask(FactoryTask):
     region = luigi.Parameter()
     version = luigi.DictParameter()
-    product_args = luigi.DictParameter()
+    create_product_task_ref = luigi.Parameter()
 
     def params_for_results_display(self):
         return {
             "region": self.region,
-            "version": self.version.get("Name"),
-            "product": self.product_args.get("name"),
+            "task_reference": self.task_reference,
         }
 
     def output(self):
         return luigi.LocalTarget(
-            f"output/EnsureProductVersionDetailsCorrect/"
-            f"{self.region}_{self.product_args.get('name')}_{self.version.get('Name')}.json"
+            f"output/EnsureProductVersionDetailsCorrectTask/"
+            f"{self.task_reference}.json"
         )
 
-    # def requires(self):
-    #     return CreateProductTask(**self.product_args)
-
     def run(self):
-        product = json.loads(self.input().open("r").read())
-        product_id = product.get("ProductId")
+        create_product_task_output = self.get_output_from_reference_dependency(self.create_product_task_ref)
+        product_id = create_product_task_output.get("ProductId")
+        product_name = create_product_task_output.get("Name")
         version_name = self.version.get("Name")
         version_active = self.version.get("Active", True)
 
@@ -49,7 +42,7 @@ class EnsureProductVersionDetailsCorrect(FactoryTask):
                     )
                     if provisioning_artifact_detail.get("Active") != version_active:
                         logger.info(
-                            f"Active status needs to change for: {product.get('Name')} {version_name}"
+                            f"Active status needs to change for: {product_name} {version_name}"
                         )
                         service_catalog.update_provisioning_artifact(
                             ProductId=product_id,
@@ -59,5 +52,4 @@ class EnsureProductVersionDetailsCorrect(FactoryTask):
                             Active=version_active,
                         )
 
-        with self.output().open("w") as f:
-            f.write("{}")
+        self.write_output_raw("{}")
