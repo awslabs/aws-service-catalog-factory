@@ -11,10 +11,11 @@ from deepmerge import always_merger
 
 
 def create_task_for_combined_pipeline(
-    category, item, name, versions, additional_dependencies=[]
+    task_reference, category, item, name, versions, additional_dependencies=[]
 ):
     return dict(
         section_name=section_names.CREATE_GENERIC_COMBINED_PIPELINE_TASK,
+        task_reference=task_reference,
         pipeline_type=constants.PIPELINE_MODE_COMBINED,
         category=category,
         name=name,
@@ -28,10 +29,11 @@ def create_task_for_combined_pipeline(
 
 
 def create_task_for_split_pipeline(
-    category, item, name, version, additional_dependencies=[]
+    task_reference, category, item, name, version, additional_dependencies=[]
 ):
     return dict(
         section_name=section_names.CREATE_GENERIC_COMBINED_PIPELINE_TASK,
+        task_reference=task_reference,
         pipeline_type=constants.PIPELINE_MODE_SPILT,
         category=category,
         name=name,
@@ -79,17 +81,19 @@ def generate_pipeline_task(
 
     if pipeline_mode == constants.PIPELINE_MODE_SPILT:
         for version in item.get("Versions", []):
+            task_ref = f"create-generic-split-pipeline-{category}-{name}-{version.get('Name')}"
             task_reference[
-                f"create-generic-split-pipeline-{category}-{name}-{version.get('Name')}"
+                task_ref
             ] = create_task_for_split_pipeline(
-                category, item, name, version, additional_dependencies
+                task_ref, category, item, name, version, additional_dependencies
             )
         for version_file_name in glob.glob(f"{path}/{name}/Versions/*.yaml"):
             version = yaml.safe_load(open(version_file_name, "r").read())
+            task_ref = f"create-generic-split-pipeline-{category}-{name}-{version.get('Name')}"
             task_reference[
-                f"create-generic-split-pipeline-{category}-{name}-{version.get('Name')}"
+                task_ref
             ] = create_task_for_split_pipeline(
-                category, item, name, version, additional_dependencies
+                task_ref, category, item, name, version, additional_dependencies
             )
     elif pipeline_mode == constants.PIPELINE_MODE_COMBINED:
         versions = list()
@@ -98,11 +102,11 @@ def generate_pipeline_task(
         for version_file_name in glob.glob(f"{path}/{name}/Versions/*.yaml"):
             version = yaml.safe_load(open(version_file_name, "r").read())
             versions.append(version)
-
+        task_ref = f"create-generic-combined-pipeline-{category}-{name}"
         task_reference[
-            f"create-generic-combined-pipeline-{category}-{name}"
+            task_ref
         ] = create_task_for_combined_pipeline(
-            category, item, name, versions, additional_dependencies
+            task_ref, category, item, name, versions, additional_dependencies
         )
 
     else:
@@ -173,8 +177,10 @@ def generate_tasks_for_portfolios(
                 create_portfolio_task_ref = (
                     f"create-portfolio-{portfolio_name}-{region}"
                 )
-                associations = list()
-                associations_dependencies_by_reference = list()
+                launch_role_constraints = []
+                launch_role_constraints_dependencies_by_reference = [
+                    create_portfolio_task_ref,
+                ]
 
                 if task_reference.get(create_portfolio_task_ref):
                     raise Exception(
@@ -226,13 +232,13 @@ def generate_tasks_for_portfolios(
                         dependencies_by_reference=[get_bucket_task_ref],
                         region=region,
                         name=product.get("Name"),
-                        owner=item.get("Owner"),
+                        owner=product.get("Owner"),
                         description=item.get("Description"),
-                        distributor=item.get("Distributor"),
-                        support_description=item.get("SupportDescription"),
-                        support_email=item.get("SupportEmail"),
-                        support_url=item.get("SupportUrl"),
-                        tags=item.get("Tags", []),
+                        distributor=product.get("Distributor"),
+                        support_description=product.get("SupportDescription"),
+                        support_email=product.get("SupportEmail"),
+                        support_url=product.get("SupportUrl"),
+                        tags=product.get("Tags", []) + item.get("Tags", []),
                     )
 
                     # ASSOCIATE PRODUCT WITH PORTFOLIO
@@ -255,7 +261,7 @@ def generate_tasks_for_portfolios(
                         .get("Launch", {})
                         .get("LocalRoleName")
                     ):
-                        associations.append(
+                        launch_role_constraints.append(
                             dict(
                                 portfolio_task_ref=create_portfolio_task_ref,
                                 product_task_ref=create_product_task_ref,
@@ -264,11 +270,18 @@ def generate_tasks_for_portfolios(
                                 .get("LocalRoleName"),
                             )
                         )
-                        associations_dependencies_by_reference.append(
-                            create_product_association_ref
+                        launch_role_constraints_dependencies_by_reference.extend(
+                            [
+                                create_product_association_ref,
+                                create_product_task_ref,
+                            ]
                         )
 
                     if region == constants.HOME_REGION:
+                        # create_product_task_ref = (
+                        #     f"create-product-{product.get('Name')}-{region}"
+                        # )
+
                         product_name = product.get("Name")
                         pipeline_mode = product.get(
                             "PipelineMode", constants.PIPELINE_MODE_DEFAULT
@@ -288,9 +301,11 @@ def generate_tasks_for_portfolios(
                             versions = list()
                             for version in product.get("Versions", []):
                                 versions.append(version)
+                            task_ref = f"create-generic-combined-pipeline-product-{product_name}"
                             task_reference[
-                                f"create-generic-combined-pipeline-product-{product_name}"
+                                task_ref
                             ] = create_task_for_combined_pipeline(
+                                task_ref,
                                 "product",
                                 product,
                                 product_name,
@@ -304,15 +319,16 @@ def generate_tasks_for_portfolios(
                             )
 
                 # ADD LAUNCH ROLE NAME LAUNCH CONSTRAINT
-                if associations:
+                if launch_role_constraints:
                     launch_role_name_constraint_task_ref = (
                         f"create-launch-role-name-constraint-{portfolio_name}-{region}"
                     )
                     task_reference[launch_role_name_constraint_task_ref] = dict(
+                        portfolio_name=portfolio_name,
                         task_reference=launch_role_name_constraint_task_ref,
                         section_name=section_names.CREATE_LAUNCH_ROLE_NAME_CONSTRAINTS_TASK,
-                        associations=associations,
-                        dependencies_by_reference=associations_dependencies_by_reference,
+                        launch_role_constraints=launch_role_constraints,
+                        dependencies_by_reference=launch_role_constraints_dependencies_by_reference,
                         region=region,
                     )
 
@@ -344,15 +360,21 @@ def generate_tasks_for_portfolios(
                 )
 
                 if region == constants.HOME_REGION:
+                    # create_portfolio_task_ref = (
+                    #     f"create-portfolio-{portfolio_name}-{region}"
+                    # )
+
                     product_name = item.get("Name")
                     pipeline_mode = item.get(
                         "PipelineMode", constants.PIPELINE_MODE_DEFAULT
                     )
                     if pipeline_mode == constants.PIPELINE_MODE_SPILT:
                         for version in item.get("Versions", []):
+                            task_ref = f"create-generic-split-pipeline-product-{product_name}-{version.get('Name')}"
                             task_reference[
-                                f"create-generic-split-pipeline-product-{product_name}-{version.get('Name')}"
+                                task_ref
                             ] = create_task_for_split_pipeline(
+                                task_ref,
                                 "product",
                                 item,
                                 product_name,
@@ -363,9 +385,11 @@ def generate_tasks_for_portfolios(
                         versions = list()
                         for version in item.get("Versions", []):
                             versions.append(version)
+                        task_ref = f"create-generic-combined-pipeline-product-{product_name}"
                         task_reference[
-                            f"create-generic-combined-pipeline-product-{product_name}"
+                            task_ref
                         ] = create_task_for_combined_pipeline(
+                            task_ref,
                             "product",
                             item,
                             product_name,
@@ -376,7 +400,8 @@ def generate_tasks_for_portfolios(
                     else:
                         raise Exception(f"Unsupported pipeline_mode: {pipeline_mode}")
 
-                for portfolio_name in item.get("Portfolios", []):
+                for portfolio_name_suffix in item.get("Portfolios", []):
+                    portfolio_name = f"{p_name}-{portfolio_name_suffix}"
                     # GET PORTFOLIO
                     get_portfolio_task_ref = (
                         f"create-portfolio-{portfolio_name}-{region}"
@@ -410,14 +435,15 @@ def generate_tasks_for_portfolios(
                         launch_role_name_constraint_task_ref = f"create-launch-role-name-constraint-{portfolio_name}-{region}"
                         if not task_reference.get(launch_role_name_constraint_task_ref):
                             task_reference[launch_role_name_constraint_task_ref] = dict(
+                                portfolio_name=portfolio_name,
                                 task_reference=launch_role_name_constraint_task_ref,
                                 section_name=section_names.CREATE_LAUNCH_ROLE_NAME_CONSTRAINTS_TASK,
-                                associations=list(),
-                                dependencies_by_reference=list(),
+                                launch_role_constraints=[],
+                                dependencies_by_reference=[],
                                 region=region,
                             )
                         task_reference[launch_role_name_constraint_task_ref][
-                            "associations"
+                            "launch_role_constraints"
                         ].append(
                             dict(
                                 portfolio_task_ref=get_portfolio_task_ref,
@@ -427,7 +453,14 @@ def generate_tasks_for_portfolios(
                         )
                         task_reference[launch_role_name_constraint_task_ref][
                             "dependencies_by_reference"
-                        ].append(create_product_association_ref)
+                        ].extend(
+                            [
+                                # create_portfolio_task_ref,
+                                f"create-portfolio-{portfolio_name}-{region}",
+                                create_product_association_ref,
+                                create_product_task_ref,
+                            ]
+                        )
 
     return task_reference
 

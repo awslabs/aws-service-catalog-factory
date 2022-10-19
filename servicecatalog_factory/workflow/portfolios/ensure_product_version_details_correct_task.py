@@ -28,8 +28,8 @@ class EnsureProductVersionDetailsCorrect(FactoryTask):
             f"{self.region}_{self.product_args.get('name')}_{self.version.get('Name')}.json"
         )
 
-    def requires(self):
-        return CreateProductTask(**self.product_args)
+    # def requires(self):
+    #     return CreateProductTask(**self.product_args)
 
     def run(self):
         product = json.loads(self.input().open("r").read())

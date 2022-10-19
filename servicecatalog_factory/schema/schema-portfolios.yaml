@@ -104,6 +104,7 @@ product_without_source:
   Tags: list(include('tag'), required=False)
   Versions: list(include('version_with_source'), required=False)
   Portfolios: list(required=False)
+  Constraints: include('constraints', required=False)
 
 product_with_source:
   Name: str()
@@ -122,10 +123,13 @@ product_with_source:
   Tags: list(include('tag'), required=False)
   Versions: list(include('version'), required=False)
   Portfolios: list(required=False)
+  Constraints: include('constraints', required=False)
 
+constraints:
+  Launch: include('launch')
 
-
-
+launch:
+  LocalRoleName: str()
 
 
 

@@ -96,14 +96,12 @@ def create(
 
             return create_portfolio_association_task.CreatePortfolioAssociationTask(
                 **minimum_common_parameters,
+
                 region=parameters_to_use.get("region"),
-                # portfolio_group_name =parameters_to_use.get("portfolio_group_name"),
                 portfolio_name=parameters_to_use.get("portfolio_name"),
-                # display_name =parameters_to_use.get("tags"),
-                description=parameters_to_use.get("description"),
-                provider_name=parameters_to_use.get("provider_name"),
-                tags=parameters_to_use.get("tags"),
+                create_portfolio_task_ref=parameters_to_use.get("create_portfolio_task_ref"),
                 associations=parameters_to_use.get("associations"),
+                tags=parameters_to_use.get("tags"),
                 factory_version=factory_version,
             )
 
@@ -117,9 +115,10 @@ def create(
 
             return associate_product_with_portfolio_task.AssociateProductWithPortfolioTask(
                 **minimum_common_parameters,
+
                 region=parameters_to_use.get("region"),
-                portfolio_args=parameters_to_use.get("portfolio_args"),
-                product_args=parameters_to_use.get("product_args"),
+                create_product_task_ref=parameters_to_use.get("create_product_task_ref"),
+                create_portfolio_task_ref=parameters_to_use.get("create_portfolio_task_ref"),
             )
 
     elif section_name == section_names.CREATE_LAUNCH_ROLE_NAME_CONSTRAINTS_TASK:
@@ -132,7 +131,10 @@ def create(
 
             return create_launch_role_name_constraints_task.CreateLaunchRoleNameConstraintsTask(
                 **minimum_common_parameters,
-                # TODO implement
+
+                portfolio_name=parameters_to_use.get("portfolio_name"),
+                region=parameters_to_use.get("region"),
+                launch_role_constraints=parameters_to_use.get("launch_role_constraints"),
             )
 
     else:

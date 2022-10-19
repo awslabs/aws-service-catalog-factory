@@ -181,7 +181,7 @@ def worker_task(
                         )
                         logger.error(f"---- START OF ERROR----")
                         logger.error(f"Task {task_type}:")
-                        for l in serialisation_utils.dump(task_details).split("\n"):
+                        for l in serialisation_utils.dump(utils.unwrap(task_details)).split("\n"):
                             logger.error(l)
                         for l in traceback.format_exception(
                             etype=type(e), value=e, tb=e.__traceback__,
@@ -376,6 +376,7 @@ def run(
     manifest_task_reference_file_path,
     puppet_account_id,
 ):
+    num_workers = 1
     resources_file_path = f"{manifest_files_path}/resources.json"
     os.environ["SCT_START_TIME"] = str(time.time())
 

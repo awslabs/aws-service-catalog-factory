@@ -16,47 +16,39 @@ from servicecatalog_factory.workflow.tasks import FactoryTask, logger
 
 class AssociateProductWithPortfolioTask(FactoryTask):
     region = luigi.Parameter()
-    portfolio_args = luigi.DictParameter()
-    product_args = luigi.DictParameter()
+    create_product_task_ref = luigi.Parameter()
+    create_portfolio_task_ref = luigi.Parameter()
 
     def params_for_results_display(self):
         return {
             "region": self.region,
-            "portfolio": f"{self.portfolio_args.get('portfolio_group_name')}-{self.portfolio_args.get('display_name')}-{self.portfolio_args.get('portfolio_name')}",
-            "product": self.product_args.get("name"),
+            "create_product_task_ref": self.create_product_task_ref,
+            "create_portfolio_task_ref": self.create_portfolio_task_ref,
         }
 
     def output(self):
         return luigi.LocalTarget(
             f"output/AssociateProductWithPortfolioTask/"
-            f"{self.region}"
-            f"{self.product_args.get('name')}"
-            f"_{self.portfolio_args.get('portfolio_group_name')}"
-            f"_{self.portfolio_args.get('portfolio_name')}"
-            f"_{self.portfolio_args.get('display_name')}.json"
+            f"{self.task_reference}"
         )
 
-    def requires(self):
-        return {
-            "create_portfolio_task": CreatePortfolioTask(**self.portfolio_args),
-            "create_product_task": CreateProductTask(**self.product_args),
-        }
+    # def requires(self):
+    #     return {
+    #         "create_portfolio_task": CreatePortfolioTask(**self.portfolio_args),
+    #         "create_product_task": CreateProductTask(**self.product_args),
+    #     }
 
     def run(self):
-        logger_prefix = f"{self.region}-{self.portfolio_args.get('portfolio_group_name')}-{self.portfolio_args.get('display_name')}-{self.portfolio_args.get('portfolio_name')}"
-        portfolio = json.loads(
-            self.input().get("create_portfolio_task").open("r").read()
-        )
-        portfolio_id = portfolio.get("Id")
-        product = json.loads(self.input().get("create_product_task").open("r").read())
-        product_id = product.get("ProductId")
+        create_portfolio_task_output = self.get_output_from_reference_dependency(self.create_portfolio_task_ref)
+        create_product_task_output = self.get_output_from_reference_dependency(self.create_product_task_ref)
+
+        portfolio_id = create_portfolio_task_output.get("Id")
+        product_id = create_product_task_output.get("ProductId")
         with self.regional_client("servicecatalog") as service_catalog:
-            logger.info(f"{logger_prefix}: Searching for existing association")
+            self.info(f"Searching for existing association")
 
             aws.ensure_portfolio_association_for_product(
                 portfolio_id, product_id, service_catalog
             )
 
-            with self.output().open("w") as f:
-                logger.info(f"{logger_prefix}: about to write!")
-                f.write("{}")
+            self.write_output_raw("{}")

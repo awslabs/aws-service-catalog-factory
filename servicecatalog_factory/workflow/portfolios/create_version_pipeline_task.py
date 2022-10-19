@@ -37,17 +37,17 @@ class CreateVersionPipelineTask(FactoryTask):
             f"{self.product.get('Name')}_{self.version.get('Name')}.template.yaml"
         )
 
-    def requires(self):
-        return CreateVersionPipelineTemplateTask(
-            all_regions=self.all_regions,
-            version=self.version,
-            product=self.product,
-            provisioner=self.provisioner,
-            template=self.template,
-            products_args_by_region=self.products_args_by_region,
-            factory_version=self.factory_version,
-            tags=self.tags,
-        )
+    # def requires(self):
+    #     return CreateVersionPipelineTemplateTask(
+    #         all_regions=self.all_regions,
+    #         version=self.version,
+    #         product=self.product,
+    #         provisioner=self.provisioner,
+    #         template=self.template,
+    #         products_args_by_region=self.products_args_by_region,
+    #         factory_version=self.factory_version,
+    #         tags=self.tags,
+    #     )
 
     def api_calls_used(self):
         return [

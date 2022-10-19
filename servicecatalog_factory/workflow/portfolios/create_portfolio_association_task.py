@@ -14,32 +14,16 @@ from servicecatalog_factory.workflow.tasks import FactoryTask
 
 class CreatePortfolioAssociationTask(FactoryTask):
     region = luigi.Parameter()
-    portfolio_group_name = luigi.Parameter()  # TODO remove
-    portfolio_name = luigi.Parameter()  # TODO remove
-    display_name = luigi.Parameter()
-    description = luigi.Parameter(significant=False)
-    provider_name = luigi.Parameter(significant=False)
-    tags = luigi.ListParameter(default=[], significant=False)
+    create_portfolio_task_ref = luigi.Parameter()
+    portfolio_name = luigi.Parameter()
+    associations = luigi.ListParameter()
+    tags = luigi.ListParameter()
 
-    associations = luigi.ListParameter(significant=False, default=[])
     factory_version = luigi.Parameter()
-
-    def requires(self):
-        return CreatePortfolioTask(
-            self.region,
-            self.portfolio_group_name,
-            self.portfolio_name,
-            self.display_name,
-            self.description,
-            self.provider_name,
-            self.tags,
-        )
 
     def params_for_results_display(self):
         return {
             "region": self.region,
-            "portfolio_group_name": self.portfolio_group_name,
-            "display_name": self.display_name,
             "portfolio_name": self.portfolio_name,
         }
 
@@ -49,27 +33,22 @@ class CreatePortfolioAssociationTask(FactoryTask):
         ]
 
     def output(self):
-        output_file = f"output/CreatePortfolioAssociationTask/{self.region}-{self.portfolio_group_name}-{self.portfolio_name}-{self.display_name}.json"
+        output_file = f"output/CreatePortfolioAssociationTask/{self.region}-{self.portfolio_name}-{self.task_reference}.json"
         return luigi.LocalTarget(output_file)
 
     def run(self):
         with self.regional_client("cloudformation") as cloudformation:
-            portfolio_details = json.loads(self.input().open("r").read())
+            create_portfolio_task_output = self.get_output_from_reference_dependency(self.create_portfolio_task_ref)
             template = utils.ENV.get_template(constants.ASSOCIATIONS)
             rendered = template.render(
                 FACTORY_VERSION=self.factory_version,
                 portfolio={
-                    "DisplayName": portfolio_details.get("DisplayName"),
+                    "DisplayName": self.portfolio_name,
                     "Associations": self.associations,
                 },
-                portfolio_id=portfolio_details.get("Id"),
+                portfolio_id=create_portfolio_task_output.get("Id"),
             )
-            if self.display_name:
-                stack_name = "-".join(
-                    [self.portfolio_group_name, self.display_name, "associations"]
-                )
-            else:
-                stack_name = "-".join([self.portfolio_name, "associations"])
+            stack_name = "-".join([self.portfolio_name, "associations"])
             tags = [dict(Key="ServiceCatalogFactory:Actor", Value="Generated",)]
             if self.should_pipelines_inherit_tags:
                 tags += list(self.initialiser_stack_tags)

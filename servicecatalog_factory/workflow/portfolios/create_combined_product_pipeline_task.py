@@ -21,13 +21,13 @@ class CreateCombinedProductPipelineTask(FactoryTask):
             "product": self.product.get("Name"),
         }
 
-    def requires(self):
-        return CreateCombinedProductPipelineTemplateTask(
-            all_regions=self.all_regions,
-            product=self.product,
-            products_args_by_region=self.products_args_by_region,
-            factory_version=self.factory_version,
-        )
+    # def requires(self):
+    #     return CreateCombinedProductPipelineTemplateTask(
+    #         all_regions=self.all_regions,
+    #         product=self.product,
+    #         products_args_by_region=self.products_args_by_region,
+    #         factory_version=self.factory_version,
+    #     )
 
     def api_calls_used(self):
         return [

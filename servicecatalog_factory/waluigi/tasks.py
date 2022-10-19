@@ -83,9 +83,6 @@ class WaluigiTaskMixin:
             )
         return dependencies
 
-    def requires(self):
-        return dict(reference_dependencies=self.dependencies_for_task_reference())
-
     def get_output_from_reference_dependency(self, reference):
         f = self.input().get("reference_dependencies").get(reference).open("r")
         content = f.read()
