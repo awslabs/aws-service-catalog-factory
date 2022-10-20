@@ -17,6 +17,8 @@ class DeleteProductTaskTest(tasks_unit_tests_helper.FactoryTaskUnitTest):
         self.module = delete_product_task
 
         self.sut = self.module.DeleteProductTask(
+            **self.minimal_common_params,
+
             uid=self.uid,
             region=self.region,
             name=self.name,

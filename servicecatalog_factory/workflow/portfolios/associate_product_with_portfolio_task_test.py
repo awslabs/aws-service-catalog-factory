@@ -9,8 +9,8 @@ class AssociateProductWithPortfolioTaskTest(
     tasks_unit_tests_helper.FactoryTaskUnitTest
 ):
     region = "region"
-    portfolio_args = {}
-    product_args = {}
+    create_product_task_ref = "create_product_task_ref"
+    create_portfolio_task_ref = "create_portfolio_task_ref"
 
     def setUp(self) -> None:
         from servicecatalog_factory.workflow.portfolios import (
@@ -20,9 +20,11 @@ class AssociateProductWithPortfolioTaskTest(
         self.module = associate_product_with_portfolio_task
 
         self.sut = self.module.AssociateProductWithPortfolioTask(
+            **self.minimal_common_params,
+
             region=self.region,
-            portfolio_args=self.portfolio_args,
-            product_args=self.product_args,
+            create_product_task_ref=self.create_product_task_ref,
+            create_portfolio_task_ref=self.create_portfolio_task_ref,
         )
 
         self.wire_up_mocks()
@@ -31,8 +33,8 @@ class AssociateProductWithPortfolioTaskTest(
         # setup
         expected_result = {
             "region": self.region,
-            "portfolio": f"{self.portfolio_args.get('portfolio_group_name')}-{self.portfolio_args.get('display_name')}-{self.portfolio_args.get('portfolio_name')}",
-            "product": self.product_args.get("name"),
+            "create_product_task_ref": self.create_product_task_ref,
+            "create_portfolio_task_ref": self.create_portfolio_task_ref,
         }
 
         # exercise

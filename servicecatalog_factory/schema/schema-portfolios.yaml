@@ -104,6 +104,7 @@ product_without_source:
   Tags: list(include('tag'), required=False)
   Versions: list(include('version_with_source'), required=False)
   Portfolios: list(required=False)
+  Constraints: include('constraints', required=False)
 
 product_with_source:
   Name: str()
@@ -122,10 +123,13 @@ product_with_source:
   Tags: list(include('tag'), required=False)
   Versions: list(include('version'), required=False)
   Portfolios: list(required=False)
+  Constraints: include('constraints', required=False)
 
+constraints:
+  Launch: include('launch')
 
-
-
+launch:
+  LocalRoleName: str()
 
 
 
@@ -143,6 +147,15 @@ schema: enum("factory-2019-04-01", "Factory-2019-04-01")
 configuration_codecommit:
   RepositoryName: str(required=False)
   BranchName: str(required=False)
+  Code: include("code", required=False)
+
+code:
+  S3: include("code_s3")
+
+code_s3:
+  Bucket: str()
+  Key: str()
+
 
 configuration_github:
   Branch: str(required=False)
@@ -194,11 +207,6 @@ code_s3_bucket:
 code_s3_key:
   Bucket: str(required=False)
   Key: str()
-
-code_s3: any(include('code_s3_bucket'), include('code_s3_key'))
-
-code:
-  S3: include('code_s3')
 
 active: any(bool(required=False), enum("terminated"))
 status: enum("active", "terminated")

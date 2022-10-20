@@ -6,13 +6,11 @@ from servicecatalog_factory.workflow import tasks_unit_tests_helper
 
 
 class CreatePortfolioTaskTest(tasks_unit_tests_helper.FactoryTaskUnitTest):
-    region = "region"
-    portfolio_name = "portfolio_name"
-    portfolio_group_name = "portfolio_group_name"
-    display_name = "display_name"
+    region ="region"
+    portfolio_name ="portfolio_name"
     description = "description"
     provider_name = "provider_name"
-    tags = []
+    tags =[]
 
     def setUp(self) -> None:
         from servicecatalog_factory.workflow.portfolios import create_portfolio_task
@@ -20,10 +18,10 @@ class CreatePortfolioTaskTest(tasks_unit_tests_helper.FactoryTaskUnitTest):
         self.module = create_portfolio_task
 
         self.sut = self.module.CreatePortfolioTask(
+            **self.minimal_common_params,
+
             region=self.region,
             portfolio_name=self.portfolio_name,
-            portfolio_group_name=self.portfolio_group_name,
-            display_name=self.display_name,
             description=self.description,
             provider_name=self.provider_name,
             tags=self.tags,
@@ -35,9 +33,8 @@ class CreatePortfolioTaskTest(tasks_unit_tests_helper.FactoryTaskUnitTest):
         # setup
         expected_result = {
             "region": self.region,
-            "portfolio_group_name": self.portfolio_group_name,
-            "display_name": self.display_name,
             "portfolio_name": self.portfolio_name,
+            "task_reference": self.task_reference,
         }
 
         # exercise

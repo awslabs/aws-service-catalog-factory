@@ -25,9 +25,6 @@ class DeleteAVersionTask(FactoryTask):
             "version": self.version,
         }
 
-    def requires(self):
-        return {"create_product": CreateProductTask(**self.product_args)}
-
     def run(self):
         product = self.load_from_input("create_product")
         product_id = product.get("ProductId")

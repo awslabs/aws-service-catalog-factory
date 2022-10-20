@@ -7,12 +7,15 @@ package_dir = \
 packages = \
 ['servicecatalog_factory',
  'servicecatalog_factory.commands',
+ 'servicecatalog_factory.common',
  'servicecatalog_factory.template_builder',
  'servicecatalog_factory.template_builder.cdk',
  'servicecatalog_factory.template_builder.troposphere_contstants',
  'servicecatalog_factory.utilities',
+ 'servicecatalog_factory.waluigi',
  'servicecatalog_factory.workflow',
  'servicecatalog_factory.workflow.codecommit',
+ 'servicecatalog_factory.workflow.dependencies',
  'servicecatalog_factory.workflow.generic',
  'servicecatalog_factory.workflow.portfolios']
 
@@ -34,6 +37,8 @@ install_requires = \
  'docutils==0.14',
  'jinja2==2.11.3',
  'luigi==2.8.6',
+ 'networkx==2.6.3',
+ 'orjson>=3.8.0,<4.0.0',
  'requests==2.26.0',
  'terminaltables==3.1.0',
  'troposphere==3.1.0',

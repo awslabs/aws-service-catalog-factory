@@ -28,6 +28,18 @@ class FakeInput(object):
 
 class FactoryTaskUnitTest(unittest.TestCase):
     cache_invalidator = "NOW"
+    task_reference = "task_reference"
+    dependencies_by_reference = []
+    manifest_files_path = "manifest_files_path"
+
+    @property
+    def minimal_common_params(self):
+        return dict(
+            task_reference=self.task_reference,
+            dependencies_by_reference=self.dependencies_by_reference,
+            manifest_files_path=self.manifest_files_path,
+        )
+
 
     def wire_up_mocks(self):
         self.spoke_client_mock, self.sut.spoke_client = mocked_client()

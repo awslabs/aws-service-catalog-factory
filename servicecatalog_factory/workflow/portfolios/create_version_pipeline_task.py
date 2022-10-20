@@ -31,29 +31,6 @@ class CreateVersionPipelineTask(FactoryTask):
             "product": self.product.get("Name"),
         }
 
-    def output(self):
-        return luigi.LocalTarget(
-            f"output/CreateVersionPipelineTask/"
-            f"{self.product.get('Name')}_{self.version.get('Name')}.template.yaml"
-        )
-
-    def requires(self):
-        return CreateVersionPipelineTemplateTask(
-            all_regions=self.all_regions,
-            version=self.version,
-            product=self.product,
-            provisioner=self.provisioner,
-            template=self.template,
-            products_args_by_region=self.products_args_by_region,
-            factory_version=self.factory_version,
-            tags=self.tags,
-        )
-
-    def api_calls_used(self):
-        return [
-            f"cloudformation.create_or_update_{constants.HOME_REGION}",
-        ]
-
     def run(self):
         template_contents = self.input().open("r").read()
         template = cfn_tools.load_yaml(template_contents)

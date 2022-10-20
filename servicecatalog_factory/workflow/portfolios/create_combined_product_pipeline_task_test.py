@@ -9,9 +9,9 @@ class CreateCombinedProductPipelineTaskTest(
     tasks_unit_tests_helper.FactoryTaskUnitTest
 ):
     all_regions = []
-    product = {}
-    products_args_by_region = {}
-    factory_version = "factory_version"
+    product = dict()
+    products_args_by_region = dict()
+    factory_version = ""
 
     def setUp(self) -> None:
         from servicecatalog_factory.workflow.portfolios import (
@@ -21,6 +21,8 @@ class CreateCombinedProductPipelineTaskTest(
         self.module = create_combined_product_pipeline_task
 
         self.sut = self.module.CreateCombinedProductPipelineTask(
+            **self.minimal_common_params,
+
             all_regions=self.all_regions,
             product=self.product,
             products_args_by_region=self.products_args_by_region,

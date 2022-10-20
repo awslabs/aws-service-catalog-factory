@@ -9,6 +9,7 @@ from servicecatalog_factory.workflow.tasks import FactoryTask
 
 
 class CreateCodeRepoTask(FactoryTask):
+    region = luigi.Parameter()
     repository_name = luigi.Parameter()
     branch_name = luigi.Parameter()
     bucket = luigi.Parameter()
@@ -21,7 +22,7 @@ class CreateCodeRepoTask(FactoryTask):
         }
 
     def run(self):
-        with self.client("s3") as s3:
+        with self.regional_client("s3") as s3:
             z = zipfile.ZipFile(
                 io.BytesIO(
                     s3.get_object(Bucket=self.bucket, Key=self.key).get("Body").read()
@@ -36,7 +37,7 @@ class CreateCodeRepoTask(FactoryTask):
                         fileContent=z.open(f, "r").read(),
                     )
                 )
-        with self.client("codecommit") as codecommit:
+        with self.regional_client("codecommit") as codecommit:
             try:
                 repo = codecommit.get_repository(
                     repositoryName=self.repository_name

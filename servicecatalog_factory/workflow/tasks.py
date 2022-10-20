@@ -12,10 +12,16 @@ from betterboto import client as betterboto_client
 
 from servicecatalog_factory import constants
 
+from servicecatalog_factory.waluigi import tasks as waluigi_tasks
+
 logger = logging.getLogger(__file__)
 
 
-class FactoryTask(luigi.Task):
+class FactoryTask(waluigi_tasks.WaluigiTaskMixin, luigi.Task):
+
+    def params_for_results_display(self):
+        return {"task_reference": self.task_reference}
+
     @property
     def factory_account_id(self):
         account_id = os.environ.get("ACCOUNT_ID", None)
@@ -61,8 +67,8 @@ class FactoryTask(luigi.Task):
     def info(self, message):
         logger.info(f"{self.uid}: {message}")
 
-    def params_for_results_display(self):
-        return "Omitted"
+    def output(self):
+        return luigi.LocalTarget(f"output/{self.uid}.json")
 
     def write_output(self, content):
         self.write_output_raw(json.dumps(content, indent=4, default=str,))
@@ -71,42 +77,10 @@ class FactoryTask(luigi.Task):
         with self.output().open("w") as f:
             f.write(content)
 
-    def output(self):
-        return luigi.LocalTarget(f"output/{self.uid}.json")
-
     @property
     def uid(self):
-        return f"{self.__class__.__name__}/{self.node_id}"
+        return f"{self.__class__.__name__}/{self.task_reference}"
 
-    @property
-    def node_id(self):
-        return f"{self.__class__.__name__}_{'|'.join(self.params_for_results_display().values())}"
-
-    def api_calls_used(self):
-        resources_for_this_task = {}
-
-        if hasattr(self, "region"):
-            resources_for_this_task[self.region] = 1
-
-        return resources_for_this_task
-
-    def resources_used(self):
-        return []
-
-    @property
-    def resources(self):
-        result = {}
-        api_calls = self.api_calls_used()
-        if isinstance(api_calls, list):
-            for a in self.api_calls_used():
-                result[a] = 1
-        elif isinstance(api_calls, dict):
-            for a, r in api_calls.items():
-                result[a] = r
-
-        for i, r in self.resources_used():
-            result[f"{i}-{r.name}"] = 1 / r.value
-        return result
 
 
 def record_event(event_type, task, extra_event_data=None):
