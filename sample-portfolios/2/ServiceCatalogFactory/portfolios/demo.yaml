@@ -1,7 +1,0 @@
-Schema: factory-2019-04-01
-Portfolios:
-- Associations:
-  - arn:aws:iam::${AWS::AccountId}:role/AccountVendorRole
-  Description: A place for self service products ready for your account
-  DisplayName: central-it-team-portfolio
-  ProviderName: central-it-team

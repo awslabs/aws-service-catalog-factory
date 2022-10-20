@@ -1,7 +1,0 @@
-Description: template used to interact with custom resources in the shared projects.
-Active: True
-Source:
-  Provider: CodeCommit
-  Configuration:
-    RepositoryName: product-b
-    BranchName: v1
