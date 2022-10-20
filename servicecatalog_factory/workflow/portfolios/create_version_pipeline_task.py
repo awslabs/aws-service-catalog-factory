@@ -31,11 +31,6 @@ class CreateVersionPipelineTask(FactoryTask):
             "product": self.product.get("Name"),
         }
 
-    def api_calls_used(self):
-        return [
-            f"cloudformation.create_or_update_{constants.HOME_REGION}",
-        ]
-
     def run(self):
         template_contents = self.input().open("r").read()
         template = cfn_tools.load_yaml(template_contents)

@@ -7,6 +7,7 @@ import luigi
 
 
 class CreateGenericCombinedPipelineTask(tasks.FactoryTask):
+    region = luigi.Parameter()
     pipeline_type = luigi.Parameter()
     category = luigi.Parameter()
     name = luigi.Parameter()
@@ -19,11 +20,6 @@ class CreateGenericCombinedPipelineTask(tasks.FactoryTask):
 
     def params_for_results_display(self):
         return {"task_reference": self.task_reference}
-
-    def api_calls_used(self):
-        return [
-            f"cloudformation.create_or_update_{constants.HOME_REGION}",
-        ]
 
     def make_template(self):
         template = pipeline_template_builder.PipelineTemplate(
@@ -53,7 +49,7 @@ class CreateGenericCombinedPipelineTask(tasks.FactoryTask):
         for tag in self.tags:
             tags.append(dict(Key=tag.get("Key"), Value=tag.get("Value"),))
 
-        with self.client("cloudformation") as cloudformation:
+        with self.regional_client("cloudformation") as cloudformation:
             cloudformation.create_or_update(
                 StackName=friendly_uid, TemplateBody=template, Tags=tags,
             )

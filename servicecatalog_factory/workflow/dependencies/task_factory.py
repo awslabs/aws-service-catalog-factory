@@ -12,8 +12,6 @@ def create(
     minimum_common_parameters = dict(
         task_reference=parameters_to_use.get("task_reference"),
         manifest_files_path=manifest_files_path,
-        # manifest_task_reference_file_path=manifest_task_reference_file_path,
-        # manifest_files_path=manifest_files_path,
         dependencies_by_reference=parameters_to_use.get("dependencies_by_reference"),
     )
 
@@ -24,7 +22,11 @@ def create(
         else:
             from servicecatalog_factory.workflow.portfolios import get_bucket_task
 
-            return get_bucket_task.GetBucketTask(**minimum_common_parameters,)
+            return get_bucket_task.GetBucketTask(
+                **minimum_common_parameters,
+
+                region=parameters_to_use.get("region"),
+            )
 
     elif section_name == section_names.CREATE_PRODUCT_TASK:
         if status == "terminated":
@@ -72,6 +74,7 @@ def create(
 
             return create_generic_version_pipeline_task.CreateGenericCombinedPipelineTask(
                 **minimum_common_parameters,
+                region=parameters_to_use.get("region"),
                 pipeline_type=parameters_to_use.get("pipeline_type"),
                 category=parameters_to_use.get("category"),
                 name=parameters_to_use.get("name"),
@@ -163,6 +166,7 @@ def create(
             return create_code_repo_task.CreateCodeRepoTask(
                 **minimum_common_parameters,
 
+                region=parameters_to_use.get("region"),
                 repository_name=parameters_to_use.get("repository_name"),
                 branch_name=parameters_to_use.get("branch_name"),
                 bucket=parameters_to_use.get("bucket"),

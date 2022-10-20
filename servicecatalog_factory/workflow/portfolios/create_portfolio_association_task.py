@@ -27,11 +27,6 @@ class CreatePortfolioAssociationTask(FactoryTask):
             "portfolio_name": self.portfolio_name,
         }
 
-    def api_calls_used(self):
-        return [
-            f"cloudformation.create_or_update_{constants.HOME_REGION}",
-        ]
-
     def run(self):
         with self.regional_client("cloudformation") as cloudformation:
             create_portfolio_task_output = self.get_output_from_reference_dependency(self.create_portfolio_task_ref)

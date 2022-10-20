@@ -17,6 +17,7 @@ def create_task_for_combined_pipeline(
 ):
     return dict(
         section_name=section_names.CREATE_GENERIC_COMBINED_PIPELINE_TASK,
+        region=constants.HOME_REGION,
         task_reference=task_reference,
         pipeline_type=constants.PIPELINE_MODE_COMBINED,
         category=category,
@@ -36,6 +37,7 @@ def create_task_for_split_pipeline(
 ):
     return dict(
         section_name=section_names.CREATE_GENERIC_COMBINED_PIPELINE_TASK,
+        region=constants.HOME_REGION,
         task_reference=task_reference,
         pipeline_type=constants.PIPELINE_MODE_SPILT,
         category=category,
@@ -130,6 +132,7 @@ def generate_tasks_for_portfolios(
         task_reference=get_bucket_task_ref,
         section_name=section_names.GET_BUCKET,
         dependencies_by_reference=[],
+        region=constants.HOME_REGION,
     )
 
     for file_name in glob.glob(f"{path}/*.yaml"):
@@ -297,6 +300,7 @@ def generate_tasks_for_portfolios(
                                 task_reference=t_ref,
                                 section_name=section_names.CREATE_CODE_REPO_TASK,
                                 dependencies_by_reference=[],
+                                region=constants.HOME_REGION,
                                 repository_name=configuration.get("RepositoryName"),
                                 branch_name=configuration.get("BranchName"),
                                 bucket=code.get("S3").get("Bucket"),
@@ -418,6 +422,7 @@ def generate_tasks_for_portfolios(
                             task_reference=t_ref,
                             section_name=section_names.CREATE_CODE_REPO_TASK,
                             dependencies_by_reference=[],
+                            region=constants.HOME_REGION,
                             repository_name=configuration.get("RepositoryName"),
                             branch_name=configuration.get("BranchName"),
                             bucket=code.get("S3").get("Bucket"),
