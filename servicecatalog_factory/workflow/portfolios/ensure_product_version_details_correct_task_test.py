@@ -8,9 +8,11 @@ from servicecatalog_factory.workflow import tasks_unit_tests_helper
 class EnsureProductVersionDetailsCorrectTest(
     tasks_unit_tests_helper.FactoryTaskUnitTest
 ):
-    region = "region"
-    version = {}
-    product_args = {}
+
+    region = "rergion"
+    version = dict()
+    create_product_task_ref = "create_product_task_ref"
+
 
     def setUp(self) -> None:
         from servicecatalog_factory.workflow.portfolios import (
@@ -19,8 +21,10 @@ class EnsureProductVersionDetailsCorrectTest(
 
         self.module = ensure_product_version_details_correct_task
 
-        self.sut = self.module.EnsureProductVersionDetailsCorrect(
-            region=self.region, version=self.version, product_args=self.product_args
+        self.sut = self.module.EnsureProductVersionDetailsCorrectTask(
+            **self.minimal_common_params,
+
+            region=self.region, version=self.version, create_product_task_ref=self.create_product_task_ref
         )
 
         self.wire_up_mocks()
@@ -29,8 +33,7 @@ class EnsureProductVersionDetailsCorrectTest(
         # setup
         expected_result = {
             "region": self.region,
-            "version": self.version.get("Name"),
-            "product": self.product_args.get("name"),
+            "task_reference": self.task_reference,
         }
 
         # exercise

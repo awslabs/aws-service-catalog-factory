@@ -7,14 +7,13 @@ from servicecatalog_factory.workflow import tasks_unit_tests_helper
 
 class CreatePortfolioAssociationTaskTest(tasks_unit_tests_helper.FactoryTaskUnitTest):
     region = "region"
-    portfolio_group_name = "portfolio_group_name"
-    display_name = "display_name"
     portfolio_name = "portfolio_name"
     description = "description"
     provider_name = "provider_name"
     tags = []
     associations = []
     factory_version = "factory_version"
+    create_portfolio_task_ref= "create_portfolio_task_ref"
 
     def setUp(self) -> None:
         from servicecatalog_factory.workflow.portfolios import (
@@ -24,15 +23,14 @@ class CreatePortfolioAssociationTaskTest(tasks_unit_tests_helper.FactoryTaskUnit
         self.module = create_portfolio_association_task
 
         self.sut = self.module.CreatePortfolioAssociationTask(
+            **self.minimal_common_params,
+
+            create_portfolio_task_ref=self.create_portfolio_task_ref,
             region=self.region,
-            portfolio_group_name=self.portfolio_group_name,
             portfolio_name=self.portfolio_name,
-            display_name=self.display_name,
-            description=self.description,
-            provider_name=self.provider_name,
-            tags=self.tags,
             associations=self.associations,
             factory_version=self.factory_version,
+            tags=self.tags,
         )
 
         self.wire_up_mocks()
@@ -50,8 +48,6 @@ class CreatePortfolioAssociationTaskTest(tasks_unit_tests_helper.FactoryTaskUnit
         # setup
         expected_result = {
             "region": self.region,
-            "portfolio_group_name": self.portfolio_group_name,
-            "display_name": self.display_name,
             "portfolio_name": self.portfolio_name,
         }
 

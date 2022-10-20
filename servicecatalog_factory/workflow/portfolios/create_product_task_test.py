@@ -6,7 +6,6 @@ from servicecatalog_factory.workflow import tasks_unit_tests_helper
 
 
 class CreateProductTaskTest(tasks_unit_tests_helper.FactoryTaskUnitTest):
-    uid = "uid"
     region = "region"
     name = "name"
     owner = "owner"
@@ -15,6 +14,7 @@ class CreateProductTaskTest(tasks_unit_tests_helper.FactoryTaskUnitTest):
     support_description = "support_description"
     support_email = "support_email"
     support_url = "support_url"
+    get_bucket_task_ref = "get_bucket_task_ref"
     tags = []
 
     def setUp(self) -> None:
@@ -23,7 +23,8 @@ class CreateProductTaskTest(tasks_unit_tests_helper.FactoryTaskUnitTest):
         self.module = create_product_task
 
         self.sut = self.module.CreateProductTask(
-            uid=self.uid,
+            **self.minimal_common_params,
+
             region=self.region,
             name=self.name,
             owner=self.owner,
@@ -32,6 +33,7 @@ class CreateProductTaskTest(tasks_unit_tests_helper.FactoryTaskUnitTest):
             support_description=self.support_description,
             support_email=self.support_email,
             support_url=self.support_url,
+            get_bucket_task_ref=self.get_bucket_task_ref,
             tags=self.tags,
         )
 
@@ -41,8 +43,8 @@ class CreateProductTaskTest(tasks_unit_tests_helper.FactoryTaskUnitTest):
         # setup
         expected_result = {
             "region": self.region,
-            "uid": self.uid,
             "name": self.name,
+            "task_reference": self.task_reference,
         }
 
         # exercise

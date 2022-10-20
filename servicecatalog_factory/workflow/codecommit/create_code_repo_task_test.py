@@ -7,6 +7,7 @@ from servicecatalog_factory.workflow import tasks_unit_tests_helper
 
 class CreateCodeRepoTaskTest(tasks_unit_tests_helper.FactoryTaskUnitTest):
     repository_name = "repository_name"
+    region = "region"
     branch_name = "branch_name"
     bucket = "bucket"
     key = "key"
@@ -17,7 +18,10 @@ class CreateCodeRepoTaskTest(tasks_unit_tests_helper.FactoryTaskUnitTest):
         self.module = create_code_repo_task
 
         self.sut = self.module.CreateCodeRepoTask(
+            **self.minimal_common_params,
+
             repository_name=self.repository_name,
+            region=self.region,
             branch_name=self.branch_name,
             bucket=self.bucket,
             key=self.key,

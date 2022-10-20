@@ -25,6 +25,8 @@ class CreateVersionPipelineTemplateTaskTest(
         self.module = create_version_pipeline_template_task
 
         self.sut = self.module.CreateVersionPipelineTemplateTask(
+            **self.minimal_common_params,
+
             all_regions=self.all_regions,
             version=self.version,
             product=self.product,
