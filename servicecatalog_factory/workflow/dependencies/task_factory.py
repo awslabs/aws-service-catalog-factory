@@ -72,9 +72,9 @@ def create(
             if parameters_to_use.get("stack_name"):
                 stack_name = parameters_to_use.get("stack_name")
             else:
-                if parameters_to_use.pipeline_type == constants.PIPELINE_MODE_COMBINED:
+                if parameters_to_use.get('pipeline_type') == constants.PIPELINE_MODE_COMBINED:
                     stack_name = f"{parameters_to_use.get('category')}--{parameters_to_use.get('name')}"
-                elif parameters_to_use.pipeline_type == constants.PIPELINE_MODE_SPILT:
+                elif parameters_to_use.get('pipeline_type') == constants.PIPELINE_MODE_SPILT:
                     stack_name = f"{parameters_to_use.get('category')}--{parameters_to_use.get('name')}-{parameters_to_use.get('versions')[0].get('Name')}"
 
             return delete_stack_task.DeleteStackTask(
