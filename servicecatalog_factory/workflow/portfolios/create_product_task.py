@@ -6,12 +6,10 @@ import time
 import luigi
 
 from servicecatalog_factory import constants
-from servicecatalog_factory.workflow.portfolios.get_bucket_task import GetBucketTask
-from servicecatalog_factory.workflow.tasks import FactoryTask, logger
+from servicecatalog_factory.workflow.tasks import FactoryTask
 
 
 class CreateProductTask(FactoryTask):
-    # uid = luigi.Parameter()
     region = luigi.Parameter()
     name = luigi.Parameter()
     owner = luigi.Parameter(significant=False)
@@ -27,17 +25,16 @@ class CreateProductTask(FactoryTask):
     def params_for_results_display(self):
         return {
             "region": self.region,
-            # "uid": self.uid,
             "name": self.name,
+            "task_reference": self.task_reference,
         }
 
     def run(self):
-        logger_prefix = f"{self.region}-{self.name}"
         with self.regional_client("servicecatalog") as service_catalog:
             found, product_view_summary = self.check_and_update_product_if_product_exists(service_catalog)
 
             if not found:
-                logger.info(f"Not found product: {self.name}, creating")
+                self.info(f"Not found product: {self.name}, creating")
 
                 tags = [{"Key": "ServiceCatalogFactory:Actor", "Value": "Product"}] + [
                     {"Key": t.get("Key"), "Value": t.get("Value"),} for t in self.tags
@@ -75,7 +72,7 @@ class CreateProductTask(FactoryTask):
                     .get("ProductViewSummary")
                 )
                 product_id = product_view_summary.get("ProductId")
-                logger.info(f"Created product {self.name}, waiting for completion")
+                self.info(f"Created product {self.name}, waiting for completion")
                 while True:
                     time.sleep(2)
                     search_products_as_admin_response = (
@@ -87,16 +84,16 @@ class CreateProductTask(FactoryTask):
                             "ProductViewDetails"
                         )
                     ]
-                    logger.info(f"Looking for {product_id} in {products_ids}")
+                    self.info(f"Looking for {product_id} in {products_ids}")
                     if product_id in products_ids:
-                        logger.info(f"Found {product_id} ")
+                        self.info(f"Found {product_id} ")
                         break
 
             if product_view_summary is None:
-                raise Exception(f"{logger_prefix}: did not find or create a product")
+                raise Exception(f"did not find or create a product")
 
             with self.output().open("w") as f:
-                logger.info(f"{logger_prefix}: about to write! {product_view_summary}")
+                self.info(f"about to write! {product_view_summary}")
                 f.write(json.dumps(product_view_summary, indent=4, default=str,))
 
     def check_and_update_product_if_product_exists(self, service_catalog):
@@ -111,7 +108,7 @@ class CreateProductTask(FactoryTask):
             product_view_summary = product_view_details.get("ProductViewSummary")
             if product_view_summary.get("Name") == self.name:
                 found = True
-                logger.info(f"Found product: {self.name}: {product_view_summary}")
+                self.info(f"Found product: {self.name}: {product_view_summary}")
                 things_to_change = dict()
                 if product_view_summary.get("Owner") != self.owner:
                     things_to_change["Owner"] = self.owner

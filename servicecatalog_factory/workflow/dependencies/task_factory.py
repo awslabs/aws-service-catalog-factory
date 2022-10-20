@@ -59,8 +59,6 @@ def create(
                 portfolio_name=parameters_to_use.get("portfolio_name"),
                 description=parameters_to_use.get("description"),
                 provider_name=parameters_to_use.get("provider_name"),
-                # portfolio_group_name =parameters_to_use.get("tags"),
-                # display_name =parameters_to_use.get("tags"),
                 tags=parameters_to_use.get("tags"),
             )
 

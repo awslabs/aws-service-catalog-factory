@@ -9,6 +9,8 @@ from servicecatalog_factory.workflow.dependencies import section_names
 from servicecatalog_factory import constants
 from deepmerge import always_merger
 
+from servicecatalog_factory.workflow.dependencies import resources_factory
+
 
 def create_task_for_combined_pipeline(
     task_reference, category, item, name, versions, additional_dependencies, stack_name=""
@@ -573,5 +575,11 @@ def generate_task_reference(p, enabled_regions, factory_version):
     generate_tasks_for_generic_type(
         apps_path, "Apps", "app", factory_version, task_reference
     )
+
+    for _, task in task_reference.items():
+        resources = resources_factory.create(
+            task.get("section_name"), task
+        )
+        task["resources_required"] = resources
 
     return task_reference
