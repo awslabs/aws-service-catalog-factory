@@ -1,6 +1,0 @@
-[
-  {
-    "ParameterKey": "EnabledRegions",
-    "ParameterValue": {{ enabled_regions }}
-  }
-]
