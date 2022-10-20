@@ -19,49 +19,74 @@ def create(section_name, parameters_to_use):
         if status == "terminated":
             resources = []
         else:
-            resources = [] #TODO
+            resources = [
+                r.SERVICE_CATALOG_SEARCH_PRODUCTS_AS_ADMIN_PER_REGION_OF_ACCOUNT,
+                r.SERVICE_CATALOG_UPDATE_PRODUCT_PER_REGION_OF_ACCOUNT,
+                r.SERVICE_CATALOG_CREATE_PRODUCT_PER_REGION_OF_ACCOUNT,
+            ]
 
     elif section_name == section_names.CREATE_PORTFOLIO_TASK:
         if status == "terminated":
             resources = []
         else:
-            resources = []
+            resources = [
+                r.SERVICE_CATALOG_LIST_PORTFOLIOS_PER_REGION_OF_ACCOUNT,
+                r.SERVICE_CATALOG_CREATE_PORTFOLIO_PER_REGION_OF_ACCOUNT,
+            ]
 
     elif section_name == section_names.CREATE_GENERIC_COMBINED_PIPELINE_TASK:
         if status == "terminated":
             resources = []
         else:
-            resources = []
+            resources = [
+                r.CLOUDFORMATION_CREATE_OR_UPDATE_PER_REGION_OF_ACCOUNT,
+            ]
 
     elif section_name == section_names.CREATE_PORTFOLIO_ASSOCIATIONS_TASK:
         if status == "terminated":
             resources = []
         else:
-            resources = []
+            resources = [
+                r.CLOUDFORMATION_CREATE_OR_UPDATE_PER_REGION_OF_ACCOUNT,
+            ]
 
     elif section_name == section_names.CREATE_PRODUCT_ASSOCIATION_TASK:
         if status == "terminated":
             resources = []
         else:
-            resources = []
+            resources = [
+                r.SERVICE_CATALOG_LIST_PORTFOLIOS_PER_REGION_OF_ACCOUNT,
+                r.SERVICE_CATALOG_ASSOCIATE_PRODUCT_WITH_PORTFOLIO_PER_REGION_OF_ACCOUNT,
+            ]
 
     elif section_name == section_names.CREATE_LAUNCH_ROLE_NAME_CONSTRAINTS_TASK:
         if status == "terminated":
             resources = []
         else:
-            resources = []
+            resources = [
+                r.CLOUDFORMATION_CREATE_OR_UPDATE_PER_REGION_OF_ACCOUNT,
+            ]
 
     elif section_name == section_names.ENSURE_PRODUCT_VERSION_DETAILS_CORRECT_TASK:
         if status == "terminated":
             resources = []
         else:
-            resources = []
+            resources = [
+                r.SERVICE_CATALOG_LIST_PROVISIONING_ARTIFACTS_PER_REGION_OF_ACCOUNT,
+                r.SERVICE_CATALOG_UPDATE_PROVISIONING_ARTIFACT_PER_REGION_OF_ACCOUNT,
+            ]
 
     elif section_name == section_names.CREATE_CODE_REPO_TASK:
         if status == "terminated":
             resources = []
         else:
-            resources = []
+            resources = [
+                r.CODECOMMIT_GET_REPOSITORY_PER_REGION_OF_ACCOUNT,
+                r.CODECOMMIT_CREATE_REPOSITORY_PER_REGION_OF_ACCOUNT,
+                r.CODECOMMIT_GET_BRANCH_PER_REGION_OF_ACCOUNT,
+                r.CODECOMMIT_CREATE_BRANCH_PER_REGION_OF_ACCOUNT,
+                r.CODECOMMIT_CREATE_COMMIT_PER_REGION_OF_ACCOUNT,
+            ]
 
     else:
         raise Exception(f"Unknown section_name: {section_name}")

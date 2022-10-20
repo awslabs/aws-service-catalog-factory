@@ -22,11 +22,8 @@ class CreateLaunchRoleNameConstraintsTask(FactoryTask):
         tpl.description = f"Launch role constraints for {self.portfolio_name}"
         for launch_role_constraint in self.launch_role_constraints:
             portfolio_task_ref = launch_role_constraint.get("portfolio_task_ref")
-            print(f"task_reference is {self.task_reference}")
-            print(f"portfolio_task_ref is {portfolio_task_ref}")
             portfolio_task_output = self.get_output_from_reference_dependency(portfolio_task_ref)
             product_task_ref = launch_role_constraint.get("product_task_ref")
-            print(f"product_task_ref is {product_task_ref}")
             product_task_output = self.get_output_from_reference_dependency(product_task_ref)
             constraint_name = f'{portfolio_task_output.get("Id")}1{product_task_output.get("ProductId")}'.replace("-", "")
             tpl.add_resource(

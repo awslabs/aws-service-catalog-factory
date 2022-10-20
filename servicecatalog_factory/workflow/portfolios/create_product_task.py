@@ -92,9 +92,7 @@ class CreateProductTask(FactoryTask):
             if product_view_summary is None:
                 raise Exception(f"did not find or create a product")
 
-            with self.output().open("w") as f:
-                self.info(f"about to write! {product_view_summary}")
-                f.write(json.dumps(product_view_summary, indent=4, default=str,))
+            self.write_output(product_view_summary)
 
     def check_and_update_product_if_product_exists(self, service_catalog):
         search_products_as_admin_response = service_catalog.search_products_as_admin_single_page(
