@@ -18,6 +18,10 @@ logger = logging.getLogger(__file__)
 
 
 class FactoryTask(waluigi_tasks.WaluigiTaskMixin, luigi.Task):
+
+    def params_for_results_display(self):
+        return {"task_reference": self.task_reference}
+
     @property
     def factory_account_id(self):
         account_id = os.environ.get("ACCOUNT_ID", None)
@@ -62,9 +66,6 @@ class FactoryTask(waluigi_tasks.WaluigiTaskMixin, luigi.Task):
 
     def info(self, message):
         logger.info(f"{self.uid}: {message}")
-
-    def params_for_results_display(self):
-        return "Omitted"
 
     def output(self):
         return luigi.LocalTarget(f"output/{self.uid}.json")

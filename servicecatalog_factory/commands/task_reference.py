@@ -16,6 +16,7 @@ def create_task_for_combined_pipeline(
     task_reference, category, item, name, versions, additional_dependencies, stack_name=""
 ):
     return dict(
+        status=item.get("Status"),
         section_name=section_names.CREATE_GENERIC_COMBINED_PIPELINE_TASK,
         region=constants.HOME_REGION,
         task_reference=task_reference,
@@ -37,6 +38,7 @@ def create_task_for_split_pipeline(
 ):
     return dict(
         section_name=section_names.CREATE_GENERIC_COMBINED_PIPELINE_TASK,
+        status=version.get("Status"),
         region=constants.HOME_REGION,
         task_reference=task_reference,
         pipeline_type=constants.PIPELINE_MODE_SPILT,
@@ -343,7 +345,8 @@ def generate_tasks_for_portfolios(
                         elif pipeline_mode == constants.PIPELINE_MODE_COMBINED:
                             versions = list()
                             for version in product.get("Versions", []):
-                                versions.append(version)
+                                if version.get("Status") != constants.STATUS_TERMINATED:
+                                    versions.append(version)
                             task_ref = f"create-generic-combined-pipeline-product-{product_name}"
                             stack_name = f"{portfolio_name}-{product.get('Name')}"
                             task_reference[
