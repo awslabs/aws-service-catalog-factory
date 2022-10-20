@@ -1,12 +1,7 @@
+dist
 .idea
 *.iml
-venv
 .venv
-ServiceCatalogFactory
-repos
-aws-service-catalog-factory-*
-aws_service_catalog_factory.egg-info/
-dist
 __pycache__
 .coverage
 .pytest_cache
@@ -14,13 +9,7 @@ __pycache__
 output
 results
 ignored
-account-iam-terraform/
-.gitignore
-Would skip repository aws-iam-assume-roles-spoke/
-Would skip repository aws-iam-groups-security-account/
 e2e.sh
 reports
-product.template.yaml
 coverage.xml
 htmlcov
-#include sample portfolios
