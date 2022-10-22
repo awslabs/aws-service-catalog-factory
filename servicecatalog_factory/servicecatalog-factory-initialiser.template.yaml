@@ -4,7 +4,7 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: |
   Initialiser template used to bring up the install ServiceCatalog-Factory
-  {"version": "0.73.0", "framework": "servicecatalog-factory", "role": "initialiser"}
+  {"version": "0.90.0", "framework": "servicecatalog-factory", "role": "initialiser"}
 
 
 Metadata:
@@ -170,7 +170,7 @@ Resources:
       Environment:
         Type: linuxContainer
         ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/python:3.7.1
+        Image: aws/codebuild/standard:4.0
         EnvironmentVariables:
           - Name: ENABLED_REGIONS
             Type: PLAINTEXT
@@ -230,6 +230,8 @@ Resources:
           version: 0.2
           phases:
             install:
+              runtime-versions:
+                python: 3.7
               commands:
                 - pip install ${VERSION}
                 - servicecatalog-factory --info set-regions ${ENABLED_REGIONS}
