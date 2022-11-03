@@ -197,52 +197,6 @@ Resources:
           Value: "Framework"
       TimeoutInMinutes: 480
 
-  GenerateLaunchConstraintsProject:
-    Type: AWS::CodeBuild::Project
-    Properties:
-      Name: servicecatalog-product-factory-generate-launch-constraints
-      Description: "Creates launch constraints for the portfolios"
-      ServiceRole: !GetAtt BuildRole.Arn
-      Artifacts:
-        Type: CODEPIPELINE
-      Environment:
-        Type: linuxContainer
-        ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/standard:4.0
-        EnvironmentVariables:
-          - Name: PARTITION
-            Type: PLAINTEXT
-            Value: !Ref AWS::Partition
-      Source:
-        Type: CODEPIPELINE
-        BuildSpec: |
-          version: 0.2
-          phases:
-            install:
-              runtime-versions:
-                python: 3.7
-              commands:
-  {% if 'http' in VERSION %}
-                - pip install {{ VERSION }}
-  {% else %}
-                - pip install aws-service-catalog-factory=={{ VERSION }}
-  {% endif %}
-            build:
-              commands:
-                - servicecatalog-factory --info generate-launch-constraints portfolios/
-                - servicecatalog-factory --info deploy-launch-constraints
-          artifacts:
-            files:
-              - results/*/*
-              - output/*/*
-              - output/constraints/launch-role/*.template.yaml
-            name: GenerateLaunchConstraintsOutput
-          Tags:
-            - Key: "ServiceCatalogFactory:Actor"
-              Value: "Framework"
-          TimeoutInMinutes: 60
-
-
   CodePipelineTriggerRole:
     Type: AWS::IAM::Role
     Properties:
@@ -468,21 +422,7 @@ Resources:
                 - Name: Source
               OutputArtifacts:
                 - Name: BuildOutput
-        - Name: GenerateConstraints
-          Actions:
-            - Name: GenerateLaunchConstraints
-              ActionTypeId:
-                Category: Build
-                Owner: AWS
-                Version: 1
-                Provider: CodeBuild
-              Configuration:
-                ProjectName: !Ref GenerateLaunchConstraintsProject
-              RunOrder: 1
-              InputArtifacts:
-                - Name: BuildOutput
-              OutputArtifacts:
-                - Name: GeneratePortfolioConstraintsOutput
+                
       Tags:
         - Key: "ServiceCatalogFactory:Actor"
           Value: "Framework"
