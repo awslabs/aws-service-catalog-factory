@@ -177,21 +177,7 @@ Resources:
                 - Name: Source
               OutputArtifacts:
                 - Name: BuildOutput
-        - Name: GenerateConstraints
-          Actions:
-            - Name: GenerateLaunchConstraints
-              ActionTypeId:
-                Category: Build
-                Owner: AWS
-                Version: 1
-                Provider: CodeBuild
-              Configuration:
-                ProjectName: servicecatalog-product-factory-generate-launch-constraints
-              RunOrder: 1
-              InputArtifacts:
-                - Name: BuildOutput
-              OutputArtifacts:
-                - Name: GeneratePortfolioConstraintsOutput
+                
       Tags:
         - Key: "ServiceCatalogFactory:Actor"
           Value: "Framework"
