@@ -1533,7 +1533,7 @@ class PipelineTemplate(
         return tpl
 
     def is_cloudformation_based(self):
-        return self.category in ["stack", "products"]
+        return self.category in ["stack", "products", "product"]
 
     def has_a_parse_stage(self, options):
         if self.is_cloudformation_based():
