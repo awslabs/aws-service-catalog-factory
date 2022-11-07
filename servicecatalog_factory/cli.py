@@ -8,7 +8,6 @@ import yaml
 from servicecatalog_factory import environmental_variables
 from servicecatalog_factory.commands import bootstrap as bootstrap_commands
 from servicecatalog_factory.commands import configuration_management
-from servicecatalog_factory.commands import fix_issues as fix_issues_commands
 from servicecatalog_factory.commands import generate as generate_commands
 from servicecatalog_factory.commands import list_resources as list_resources_commands
 from servicecatalog_factory.commands import portfolios
@@ -531,12 +530,6 @@ def upload_config(p):
     content = open(p, "r").read()
     config = yaml.safe_load(content)
     configuration_management.upload_config(config)
-
-
-@cli.command()
-@click.argument("p", type=click.Path(exists=True))
-def fix_issues(p):
-    fix_issues_commands.fix_issues(p)
 
 
 @cli.command()
