@@ -628,19 +628,6 @@ def set_regions(regions):
 
 
 @cli.command()
-@click.argument("p", type=click.Path())
-def generate_launch_constraints(p):
-    if os.path.exists(p):
-        portfolios.generate_launch_constraints(p)
-
-
-@cli.command()
-@click.option("--partition", envvar="PARTITION")
-def deploy_launch_constraints(partition):
-    portfolios.deploy_launch_constraints(partition)
-
-
-@cli.command()
 @click.argument("pipeline-name")
 @click.argument("execution-id")
 def print_source_directory(pipeline_name, execution_id):
