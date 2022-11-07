@@ -80,7 +80,6 @@ def generate(p):
         puppet_account_id="012345678910",
     )
 
-
     table_data = [
         ["Result", "Task", "Significant Parameters", "Duration"],
     ]

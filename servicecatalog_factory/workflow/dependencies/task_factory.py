@@ -24,9 +24,7 @@ def create(
             from servicecatalog_factory.workflow.portfolios import get_bucket_task
 
             return get_bucket_task.GetBucketTask(
-                **minimum_common_parameters,
-
-                region=parameters_to_use.get("region"),
+                **minimum_common_parameters, region=parameters_to_use.get("region"),
             )
 
     elif section_name == section_names.CREATE_PRODUCT_TASK:
@@ -72,14 +70,19 @@ def create(
             if parameters_to_use.get("stack_name"):
                 stack_name = parameters_to_use.get("stack_name")
             else:
-                if parameters_to_use.get('pipeline_type') == constants.PIPELINE_MODE_COMBINED:
+                if (
+                    parameters_to_use.get("pipeline_type")
+                    == constants.PIPELINE_MODE_COMBINED
+                ):
                     stack_name = f"{parameters_to_use.get('category')}--{parameters_to_use.get('name')}"
-                elif parameters_to_use.get('pipeline_type') == constants.PIPELINE_MODE_SPILT:
+                elif (
+                    parameters_to_use.get("pipeline_type")
+                    == constants.PIPELINE_MODE_SPILT
+                ):
                     stack_name = f"{parameters_to_use.get('category')}--{parameters_to_use.get('name')}-{parameters_to_use.get('versions')[0].get('Name')}"
 
             return delete_stack_task.DeleteStackTask(
                 **minimum_common_parameters,
-
                 region=parameters_to_use.get("region"),
                 stack_name=stack_name,
             )
@@ -115,10 +118,11 @@ def create(
 
             return create_portfolio_association_task.CreatePortfolioAssociationTask(
                 **minimum_common_parameters,
-
                 region=parameters_to_use.get("region"),
                 portfolio_name=parameters_to_use.get("portfolio_name"),
-                create_portfolio_task_ref=parameters_to_use.get("create_portfolio_task_ref"),
+                create_portfolio_task_ref=parameters_to_use.get(
+                    "create_portfolio_task_ref"
+                ),
                 associations=parameters_to_use.get("associations"),
                 tags=parameters_to_use.get("tags"),
                 factory_version=factory_version,
@@ -134,10 +138,13 @@ def create(
 
             return associate_product_with_portfolio_task.AssociateProductWithPortfolioTask(
                 **minimum_common_parameters,
-
                 region=parameters_to_use.get("region"),
-                create_product_task_ref=parameters_to_use.get("create_product_task_ref"),
-                create_portfolio_task_ref=parameters_to_use.get("create_portfolio_task_ref"),
+                create_product_task_ref=parameters_to_use.get(
+                    "create_product_task_ref"
+                ),
+                create_portfolio_task_ref=parameters_to_use.get(
+                    "create_portfolio_task_ref"
+                ),
             )
 
     elif section_name == section_names.CREATE_LAUNCH_ROLE_NAME_CONSTRAINTS_TASK:
@@ -150,10 +157,11 @@ def create(
 
             return create_launch_role_name_constraints_task.CreateLaunchRoleNameConstraintsTask(
                 **minimum_common_parameters,
-
                 portfolio_name=parameters_to_use.get("portfolio_name"),
                 region=parameters_to_use.get("region"),
-                launch_role_constraints=parameters_to_use.get("launch_role_constraints"),
+                launch_role_constraints=parameters_to_use.get(
+                    "launch_role_constraints"
+                ),
             )
 
     elif section_name == section_names.ENSURE_PRODUCT_VERSION_DETAILS_CORRECT_TASK:
@@ -166,23 +174,21 @@ def create(
 
             return ensure_product_version_details_correct_task.EnsureProductVersionDetailsCorrectTask(
                 **minimum_common_parameters,
-
                 region=parameters_to_use.get("region"),
                 version=parameters_to_use.get("version"),
-                create_product_task_ref=parameters_to_use.get("create_product_task_ref"),
+                create_product_task_ref=parameters_to_use.get(
+                    "create_product_task_ref"
+                ),
             )
 
     elif section_name == section_names.CREATE_CODE_REPO_TASK:
         if status == "terminated":
             raise Exception("NOT BUILT YET")
         else:
-            from servicecatalog_factory.workflow.codecommit import (
-                create_code_repo_task,
-            )
+            from servicecatalog_factory.workflow.codecommit import create_code_repo_task
 
             return create_code_repo_task.CreateCodeRepoTask(
                 **minimum_common_parameters,
-
                 region=parameters_to_use.get("region"),
                 repository_name=parameters_to_use.get("repository_name"),
                 branch_name=parameters_to_use.get("branch_name"),

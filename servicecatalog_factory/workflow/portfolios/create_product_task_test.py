@@ -24,7 +24,6 @@ class CreateProductTaskTest(tasks_unit_tests_helper.FactoryTaskUnitTest):
 
         self.sut = self.module.CreateProductTask(
             **self.minimal_common_params,
-
             region=self.region,
             name=self.name,
             owner=self.owner,

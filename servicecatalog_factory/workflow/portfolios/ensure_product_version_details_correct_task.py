@@ -18,7 +18,9 @@ class EnsureProductVersionDetailsCorrectTask(FactoryTask):
         }
 
     def run(self):
-        create_product_task_output = self.get_output_from_reference_dependency(self.create_product_task_ref)
+        create_product_task_output = self.get_output_from_reference_dependency(
+            self.create_product_task_ref
+        )
         product_id = create_product_task_output.get("ProductId")
         product_name = create_product_task_output.get("Name")
         version_name = self.version.get("Name")

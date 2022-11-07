@@ -77,7 +77,7 @@ class WaluigiTaskMixin:
             t_reference = dependency_by_reference_params.get("task_reference")
             dependencies[t_reference] = task_factory.create(
                 self.manifest_files_path,
-                '',
+                "",
                 # self.manifest_task_reference_file_path,
                 dependency_by_reference_params,
             )

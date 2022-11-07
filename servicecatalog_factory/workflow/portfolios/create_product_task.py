@@ -31,7 +31,10 @@ class CreateProductTask(FactoryTask):
 
     def run(self):
         with self.regional_client("servicecatalog") as service_catalog:
-            found, product_view_summary = self.check_and_update_product_if_product_exists(service_catalog)
+            (
+                found,
+                product_view_summary,
+            ) = self.check_and_update_product_if_product_exists(service_catalog)
 
             if not found:
                 self.info(f"Not found product: {self.name}, creating")
@@ -101,7 +104,7 @@ class CreateProductTask(FactoryTask):
         found = False
         product_view_summary = None
         for product_view_details in search_products_as_admin_response.get(
-                "ProductViewDetails"
+            "ProductViewDetails"
         ):
             product_view_summary = product_view_details.get("ProductViewSummary")
             if product_view_summary.get("Name") == self.name:
@@ -115,12 +118,10 @@ class CreateProductTask(FactoryTask):
                 if product_view_summary.get("Distributor") != self.distributor:
                     things_to_change["Distributor"] = self.distributor
                 if (
-                        product_view_summary.get("SupportDescription")
-                        != self.support_description
+                    product_view_summary.get("SupportDescription")
+                    != self.support_description
                 ):
-                    things_to_change[
-                        "SupportDescription"
-                    ] = self.support_description
+                    things_to_change["SupportDescription"] = self.support_description
                 if product_view_summary.get("SupportEmail") != self.support_email:
                     things_to_change["SupportEmail"] = self.support_email
                 if product_view_summary.get("SupportUrl") != self.support_url:

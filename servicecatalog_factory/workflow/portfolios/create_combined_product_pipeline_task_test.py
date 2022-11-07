@@ -22,7 +22,6 @@ class CreateCombinedProductPipelineTaskTest(
 
         self.sut = self.module.CreateCombinedProductPipelineTask(
             **self.minimal_common_params,
-
             all_regions=self.all_regions,
             product=self.product,
             products_args_by_region=self.products_args_by_region,

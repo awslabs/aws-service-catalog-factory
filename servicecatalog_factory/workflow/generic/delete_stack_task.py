@@ -13,4 +13,3 @@ class DeleteStackTask(FactoryTask):
             cloudformation.ensure_deleted(StackName=self.stack_name)
 
         self.write_output_raw("{}")
-

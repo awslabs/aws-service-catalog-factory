@@ -16,8 +16,8 @@ class DeleteAVersionTaskTest(tasks_unit_tests_helper.FactoryTaskUnitTest):
 
         self.sut = self.module.DeleteAVersionTask(
             **self.minimal_common_params,
-
-            product_args=self.product_args, version=self.version
+            product_args=self.product_args,
+            version=self.version
         )
 
         self.wire_up_mocks()
