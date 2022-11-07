@@ -1,11 +1,11 @@
 #  Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
-import json
 import time
 
 import luigi
 
-from servicecatalog_factory import constants
+
+from servicecatalog_factory import constants, config
 from servicecatalog_factory.workflow.tasks import FactoryTask
 
 
@@ -50,11 +50,12 @@ class CreateProductTask(FactoryTask):
                         "Type": "CLOUD_FORMATION_TEMPLATE",
                         "Description": "Placeholder version, do not provision",
                         "Info": {
-                            "LoadTemplateFromURL": "https://{}.s3.{}.amazonaws.com/{}".format(
+                            "LoadTemplateFromURL": "https://{}.s3.{}.{}/{}".format(
                                 self.get_output_from_reference_dependency(
                                     self.get_bucket_task_ref
                                 ).get("s3_bucket_url"),
                                 constants.HOME_REGION,
+                                config.get_aws_url_suffix(),
                                 "empty.template.yaml",
                             )
                         },

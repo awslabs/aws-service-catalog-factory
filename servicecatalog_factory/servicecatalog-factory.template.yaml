@@ -121,6 +121,9 @@ Resources:
           - Name: REGION
             Type: PLAINTEXT
             Value: !Sub "${AWS::Region}"
+          - Name: AWS_URL_SUFFIX
+            Type: PLAINTEXT
+            Value: !Sub "${AWS::URLSuffix}"
       Source:
         Type: CODEPIPELINE
         BuildSpec: |

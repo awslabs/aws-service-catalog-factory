@@ -1,9 +1,10 @@
 #  Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
+import os
 
 import yaml
 from betterboto import client as betterboto_client
-from servicecatalog_factory import constants
+from servicecatalog_factory import constants, environmental_variables
 import functools
 import logging
 
@@ -75,3 +76,7 @@ def get_config():
 def get_should_pipelines_inherit_tags():
     logger.info(f"getting {constants.CONFIG_SHOULD_PIPELINES_INHERIT_TAGS}")
     return get_config().get(constants.CONFIG_SHOULD_PIPELINES_INHERIT_TAGS, True)
+
+
+def get_aws_url_suffix():
+    return os.getenv(environmental_variables.AWS_URL_SUFFIX, constants.AWS_URL_SUFFIX_DEFAULT)

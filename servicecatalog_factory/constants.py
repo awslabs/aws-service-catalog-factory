@@ -122,3 +122,5 @@ BOOTSTRAP_SECONDARY_TEMPLATE_NAME = "servicecatalog-factory-secondary"
 
 FACTORY_LOGGER_NAME = "factory-logger"
 FACTORY_SCHEDULER_LOGGER_NAME = "factory-logger-scheduler"
+
+AWS_URL_SUFFIX_DEFAULT = "amazonaws.com"
