@@ -10,33 +10,10 @@ import click
 import requests
 import yaml
 from betterboto import client as betterboto_client
-from deepmerge import always_merger
-from jinja2 import Template
-
-from servicecatalog_factory.workflow.codecommit import create_code_repo_task
-from servicecatalog_factory.workflow.portfolios import (
-    associate_product_with_portfolio_task,
-)
-from servicecatalog_factory.workflow.portfolios import (
-    create_combined_product_pipeline_task,
-)
-from servicecatalog_factory.workflow.portfolios import create_portfolio_association_task
-from servicecatalog_factory.workflow.portfolios import create_portfolio_task
-from servicecatalog_factory.workflow.portfolios import create_product_task
-from servicecatalog_factory.workflow.portfolios import create_version_pipeline_task
-from servicecatalog_factory.workflow.portfolios import (
-    create_version_pipeline_template_task,
-)
-from servicecatalog_factory.workflow.portfolios import delete_a_version_task
-from servicecatalog_factory.workflow.portfolios import delete_product_task
-from servicecatalog_factory.workflow.portfolios import (
-    ensure_product_version_details_correct_task,
-)
 from servicecatalog_factory import aws
 from servicecatalog_factory import config
 from servicecatalog_factory import constants
 from servicecatalog_factory import utils
-from servicecatalog_factory.utilities.assets import read_from_site_packages
 
 import logging
 

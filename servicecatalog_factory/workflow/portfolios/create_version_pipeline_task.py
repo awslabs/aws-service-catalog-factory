@@ -3,11 +3,7 @@
 import cfn_tools
 import luigi
 
-from servicecatalog_factory.workflow.portfolios.create_version_pipeline_template_task import (
-    CreateVersionPipelineTemplateTask,
-)
 from servicecatalog_factory.workflow.tasks import FactoryTask
-from servicecatalog_factory import constants
 
 
 class CreateVersionPipelineTask(FactoryTask):
