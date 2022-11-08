@@ -13,7 +13,7 @@ class CreatePortfolioAssociationTaskTest(tasks_unit_tests_helper.FactoryTaskUnit
     tags = []
     associations = []
     factory_version = "factory_version"
-    create_portfolio_task_ref= "create_portfolio_task_ref"
+    create_portfolio_task_ref = "create_portfolio_task_ref"
 
     def setUp(self) -> None:
         from servicecatalog_factory.workflow.portfolios import (
@@ -24,7 +24,6 @@ class CreatePortfolioAssociationTaskTest(tasks_unit_tests_helper.FactoryTaskUnit
 
         self.sut = self.module.CreatePortfolioAssociationTask(
             **self.minimal_common_params,
-
             create_portfolio_task_ref=self.create_portfolio_task_ref,
             region=self.region,
             portfolio_name=self.portfolio_name,

@@ -8,7 +8,6 @@ import yaml
 from servicecatalog_factory import environmental_variables
 from servicecatalog_factory.commands import bootstrap as bootstrap_commands
 from servicecatalog_factory.commands import configuration_management
-from servicecatalog_factory.commands import fix_issues as fix_issues_commands
 from servicecatalog_factory.commands import generate as generate_commands
 from servicecatalog_factory.commands import list_resources as list_resources_commands
 from servicecatalog_factory.commands import portfolios
@@ -534,12 +533,6 @@ def upload_config(p):
 
 
 @cli.command()
-@click.argument("p", type=click.Path(exists=True))
-def fix_issues(p):
-    fix_issues_commands.fix_issues(p)
-
-
-@cli.command()
 @click.argument("stack-name")
 def delete_stack_from_all_regions(stack_name):
     stacks.delete_stack_from_all_regions(stack_name)
@@ -625,19 +618,6 @@ def generate_terraform_template(uid, terraform_version, tf_vars):
 @click.argument("regions", nargs=-1)
 def set_regions(regions):
     configuration_management.set_regions(regions)
-
-
-@cli.command()
-@click.argument("p", type=click.Path())
-def generate_launch_constraints(p):
-    if os.path.exists(p):
-        portfolios.generate_launch_constraints(p)
-
-
-@cli.command()
-@click.option("--partition", envvar="PARTITION")
-def deploy_launch_constraints(partition):
-    portfolios.deploy_launch_constraints(partition)
 
 
 @cli.command()

@@ -4,9 +4,6 @@ import cfn_tools
 import luigi
 
 from servicecatalog_factory import constants
-from servicecatalog_factory.workflow.portfolios.create_combined_product_pipeline_template_task import (
-    CreateCombinedProductPipelineTemplateTask,
-)
 from servicecatalog_factory.workflow.tasks import FactoryTask
 
 

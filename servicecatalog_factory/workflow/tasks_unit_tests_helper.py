@@ -40,7 +40,6 @@ class FactoryTaskUnitTest(unittest.TestCase):
             manifest_files_path=self.manifest_files_path,
         )
 
-
     def wire_up_mocks(self):
         self.spoke_client_mock, self.sut.spoke_client = mocked_client()
         (

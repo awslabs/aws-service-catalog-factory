@@ -181,7 +181,9 @@ def worker_task(
                         )
                         logger.error(f"---- START OF ERROR----")
                         logger.error(f"Task {task_type}:")
-                        for l in serialisation_utils.dump(utils.unwrap(task_details)).split("\n"):
+                        for l in serialisation_utils.dump(
+                            utils.unwrap(task_details)
+                        ).split("\n"):
                             logger.error(l)
                         for l in traceback.format_exception(
                             etype=type(e), value=e, tb=e.__traceback__,

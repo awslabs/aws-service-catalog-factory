@@ -25,7 +25,6 @@ class CreateVersionPipelineTaskTest(tasks_unit_tests_helper.FactoryTaskUnitTest)
 
         self.sut = self.module.CreateVersionPipelineTask(
             **self.minimal_common_params,
-
             all_regions=self.all_regions,
             version=self.version,
             product=self.product,

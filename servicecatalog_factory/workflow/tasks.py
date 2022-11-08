@@ -18,7 +18,6 @@ logger = logging.getLogger(__file__)
 
 
 class FactoryTask(waluigi_tasks.WaluigiTaskMixin, luigi.Task):
-
     def params_for_results_display(self):
         return {"task_reference": self.task_reference}
 
@@ -80,7 +79,6 @@ class FactoryTask(waluigi_tasks.WaluigiTaskMixin, luigi.Task):
     @property
     def uid(self):
         return f"{self.__class__.__name__}/{self.task_reference}"
-
 
 
 def record_event(event_type, task, extra_event_data=None):

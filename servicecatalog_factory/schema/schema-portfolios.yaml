@@ -90,6 +90,7 @@ stage_test:
 product_without_source:
   Name: str()
   Owner: str()
+  Status: include('status', required=False)
   Description: str()
   Distributor: str()
   SupportDescription: str()
@@ -109,6 +110,7 @@ product_without_source:
 product_with_source:
   Name: str()
   Owner: str()
+  Status: include('status', required=False)
   Description: str()
   Distributor: str()
   SupportDescription: str()

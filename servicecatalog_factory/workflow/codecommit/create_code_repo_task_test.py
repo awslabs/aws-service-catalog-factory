@@ -19,7 +19,6 @@ class CreateCodeRepoTaskTest(tasks_unit_tests_helper.FactoryTaskUnitTest):
 
         self.sut = self.module.CreateCodeRepoTask(
             **self.minimal_common_params,
-
             repository_name=self.repository_name,
             region=self.region,
             branch_name=self.branch_name,

@@ -4,6 +4,7 @@
 from servicecatalog_factory.workflow.dependencies import section_names
 from servicecatalog_factory.workflow.dependencies import reservable_resources as r
 
+
 def create(section_name, parameters_to_use):
     status = parameters_to_use.get("status")
 
@@ -11,9 +12,7 @@ def create(section_name, parameters_to_use):
         if status == "terminated":
             resources = []
         else:
-            resources = [
-                r.CLOUDFORMATION_DESCRIBE_STACKS_PER_REGION_OF_ACCOUNT
-            ]
+            resources = [r.CLOUDFORMATION_DESCRIBE_STACKS_PER_REGION_OF_ACCOUNT]
 
     elif section_name == section_names.CREATE_PRODUCT_TASK:
         if status == "terminated":

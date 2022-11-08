@@ -10,6 +10,8 @@ import click
 from betterboto import client as betterboto_client
 import time
 
+from servicecatalog_factory import config
+
 
 def deploy(pipeline_name, pipeline_region, codepipeline_id, region, source_path):
     action_configuration = set_template_url_for_codepipeline_id(
@@ -109,7 +111,7 @@ def create_or_update_provisioning_artifact(
     product = action_configuration.get("NAME")
 
     bucket = action_configuration.get("BUCKET")
-    template_url = f"https://{bucket}.s3.{pipeline_region}.amazonaws.com/{action_configuration.get('TEMPLATE_URL')}"
+    template_url = f"https://{bucket}.s3.{pipeline_region}.{config.get_aws_url_suffix()}/{action_configuration.get('TEMPLATE_URL')}"
 
     with betterboto_client.ClientContextManager(
         "servicecatalog", region_name=region

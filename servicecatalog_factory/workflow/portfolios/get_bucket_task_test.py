@@ -14,9 +14,8 @@ class GetBucketTaskTest(tasks_unit_tests_helper.FactoryTaskUnitTest):
         self.module = get_bucket_task
 
         self.sut = self.module.GetBucketTask(
-            **self.minimal_common_params,
-
-            region=self.region)
+            **self.minimal_common_params, region=self.region
+        )
 
         self.wire_up_mocks()
 

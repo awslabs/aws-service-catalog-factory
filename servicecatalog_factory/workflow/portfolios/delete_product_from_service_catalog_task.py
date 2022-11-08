@@ -39,7 +39,6 @@ class DeleteProductFromServiceCatalogTask(FactoryTask):
                 self.info(f"Finished Deleting {self.name}")
         self.write_output({"found_product": found_product})
 
-
     def delete_from_service_catalog(self, product_id, service_catalog):
         list_portfolios_response = service_catalog.list_portfolios_for_product_single_page(
             ProductId=product_id,

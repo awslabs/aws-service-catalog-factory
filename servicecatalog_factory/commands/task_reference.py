@@ -13,7 +13,13 @@ from servicecatalog_factory.workflow.dependencies import resources_factory
 
 
 def create_task_for_combined_pipeline(
-    task_reference, category, item, name, versions, additional_dependencies, stack_name=""
+    task_reference,
+    category,
+    item,
+    name,
+    versions,
+    additional_dependencies,
+    stack_name="",
 ):
     return dict(
         status=item.get("Status"),
@@ -34,7 +40,13 @@ def create_task_for_combined_pipeline(
 
 
 def create_task_for_split_pipeline(
-    task_reference, category, item, name, version, additional_dependencies, stack_name=""
+    task_reference,
+    category,
+    item,
+    name,
+    version,
+    additional_dependencies,
+    stack_name="",
 ):
     return dict(
         section_name=section_names.CREATE_GENERIC_COMBINED_PIPELINE_TASK,
@@ -89,18 +101,18 @@ def generate_pipeline_task(
 
     if pipeline_mode == constants.PIPELINE_MODE_SPILT:
         for version in item.get("Versions", []):
-            task_ref = f"create-generic-split-pipeline-{category}-{name}-{version.get('Name')}"
-            task_reference[
-                task_ref
-            ] = create_task_for_split_pipeline(
+            task_ref = (
+                f"create-generic-split-pipeline-{category}-{name}-{version.get('Name')}"
+            )
+            task_reference[task_ref] = create_task_for_split_pipeline(
                 task_ref, category, item, name, version, additional_dependencies
             )
         for version_file_name in glob.glob(f"{path}/{name}/Versions/*.yaml"):
             version = yaml.safe_load(open(version_file_name, "r").read())
-            task_ref = f"create-generic-split-pipeline-{category}-{name}-{version.get('Name')}"
-            task_reference[
-                task_ref
-            ] = create_task_for_split_pipeline(
+            task_ref = (
+                f"create-generic-split-pipeline-{category}-{name}-{version.get('Name')}"
+            )
+            task_reference[task_ref] = create_task_for_split_pipeline(
                 task_ref, category, item, name, version, additional_dependencies
             )
     elif pipeline_mode == constants.PIPELINE_MODE_COMBINED:
@@ -111,9 +123,7 @@ def generate_pipeline_task(
             version = yaml.safe_load(open(version_file_name, "r").read())
             versions.append(version)
         task_ref = f"create-generic-combined-pipeline-{category}-{name}"
-        task_reference[
-            task_ref
-        ] = create_task_for_combined_pipeline(
+        task_reference[task_ref] = create_task_for_combined_pipeline(
             task_ref, category, item, name, versions, additional_dependencies
         )
 
@@ -278,27 +288,22 @@ def generate_tasks_for_portfolios(
                             )
                         )
                         launch_role_constraints_dependencies_by_reference.extend(
-                            [
-                                create_product_association_ref,
-                                create_product_task_ref,
-                            ]
+                            [create_product_association_ref, create_product_task_ref,]
                         )
 
                     for version in product.get("Versions", []):
                         # CREATE CODE REPO IF NEEDED
-                        if version.get("Source", {}).get("Configuration", {}).get("Code"):
-                            source = always_merger.merge(
-                                {}, product.get("Source", {})
-                            )
-                            always_merger.merge(
-                                source, version.get("Source", {})
-                            )
+                        if (
+                            version.get("Source", {})
+                            .get("Configuration", {})
+                            .get("Code")
+                        ):
+                            source = always_merger.merge({}, product.get("Source", {}))
+                            always_merger.merge(source, version.get("Source", {}))
                             configuration = source.get("Configuration")
                             code = configuration.get("Code")
                             t_ref = f'{section_names.CREATE_CODE_REPO_TASK}-{configuration.get("RepositoryName")}-{configuration.get("BranchName")}'
-                            task_reference[
-                                t_ref
-                            ] = dict(
+                            task_reference[t_ref] = dict(
                                 task_reference=t_ref,
                                 section_name=section_names.CREATE_CODE_REPO_TASK,
                                 dependencies_by_reference=[],
@@ -311,15 +316,13 @@ def generate_tasks_for_portfolios(
 
                         # ENSURE VERSIONS ARE UP TO DATE
                         task_ref = f"{section_names.ENSURE_PRODUCT_VERSION_DETAILS_CORRECT_TASK}-{region}-{product.get('Name')}-{version.get('Name')}"
-                        task_reference[
-                            task_ref
-                        ] = dict(
+                        task_reference[task_ref] = dict(
                             task_reference=task_ref,
                             section_name=section_names.ENSURE_PRODUCT_VERSION_DETAILS_CORRECT_TASK,
                             region=region,
                             version=version,
                             create_product_task_ref=create_product_task_ref,
-                            dependencies_by_reference = [create_product_task_ref],
+                            dependencies_by_reference=[create_product_task_ref],
                         )
 
                     if region == constants.HOME_REGION:
@@ -390,163 +393,156 @@ def generate_tasks_for_portfolios(
                         f"Product {item.get('Name')} defined within {file_name} has already been declared"
                     )
 
-                # CREATE PRODUCT
-                task_reference[create_product_task_ref] = dict(
-                    task_reference=create_product_task_ref,
-                    section_name=section_names.CREATE_PRODUCT_TASK,
-                    get_bucket_task_ref=get_bucket_task_ref,
-                    dependencies_by_reference=[get_bucket_task_ref],
-                    region=region,
-                    name=item.get("Name"),
-                    owner=item.get("Owner"),
-                    description=item.get("Description"),
-                    distributor=item.get("Distributor"),
-                    support_description=item.get("SupportDescription"),
-                    support_email=item.get("SupportEmail"),
-                    support_url=item.get("SupportUrl"),
-                    tags=item.get("Tags", []),
-                )
+                product_status = item.get("Status", constants.STATUS_DEFAULT)
 
-                for version in item.get("Versions", []):
-                    # CREATE CODE REPO IF NEEDED
-                    if version.get("Source", {}).get("Configuration", {}).get("Code"):
-                        source = always_merger.merge(
-                            {}, item.get("Source", {})
-                        )
-                        always_merger.merge(
-                            source, version.get("Source", {})
-                        )
-                        configuration = source.get("Configuration")
-                        code = configuration.get("Code")
-                        t_ref = f'{section_names.CREATE_CODE_REPO_TASK}-{configuration.get("RepositoryName")}-{configuration.get("BranchName")}'
-                        task_reference[
-                            t_ref
-                        ] = dict(
-                            task_reference=t_ref,
-                            section_name=section_names.CREATE_CODE_REPO_TASK,
-                            dependencies_by_reference=[],
-                            region=constants.HOME_REGION,
-                            repository_name=configuration.get("RepositoryName"),
-                            branch_name=configuration.get("BranchName"),
-                            bucket=code.get("S3").get("Bucket"),
-                            key=code.get("S3").get("Key"),
-                        )
-
-                    # ENSURE VERSIONS ARE UP TO DATE
-                    task_ref = f"{section_names.ENSURE_PRODUCT_VERSION_DETAILS_CORRECT_TASK}-{region}-{item.get('Name')}-{version.get('Name')}"
-                    task_reference[
-                        task_ref
-                    ] = dict(
-                        task_reference=task_ref,
-                        section_name=section_names.ENSURE_PRODUCT_VERSION_DETAILS_CORRECT_TASK,
+                if product_status == constants.STATUS_ACTIVE:
+                    # CREATE PRODUCT
+                    task_reference[create_product_task_ref] = dict(
+                        task_reference=create_product_task_ref,
+                        section_name=section_names.CREATE_PRODUCT_TASK,
+                        get_bucket_task_ref=get_bucket_task_ref,
+                        dependencies_by_reference=[get_bucket_task_ref],
                         region=region,
-                        version=version,
-                        create_product_task_ref=create_product_task_ref,
-                        dependencies_by_reference=[create_product_task_ref],
+                        name=item.get("Name"),
+                        owner=item.get("Owner"),
+                        description=item.get("Description"),
+                        distributor=item.get("Distributor"),
+                        support_description=item.get("SupportDescription"),
+                        support_email=item.get("SupportEmail"),
+                        support_url=item.get("SupportUrl"),
+                        tags=item.get("Tags", []),
                     )
 
-                if region == constants.HOME_REGION:
-                    # create_portfolio_task_ref = (
-                    #     f"create-portfolio-{portfolio_name}-{region}"
-                    # )
+                    for version in item.get("Versions", []):
+                        # CREATE CODE REPO IF NEEDED
+                        if version.get("Source", {}).get("Configuration", {}).get("Code"):
+                            source = always_merger.merge({}, item.get("Source", {}))
+                            always_merger.merge(source, version.get("Source", {}))
+                            configuration = source.get("Configuration")
+                            code = configuration.get("Code")
+                            t_ref = f'{section_names.CREATE_CODE_REPO_TASK}-{configuration.get("RepositoryName")}-{configuration.get("BranchName")}'
+                            task_reference[t_ref] = dict(
+                                task_reference=t_ref,
+                                section_name=section_names.CREATE_CODE_REPO_TASK,
+                                dependencies_by_reference=[],
+                                region=constants.HOME_REGION,
+                                repository_name=configuration.get("RepositoryName"),
+                                branch_name=configuration.get("BranchName"),
+                                bucket=code.get("S3").get("Bucket"),
+                                key=code.get("S3").get("Key"),
+                            )
 
-                    product_name = item.get("Name")
-                    pipeline_mode = item.get(
-                        "PipelineMode", constants.PIPELINE_MODE_DEFAULT
-                    )
-                    if pipeline_mode == constants.PIPELINE_MODE_SPILT:
-                        for version in item.get("Versions", []):
-                            task_ref = f"create-generic-split-pipeline-product-{product_name}-{version.get('Name')}"
-                            task_reference[
-                                task_ref
-                            ] = create_task_for_split_pipeline(
+                        # ENSURE VERSIONS ARE UP TO DATE
+                        task_ref = f"{section_names.ENSURE_PRODUCT_VERSION_DETAILS_CORRECT_TASK}-{region}-{item.get('Name')}-{version.get('Name')}"
+                        task_reference[task_ref] = dict(
+                            task_reference=task_ref,
+                            section_name=section_names.ENSURE_PRODUCT_VERSION_DETAILS_CORRECT_TASK,
+                            region=region,
+                            version=version,
+                            create_product_task_ref=create_product_task_ref,
+                            dependencies_by_reference=[create_product_task_ref],
+                        )
+
+                    if region == constants.HOME_REGION:
+                        # create_portfolio_task_ref = (
+                        #     f"create-portfolio-{portfolio_name}-{region}"
+                        # )
+
+                        product_name = item.get("Name")
+                        pipeline_mode = item.get(
+                            "PipelineMode", constants.PIPELINE_MODE_DEFAULT
+                        )
+                        if pipeline_mode == constants.PIPELINE_MODE_SPILT:
+                            for version in item.get("Versions", []):
+                                task_ref = f"create-generic-split-pipeline-product-{product_name}-{version.get('Name')}"
+                                task_reference[task_ref] = create_task_for_split_pipeline(
+                                    task_ref,
+                                    "product",
+                                    item,
+                                    product_name,
+                                    version,
+                                    [create_product_task_ref],
+                                )
+                        elif pipeline_mode == constants.PIPELINE_MODE_COMBINED:
+                            versions = list()
+                            for version in item.get("Versions", []):
+                                versions.append(version)
+                            task_ref = (
+                                f"create-generic-combined-pipeline-product-{product_name}"
+                            )
+                            task_reference[task_ref] = create_task_for_combined_pipeline(
                                 task_ref,
                                 "product",
                                 item,
                                 product_name,
-                                version,
+                                versions,
                                 [create_product_task_ref],
                             )
-                    elif pipeline_mode == constants.PIPELINE_MODE_COMBINED:
-                        versions = list()
-                        for version in item.get("Versions", []):
-                            versions.append(version)
-                        task_ref = f"create-generic-combined-pipeline-product-{product_name}"
-                        task_reference[
-                            task_ref
-                        ] = create_task_for_combined_pipeline(
-                            task_ref,
-                            "product",
-                            item,
-                            product_name,
-                            versions,
-                            [create_product_task_ref],
+
+                        else:
+                            raise Exception(f"Unsupported pipeline_mode: {pipeline_mode}")
+
+                    for portfolio_name_suffix in item.get("Portfolios", []):
+                        portfolio_name = f"{p_name}-{portfolio_name_suffix}"
+                        # GET PORTFOLIO
+                        get_portfolio_task_ref = (
+                            f"create-portfolio-{portfolio_name}-{region}"
                         )
 
-                    else:
-                        raise Exception(f"Unsupported pipeline_mode: {pipeline_mode}")
+                        # ASSOCIATE PRODUCT WITH PORTFOLIO
+                        create_product_association_ref = f"create-product-association-{portfolio_name}-{item.get('Name')}-{region}"
+                        task_reference[create_product_association_ref] = dict(
+                            task_reference=create_product_association_ref,
+                            section_name=section_names.CREATE_PRODUCT_ASSOCIATION_TASK,
+                            create_product_task_ref=create_product_task_ref,
+                            create_portfolio_task_ref=get_portfolio_task_ref,
+                            dependencies_by_reference=[
+                                create_product_task_ref,
+                                get_portfolio_task_ref,
+                            ],
+                            region=region,
+                        )
 
-                for portfolio_name_suffix in item.get("Portfolios", []):
-                    portfolio_name = f"{p_name}-{portfolio_name_suffix}"
-                    # GET PORTFOLIO
-                    get_portfolio_task_ref = (
-                        f"create-portfolio-{portfolio_name}-{region}"
-                    )
-
-                    # ASSOCIATE PRODUCT WITH PORTFOLIO
-                    create_product_association_ref = f"create-product-association-{portfolio_name}-{item.get('Name')}-{region}"
-                    task_reference[create_product_association_ref] = dict(
-                        task_reference=create_product_association_ref,
-                        section_name=section_names.CREATE_PRODUCT_ASSOCIATION_TASK,
-                        create_product_task_ref=create_product_task_ref,
-                        create_portfolio_task_ref=get_portfolio_task_ref,
-                        dependencies_by_reference=[
-                            create_product_task_ref,
-                            get_portfolio_task_ref,
-                        ],
-                        region=region,
-                    )
-
-                    # CREATE LAUNCH ROLE NAME CONSTRAINTS
-                    if (
-                        item.get("Constraints", {})
-                        .get("Launch", {})
-                        .get("LocalRoleName")
-                    ):
-                        local_role_name = (
+                        # CREATE LAUNCH ROLE NAME CONSTRAINTS
+                        if (
                             item.get("Constraints", {})
                             .get("Launch", {})
                             .get("LocalRoleName")
-                        )
-                        launch_role_name_constraint_task_ref = f"create-launch-role-name-constraint-{portfolio_name}-{region}"
-                        if not task_reference.get(launch_role_name_constraint_task_ref):
-                            task_reference[launch_role_name_constraint_task_ref] = dict(
-                                portfolio_name=portfolio_name,
-                                task_reference=launch_role_name_constraint_task_ref,
-                                section_name=section_names.CREATE_LAUNCH_ROLE_NAME_CONSTRAINTS_TASK,
-                                launch_role_constraints=[],
-                                dependencies_by_reference=[],
-                                region=region,
+                        ):
+                            local_role_name = (
+                                item.get("Constraints", {})
+                                .get("Launch", {})
+                                .get("LocalRoleName")
                             )
-                        task_reference[launch_role_name_constraint_task_ref][
-                            "launch_role_constraints"
-                        ].append(
-                            dict(
-                                portfolio_task_ref=get_portfolio_task_ref,
-                                product_task_ref=create_product_task_ref,
-                                local_role_name=local_role_name,
+                            launch_role_name_constraint_task_ref = f"create-launch-role-name-constraint-{portfolio_name}-{region}"
+                            if not task_reference.get(launch_role_name_constraint_task_ref):
+                                task_reference[launch_role_name_constraint_task_ref] = dict(
+                                    portfolio_name=portfolio_name,
+                                    task_reference=launch_role_name_constraint_task_ref,
+                                    section_name=section_names.CREATE_LAUNCH_ROLE_NAME_CONSTRAINTS_TASK,
+                                    launch_role_constraints=[],
+                                    dependencies_by_reference=[],
+                                    region=region,
+                                )
+                            task_reference[launch_role_name_constraint_task_ref][
+                                "launch_role_constraints"
+                            ].append(
+                                dict(
+                                    portfolio_task_ref=get_portfolio_task_ref,
+                                    product_task_ref=create_product_task_ref,
+                                    local_role_name=local_role_name,
+                                )
                             )
-                        )
-                        task_reference[launch_role_name_constraint_task_ref][
-                            "dependencies_by_reference"
-                        ].extend(
-                            [
-                                # create_portfolio_task_ref,
-                                f"create-portfolio-{portfolio_name}-{region}",
-                                create_product_association_ref,
-                                create_product_task_ref,
-                            ]
-                        )
+                            task_reference[launch_role_name_constraint_task_ref][
+                                "dependencies_by_reference"
+                            ].extend(
+                                [
+                                    # create_portfolio_task_ref,
+                                    f"create-portfolio-{portfolio_name}-{region}",
+                                    create_product_association_ref,
+                                    create_product_task_ref,
+                                ]
+                            )
 
     return task_reference
 
@@ -585,9 +581,7 @@ def generate_task_reference(p, enabled_regions, factory_version):
     )
 
     for _, task in task_reference.items():
-        resources = resources_factory.create(
-            task.get("section_name"), task
-        )
+        resources = resources_factory.create(task.get("section_name"), task)
         task["resources_required"] = resources
 
     return task_reference

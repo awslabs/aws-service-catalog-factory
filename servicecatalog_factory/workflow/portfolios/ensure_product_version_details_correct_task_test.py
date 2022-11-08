@@ -13,7 +13,6 @@ class EnsureProductVersionDetailsCorrectTest(
     version = dict()
     create_product_task_ref = "create_product_task_ref"
 
-
     def setUp(self) -> None:
         from servicecatalog_factory.workflow.portfolios import (
             ensure_product_version_details_correct_task,
@@ -23,8 +22,9 @@ class EnsureProductVersionDetailsCorrectTest(
 
         self.sut = self.module.EnsureProductVersionDetailsCorrectTask(
             **self.minimal_common_params,
-
-            region=self.region, version=self.version, create_product_task_ref=self.create_product_task_ref
+            region=self.region,
+            version=self.version,
+            create_product_task_ref=self.create_product_task_ref
         )
 
         self.wire_up_mocks()

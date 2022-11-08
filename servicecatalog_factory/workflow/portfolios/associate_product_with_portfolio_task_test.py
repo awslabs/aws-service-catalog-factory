@@ -21,7 +21,6 @@ class AssociateProductWithPortfolioTaskTest(
 
         self.sut = self.module.AssociateProductWithPortfolioTask(
             **self.minimal_common_params,
-
             region=self.region,
             create_product_task_ref=self.create_product_task_ref,
             create_portfolio_task_ref=self.create_portfolio_task_ref,

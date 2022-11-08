@@ -29,7 +29,9 @@ class CreatePortfolioAssociationTask(FactoryTask):
 
     def run(self):
         with self.regional_client("cloudformation") as cloudformation:
-            create_portfolio_task_output = self.get_output_from_reference_dependency(self.create_portfolio_task_ref)
+            create_portfolio_task_output = self.get_output_from_reference_dependency(
+                self.create_portfolio_task_ref
+            )
             template = utils.ENV.get_template(constants.ASSOCIATIONS)
             rendered = template.render(
                 FACTORY_VERSION=self.factory_version,

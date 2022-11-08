@@ -193,7 +193,7 @@ class TestTemplateMixin:
                     Type=constants.ENVIRONMENT_TYPE_DEFAULT,
                     EnvironmentVariables=[
                         codebuild.EnvironmentVariable(
-                            Name="AWS_URLSUFFIX",
+                            Name="AWS_URL_SUFFIX",
                             Type="PLAINTEXT",
                             Value=t.Ref("AWS::URLSuffix"),
                         ),
@@ -437,7 +437,7 @@ class TestTemplateMixin:
                         + [
                             "export FactoryTemplateValidateBucket=$(aws cloudformation list-stack-resources --stack-name servicecatalog-factory --query 'StackResourceSummaries[?LogicalResourceId==`FactoryTemplateValidateBucket`].PhysicalResourceId' --output text)",
                             "aws s3 cp $CATEGORY.template.$TEMPLATE_FORMAT s3://$FactoryTemplateValidateBucket/$CODEBUILD_BUILD_ID.$TEMPLATE_FORMAT",
-                            "aws cloudformation validate-template --template-url https://$FactoryTemplateValidateBucket.s3.$AWS_REGION.$AWS_URLSUFFIX/$CODEBUILD_BUILD_ID.$TEMPLATE_FORMAT",
+                            "aws cloudformation validate-template --template-url https://$FactoryTemplateValidateBucket.s3.$AWS_REGION.$AWS_URL_SUFFIX/$CODEBUILD_BUILD_ID.$TEMPLATE_FORMAT",
                         ]
                     },
                 ),
@@ -1211,6 +1211,11 @@ class DeployTemplateMixin:
                         ),
                         codebuild.EnvironmentVariable(
                             Name="SOURCE_PATH", Type="PLAINTEXT", Value=".",
+                        ),
+                        codebuild.EnvironmentVariable(
+                            Name="AWS_URL_SUFFIX",
+                            Type="PLAINTEXT",
+                            Value=t.Ref("AWS::URLSuffix"),
                         ),
                     ],
                 ),

@@ -26,10 +26,13 @@ class AssociateProductWithPortfolioTask(FactoryTask):
             "create_portfolio_task_ref": self.create_portfolio_task_ref,
         }
 
-
     def run(self):
-        create_portfolio_task_output = self.get_output_from_reference_dependency(self.create_portfolio_task_ref)
-        create_product_task_output = self.get_output_from_reference_dependency(self.create_product_task_ref)
+        create_portfolio_task_output = self.get_output_from_reference_dependency(
+            self.create_portfolio_task_ref
+        )
+        create_product_task_output = self.get_output_from_reference_dependency(
+            self.create_product_task_ref
+        )
 
         portfolio_id = create_portfolio_task_output.get("Id")
         product_id = create_product_task_output.get("ProductId")
