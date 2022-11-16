@@ -79,4 +79,6 @@ def get_should_pipelines_inherit_tags():
 
 
 def get_aws_url_suffix():
-    return os.getenv(environmental_variables.AWS_URL_SUFFIX, constants.AWS_URL_SUFFIX_DEFAULT)
+    return os.getenv(
+        environmental_variables.AWS_URL_SUFFIX, constants.AWS_URL_SUFFIX_DEFAULT
+    )

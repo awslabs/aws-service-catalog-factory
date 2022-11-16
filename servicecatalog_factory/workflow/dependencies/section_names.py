@@ -5,6 +5,8 @@
 GET_BUCKET = "get-bucket"
 CREATE_PRODUCT_TASK = "create-product-task"
 CREATE_PORTFOLIO_TASK = "create-portfolio-task"
+CREATE_TAG_OPTION = "create-tag-option"
+ASSOCIATE_TAG_OPTION = "associate-tag-option"
 CREATE_GENERIC_COMBINED_PIPELINE_TASK = "create-generic-combined-pipeline-task"
 CREATE_PORTFOLIO_ASSOCIATIONS_TASK = "create-portfolio-associations-task"
 CREATE_PRODUCT_ASSOCIATION_TASK = "create-product-association-task"

@@ -216,6 +216,34 @@ def generate_tasks_for_portfolios(
                     tags=item.get("Tags", []),
                 )
 
+                for tag_option in item.get("TagOptions", []):
+                    tag_option_key = tag_option.get("Key")
+                    tag_option_value = tag_option.get("Value")
+
+                    create_tag_option_task_ref = f"create-tag-option-{region}-{tag_option_key}-{tag_option_value}"
+                    if not task_reference.get(create_tag_option_task_ref):
+                        task_reference[create_tag_option_task_ref] = dict(
+                            task_reference=create_tag_option_task_ref,
+                            section_name=section_names.CREATE_TAG_OPTION,
+                            region=region,
+                            dependencies_by_reference=[],
+                            tag_option_key=tag_option_key,
+                            tag_option_value=tag_option_value,
+                        )
+
+                    associate_tag_option_task_ref = f"associate-tag-option-{portfolio_name}-{region}--{tag_option_key}-{tag_option_value}"
+                    task_reference[associate_tag_option_task_ref] = dict(
+                        task_reference=associate_tag_option_task_ref,
+                        section_name=section_names.ASSOCIATE_TAG_OPTION,
+                        region=region,
+                        dependencies_by_reference=[
+                            create_portfolio_task_ref,
+                            create_tag_option_task_ref,
+                        ],
+                        create_portfolio_task_ref=create_portfolio_task_ref,
+                        create_tag_option_task_ref=create_tag_option_task_ref,
+                    )
+
                 # ADD ASSOCIATIONS FOR THE PORTFOLIO
                 if item.get("Associations"):
                     task_reference[
@@ -257,6 +285,34 @@ def generate_tasks_for_portfolios(
                         support_url=product.get("SupportUrl"),
                         tags=product.get("Tags", []) + item.get("Tags", []),
                     )
+
+                    for tag_option in product.get("TagOptions", []):
+                        tag_option_key = tag_option.get("Key")
+                        tag_option_value = tag_option.get("Value")
+
+                        create_tag_option_task_ref = f"create-tag-option-{region}-{tag_option_key}-{tag_option_value}"
+                        if not task_reference.get(create_tag_option_task_ref):
+                            task_reference[create_tag_option_task_ref] = dict(
+                                task_reference=create_tag_option_task_ref,
+                                section_name=section_names.CREATE_TAG_OPTION,
+                                region=region,
+                                dependencies_by_reference=[],
+                                tag_option_key=tag_option_key,
+                                tag_option_value=tag_option_value,
+                            )
+
+                        associate_tag_option_task_ref = f"associate-tag-option-{portfolio_name}-{product.get('Name')}-{region}--{tag_option_key}-{tag_option_value}"
+                        task_reference[associate_tag_option_task_ref] = dict(
+                            task_reference=associate_tag_option_task_ref,
+                            section_name=section_names.ASSOCIATE_TAG_OPTION,
+                            region=region,
+                            dependencies_by_reference=[
+                                create_product_task_ref,
+                                create_tag_option_task_ref,
+                            ],
+                            create_product_task_ref=create_product_task_ref,
+                            create_tag_option_task_ref=create_tag_option_task_ref,
+                        )
 
                     # ASSOCIATE PRODUCT WITH PORTFOLIO
                     create_product_association_ref = f"create-product-association-{portfolio_name}-{product.get('Name')}-{region}"
@@ -413,9 +469,41 @@ def generate_tasks_for_portfolios(
                         tags=item.get("Tags", []),
                     )
 
+                    for tag_option in item.get("TagOptions", []):
+                        tag_option_key = tag_option.get("Key")
+                        tag_option_value = tag_option.get("Value")
+
+                        create_tag_option_task_ref = f"create-tag-option-{region}-{tag_option_key}-{tag_option_value}"
+                        if not task_reference.get(create_tag_option_task_ref):
+                            task_reference[create_tag_option_task_ref] = dict(
+                                task_reference=create_tag_option_task_ref,
+                                section_name=section_names.CREATE_TAG_OPTION,
+                                region=region,
+                                dependencies_by_reference=[],
+                                tag_option_key=tag_option_key,
+                                tag_option_value=tag_option_value,
+                            )
+
+                        associate_tag_option_task_ref = f"associate-tag-option-{item.get('Name')}-{region}--{tag_option_key}-{tag_option_value}"
+                        task_reference[associate_tag_option_task_ref] = dict(
+                            task_reference=associate_tag_option_task_ref,
+                            section_name=section_names.ASSOCIATE_TAG_OPTION,
+                            region=region,
+                            dependencies_by_reference=[
+                                create_product_task_ref,
+                                create_tag_option_task_ref,
+                            ],
+                            create_product_task_ref=create_product_task_ref,
+                            create_tag_option_task_ref=create_tag_option_task_ref,
+                        )
+
                     for version in item.get("Versions", []):
                         # CREATE CODE REPO IF NEEDED
-                        if version.get("Source", {}).get("Configuration", {}).get("Code"):
+                        if (
+                            version.get("Source", {})
+                            .get("Configuration", {})
+                            .get("Code")
+                        ):
                             source = always_merger.merge({}, item.get("Source", {}))
                             always_merger.merge(source, version.get("Source", {}))
                             configuration = source.get("Configuration")
@@ -455,7 +543,9 @@ def generate_tasks_for_portfolios(
                         if pipeline_mode == constants.PIPELINE_MODE_SPILT:
                             for version in item.get("Versions", []):
                                 task_ref = f"create-generic-split-pipeline-product-{product_name}-{version.get('Name')}"
-                                task_reference[task_ref] = create_task_for_split_pipeline(
+                                task_reference[
+                                    task_ref
+                                ] = create_task_for_split_pipeline(
                                     task_ref,
                                     "product",
                                     item,
@@ -467,10 +557,10 @@ def generate_tasks_for_portfolios(
                             versions = list()
                             for version in item.get("Versions", []):
                                 versions.append(version)
-                            task_ref = (
-                                f"create-generic-combined-pipeline-product-{product_name}"
-                            )
-                            task_reference[task_ref] = create_task_for_combined_pipeline(
+                            task_ref = f"create-generic-combined-pipeline-product-{product_name}"
+                            task_reference[
+                                task_ref
+                            ] = create_task_for_combined_pipeline(
                                 task_ref,
                                 "product",
                                 item,
@@ -480,7 +570,9 @@ def generate_tasks_for_portfolios(
                             )
 
                         else:
-                            raise Exception(f"Unsupported pipeline_mode: {pipeline_mode}")
+                            raise Exception(
+                                f"Unsupported pipeline_mode: {pipeline_mode}"
+                            )
 
                     for portfolio_name_suffix in item.get("Portfolios", []):
                         portfolio_name = f"{p_name}-{portfolio_name_suffix}"
@@ -515,8 +607,12 @@ def generate_tasks_for_portfolios(
                                 .get("LocalRoleName")
                             )
                             launch_role_name_constraint_task_ref = f"create-launch-role-name-constraint-{portfolio_name}-{region}"
-                            if not task_reference.get(launch_role_name_constraint_task_ref):
-                                task_reference[launch_role_name_constraint_task_ref] = dict(
+                            if not task_reference.get(
+                                launch_role_name_constraint_task_ref
+                            ):
+                                task_reference[
+                                    launch_role_name_constraint_task_ref
+                                ] = dict(
                                     portfolio_name=portfolio_name,
                                     task_reference=launch_role_name_constraint_task_ref,
                                     section_name=section_names.CREATE_LAUNCH_ROLE_NAME_CONSTRAINTS_TASK,
