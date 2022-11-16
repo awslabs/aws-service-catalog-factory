@@ -14,7 +14,7 @@ portfolio:
   Tags: list(include('tag'), required=False)
   Components: list(include('product'), required=False)
   Products: list(include('product'), required=False)
-  TagOptions: list(str(), required=False)
+  TagOptions: list(include('tag'), required=False)
 
 tag:
   Key: str()
@@ -107,7 +107,7 @@ product_without_source:
   Versions: list(include('version_with_source'), required=False)
   Portfolios: list(required=False)
   Constraints: include('constraints', required=False)
-  TagOptions: list(str(), required=False)
+  TagOptions: list(include('tag'), required=False)
 
 product_with_source:
   Name: str()
@@ -128,7 +128,7 @@ product_with_source:
   Versions: list(include('version'), required=False)
   Portfolios: list(required=False)
   Constraints: include('constraints', required=False)
-  TagOptions: list(str(), required=False)
+  TagOptions: list(include('tag'), required=False)
 
 constraints:
   Launch: include('launch')
