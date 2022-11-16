@@ -195,5 +195,42 @@ def create(
                 bucket=parameters_to_use.get("bucket"),
                 key=parameters_to_use.get("key"),
             )
+
+    elif section_name == section_names.CREATE_TAG_OPTION:
+        if status == "terminated":
+            raise Exception("NOT BUILT YET")
+        else:
+            from servicecatalog_factory.workflow.portfolios import (
+                create_tag_option_task,
+            )
+
+            return create_tag_option_task.CreateTagOptionTask(
+                **minimum_common_parameters,
+                region=parameters_to_use.get("region"),
+                tag_option_key=parameters_to_use.get("tag_option_key"),
+                tag_option_value=parameters_to_use.get("tag_option_value"),
+            )
+
+    elif section_name == section_names.ASSOCIATE_TAG_OPTION:
+        if status == "terminated":
+            raise Exception("NOT BUILT YET")
+        else:
+            from servicecatalog_factory.workflow.portfolios import (
+                associate_tag_option_task,
+            )
+
+            return associate_tag_option_task.AssociateTagOptionTask(
+                **minimum_common_parameters,
+                region=parameters_to_use.get("region"),
+                create_portfolio_task_ref=parameters_to_use.get(
+                    "create_portfolio_task_ref"
+                ),
+                create_product_task_ref=parameters_to_use.get(
+                    "create_product_task_ref"
+                ),
+                create_tag_option_task_ref=parameters_to_use.get(
+                    "create_tag_option_task_ref"
+                ),
+            )
     else:
         raise Exception(f"Unknown section_name: {section_name}")

@@ -87,6 +87,22 @@ def create(section_name, parameters_to_use):
                 r.CODECOMMIT_CREATE_COMMIT_PER_REGION_OF_ACCOUNT,
             ]
 
+    elif section_name == section_names.CREATE_TAG_OPTION:
+        if status == "terminated":
+            resources = []
+        else:
+            resources = [
+                r.SERVICE_CATALOG_CREATE_TAG_OPTION_PER_REGION_OF_ACCOUNT,
+            ]
+
+    elif section_name == section_names.ASSOCIATE_TAG_OPTION:
+        if status == "terminated":
+            resources = []
+        else:
+            resources = [
+                r.SERVICE_CATALOG_ASSOCIATE_TAG_OPTION_PER_REGION_OF_ACCOUNT,
+            ]
+
     else:
         raise Exception(f"Unknown section_name: {section_name}")
 
