@@ -28,7 +28,6 @@ class EnsureProductVersionDetailsCorrectTask(FactoryTask):
 
         with self.regional_client("servicecatalog") as service_catalog:
             response = service_catalog.list_provisioning_artifacts(ProductId=product_id)
-            logger.info("Checking through: {}".format(response))
             for provisioning_artifact_detail in response.get(
                 "ProvisioningArtifactDetails", []
             ):

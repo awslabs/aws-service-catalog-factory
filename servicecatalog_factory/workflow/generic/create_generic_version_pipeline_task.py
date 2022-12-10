@@ -1,7 +1,7 @@
 #  Copyright 2021 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 from servicecatalog_factory import constants
-from servicecatalog_factory.template_builder import pipeline_template_builder
+from servicecatalog_factory.template_builder.pipeline import pipeline_template_builder
 from servicecatalog_factory.workflow import tasks
 import luigi
 
