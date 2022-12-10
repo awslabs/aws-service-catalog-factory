@@ -10,8 +10,13 @@ from troposphere import codepipeline, codebuild
 from servicecatalog_factory import config
 from servicecatalog_factory import constants
 from servicecatalog_factory.template_builder import base_template, shared_resources
-from servicecatalog_factory.template_builder.pipeline.utils import translate_category, is_for_single_version
-from servicecatalog_factory.template_builder.troposphere_contstants import codebuild as codebuild_troposphere_constants
+from servicecatalog_factory.template_builder.pipeline.utils import (
+    translate_category,
+    is_for_single_version,
+)
+from servicecatalog_factory.template_builder.troposphere_contstants import (
+    codebuild as codebuild_troposphere_constants,
+)
 
 
 class DeployTemplateMixin:
@@ -135,9 +140,7 @@ class DeployTemplateMixin:
                         ),
                     ],
                 ),
-                Source=codebuild.Source(
-                    BuildSpec=build_spec, Type="CODEPIPELINE",
-                ),
+                Source=codebuild.Source(BuildSpec=build_spec, Type="CODEPIPELINE",),
                 Description=t.Sub("build project"),
             )
         )

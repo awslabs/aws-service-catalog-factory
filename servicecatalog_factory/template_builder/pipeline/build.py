@@ -9,7 +9,9 @@ from troposphere import codepipeline, codebuild
 from servicecatalog_factory import constants
 from servicecatalog_factory.template_builder import base_template
 from servicecatalog_factory.template_builder.pipeline.utils import translate_category
-from servicecatalog_factory.template_builder.troposphere_contstants import codebuild as codebuild_troposphere_constants
+from servicecatalog_factory.template_builder.troposphere_contstants import (
+    codebuild as codebuild_troposphere_constants,
+)
 
 
 class BuildTemplateMixin:

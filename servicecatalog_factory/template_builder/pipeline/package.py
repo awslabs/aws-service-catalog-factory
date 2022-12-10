@@ -12,8 +12,13 @@ from servicecatalog_factory import config
 from servicecatalog_factory import constants
 from servicecatalog_factory import utils
 from servicecatalog_factory.template_builder import base_template
-from servicecatalog_factory.template_builder.pipeline.utils import translate_category, is_for_single_version
-from servicecatalog_factory.template_builder.troposphere_contstants import codebuild as codebuild_troposphere_constants
+from servicecatalog_factory.template_builder.pipeline.utils import (
+    translate_category,
+    is_for_single_version,
+)
+from servicecatalog_factory.template_builder.troposphere_contstants import (
+    codebuild as codebuild_troposphere_constants,
+)
 
 
 class PackageTemplateMixin:
@@ -162,9 +167,7 @@ class PackageTemplateMixin:
                             f"aws cloudformation package --region {region} --template $(pwd)/$CATEGORY.template.$TEMPLATE_FORMAT --s3-bucket sc-factory-artifacts-$ACCOUNT_ID-{region} --s3-prefix $STACK_NAME --output-template-file $CATEGORY.template-{region}.$TEMPLATE_FORMAT"
                             for region in all_regions
                         ]
-                        + [
-                             f"zip -r $CATEGORY.zip $PWD/*",
-                        ],
+                        + [f"zip -r $CATEGORY.zip $PWD/*",],
                     },
                 },
                 "artifacts": {

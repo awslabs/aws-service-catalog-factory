@@ -8,8 +8,12 @@ from troposphere import codepipeline
 from servicecatalog_factory.template_builder import base_template
 from servicecatalog_factory.template_builder.pipeline.build import BuildTemplateMixin
 from servicecatalog_factory.template_builder.pipeline.deploy import DeployTemplateMixin
-from servicecatalog_factory.template_builder.pipeline.package import PackageTemplateMixin
-from servicecatalog_factory.template_builder.pipeline.source import get_source_action_for_source
+from servicecatalog_factory.template_builder.pipeline.package import (
+    PackageTemplateMixin,
+)
+from servicecatalog_factory.template_builder.pipeline.source import (
+    get_source_action_for_source,
+)
 from servicecatalog_factory.template_builder.pipeline.test import TestTemplateMixin
 
 
