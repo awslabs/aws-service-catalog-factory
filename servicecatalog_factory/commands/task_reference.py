@@ -596,7 +596,10 @@ def generate_tasks_for_product(
                     else:
                         portfolio_name = f"{p_name}-{portfolio_name_suffix}"
                 else:
-                    portfolio_name = portfolio_name_suffix.get("PortfolioName", f"{portfolio_name_suffix.get('PortfolioGroupName')}-{portfolio_name_suffix.get('DisplayName')}")
+                    portfolio_name = portfolio_name_suffix.get(
+                        "PortfolioName",
+                        f"{portfolio_name_suffix.get('PortfolioGroupName')}-{portfolio_name_suffix.get('DisplayName')}",
+                    )
                 # GET PORTFOLIO
                 get_portfolio_task_ref = f"create-portfolio-{portfolio_name}-{region}"
 
