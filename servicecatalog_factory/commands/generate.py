@@ -50,6 +50,7 @@ def generate(p):
     if not os.path.exists(f"{p}/tasks"):
         os.makedirs(f"{p}/tasks")
     for t_name, task in task_reference.items():
+        print(t_name)
         task_output_file_path = f"{p}/tasks/{utils.escape(t_name)}.json"
         task_output_content = serialisation_utils.dump_as_json(task)
         open(task_output_file_path, "w").write(task_output_content)

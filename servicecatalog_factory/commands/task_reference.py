@@ -590,10 +590,13 @@ def generate_tasks_for_product(
                     raise Exception(f"Unsupported pipeline_mode: {pipeline_mode}")
 
             for portfolio_name_suffix in product_details.get("Portfolios", []):
-                if p_name == "":
-                    portfolio_name = portfolio_name_suffix
+                if isinstance(portfolio_name_suffix, str):
+                    if p_name == "":
+                        portfolio_name = portfolio_name_suffix
+                    else:
+                        portfolio_name = f"{p_name}-{portfolio_name_suffix}"
                 else:
-                    portfolio_name = f"{p_name}-{portfolio_name_suffix}"
+                    portfolio_name = portfolio_name_suffix.get("PortfolioName", f"{portfolio_name_suffix.get('PortfolioGroupName')}-{portfolio_name_suffix.get('DisplayName')}")
                 # GET PORTFOLIO
                 get_portfolio_task_ref = f"create-portfolio-{portfolio_name}-{region}"
 
