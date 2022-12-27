@@ -1,4 +1,4 @@
 sphinx==2.0.0
 recommonmark==0.5.0
-setuptools==57.5.0
+setuptools==65.5.1
 aws-service-catalog-factory
