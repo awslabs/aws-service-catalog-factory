@@ -180,10 +180,10 @@ def generate_tasks_for_portfolios(
                                 por["Products"] = list()
                             por["Products"].append(pro)
                 for external_version_file in glob.glob(
-                    f"{path}/{p_name}/Portfolios/{portfolio_name}/Products/*/Versions/*.yaml"
+                    f"{path}/{p_name}/Portfolios/{portfolio_name}/Products/*/Versions/*/*.yaml"
                 ):
-                    version_name = os.path.basename(external_version_file)[0:-5]
-                    product_name = external_version_file.split("/")[-3]
+                    version_name = external_version_file.split("/")[-2]
+                    product_name = external_version_file.split("/")[-4]
                     for por in file[item_collection_name]:
                         if por.get("DisplayName") == portfolio_name:
                             for pro in por.get("Products", []) + por.get(
