@@ -204,6 +204,7 @@ def get_resources() -> list:
                                 "build": {
                                     "commands": [
                                         "cd $SOURCE_PATH",
+                                        "export RUBYOPT='-KU -E utf-8:utf-8'",
                                         "cfn_nag_scan --input-path ./$CATEGORY.template.$TEMPLATE_FORMAT",
                                     ]
                                 },
