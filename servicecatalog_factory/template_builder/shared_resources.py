@@ -186,6 +186,9 @@ def get_resources() -> list:
                     codebuild.EnvironmentVariable(
                         Name="SOURCE_PATH", Type="PLAINTEXT", Value=".",
                     ),
+                    codebuild.EnvironmentVariable(
+                        Name="RUBYOPT", Type="PLAINTEXT", Value="-KU -E utf-8:utf-8",
+                    ),
                 ],
             ),
             Source=codebuild.Source(

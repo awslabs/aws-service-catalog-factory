@@ -34,7 +34,7 @@ def create_cdk_pipeline(
         t.Parameter(
             "CDKSupportCDKDeployImage",
             Type="String",
-            Default="aws/codebuild/standard:4.0",
+            Default="aws/codebuild/standard:5.0",
         )
     )
     template.add_parameter(
