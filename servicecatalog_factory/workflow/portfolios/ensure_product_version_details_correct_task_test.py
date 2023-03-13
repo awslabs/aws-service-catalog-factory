@@ -2,6 +2,8 @@
 #  SPDX-License-Identifier: Apache-2.0
 
 from unittest import skip
+
+from servicecatalog_factory import constants
 from servicecatalog_factory.workflow import tasks_unit_tests_helper
 
 
@@ -9,9 +11,10 @@ class EnsureProductVersionDetailsCorrectTest(
     tasks_unit_tests_helper.FactoryTaskUnitTest
 ):
 
-    region = "rergion"
     version = dict()
+    region = "region"
     create_product_task_ref = "create_product_task_ref"
+    status = constants.STATUS_ACTIVE
 
     def setUp(self) -> None:
         from servicecatalog_factory.workflow.portfolios import (
@@ -24,6 +27,7 @@ class EnsureProductVersionDetailsCorrectTest(
             **self.minimal_common_params,
             region=self.region,
             version=self.version,
+            status=self.status,
             create_product_task_ref=self.create_product_task_ref
         )
 
@@ -32,7 +36,7 @@ class EnsureProductVersionDetailsCorrectTest(
     def test_params_for_results_display(self):
         # setup
         expected_result = {
-            "region": self.region,
+            "status": self.status,
             "task_reference": self.task_reference,
         }
 
