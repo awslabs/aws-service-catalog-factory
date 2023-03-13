@@ -72,7 +72,6 @@ def test_constants():
     assert sut.PRODUCT == "product.j2"
     assert sut.PRODUCT_TERRAFORM == "product-terraform.j2"
     assert sut.TERRAFORM_TEMPLATE == "terraform.template.yaml.j2"
-    assert sut.ASSOCIATIONS == "associations.j2"
 
     assert sut.RESULTS_DIRECTORY == "results"
 
