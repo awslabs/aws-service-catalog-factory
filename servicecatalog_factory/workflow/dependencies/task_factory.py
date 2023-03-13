@@ -114,7 +114,7 @@ def create(
                 create_portfolio_association_task,
             )
 
-            factory_version = "XXX"  # TODO implement or remove
+            factory_version = constants.VERSION
 
             return create_portfolio_association_task.CreatePortfolioAssociationTask(
                 **minimum_common_parameters,
