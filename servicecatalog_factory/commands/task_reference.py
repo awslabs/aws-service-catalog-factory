@@ -592,6 +592,7 @@ def generate_tasks_for_product(
                     section_name=section_names.ENSURE_PRODUCT_VERSION_DETAILS_CORRECT_TASK,
                     region=region,
                     version=version,
+                    status=version.get("Status", constants.STATUS_ACTIVE),
                     create_product_task_ref=create_product_task_ref,
                     dependencies_by_reference=[create_product_task_ref],
                 )

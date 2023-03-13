@@ -165,21 +165,17 @@ def create(
             )
 
     elif section_name == section_names.ENSURE_PRODUCT_VERSION_DETAILS_CORRECT_TASK:
-        if status == "terminated":
-            raise Exception("NOT BUILT YET")
-        else:
-            from servicecatalog_factory.workflow.portfolios import (
-                ensure_product_version_details_correct_task,
-            )
+        from servicecatalog_factory.workflow.portfolios import (
+            ensure_product_version_details_correct_task,
+        )
 
-            return ensure_product_version_details_correct_task.EnsureProductVersionDetailsCorrectTask(
-                **minimum_common_parameters,
-                region=parameters_to_use.get("region"),
-                version=parameters_to_use.get("version"),
-                create_product_task_ref=parameters_to_use.get(
-                    "create_product_task_ref"
-                ),
-            )
+        return ensure_product_version_details_correct_task.EnsureProductVersionDetailsCorrectTask(
+            **minimum_common_parameters,
+            region=parameters_to_use.get("region"),
+            status=parameters_to_use.get("status"),
+            version=parameters_to_use.get("version"),
+            create_product_task_ref=parameters_to_use.get("create_product_task_ref"),
+        )
 
     elif section_name == section_names.CREATE_CODE_REPO_TASK:
         if status == "terminated":
