@@ -77,8 +77,6 @@ class CreatePortfolioAssociationTask(FactoryTask):
 
             cloudformation.ensure_deleted(StackName=v1_stack_name)
 
-            print(tpl.to_yaml())
-
             cloudformation.create_or_update(
                 StackName=v2_stack_name,
                 TemplateBody=tpl.to_yaml(clean_up=True, long_form=True),
