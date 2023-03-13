@@ -11,7 +11,6 @@ import troposphere as t
 from troposphere import s3, servicecatalog
 
 
-
 class CreatePortfolioAssociationTask(FactoryTask):
     region = luigi.Parameter()
     create_portfolio_task_ref = luigi.Parameter()
@@ -33,20 +32,18 @@ class CreatePortfolioAssociationTask(FactoryTask):
                 self.create_portfolio_task_ref
             )
             tpl = t.Template()
-            tpl.description = '''Associations for ''' + self.portfolio_name + '''
-    {"version": "''' + constants.VERSION + '''", "framework": "servicecatalog-factory", "role": "portfolio-associations"}'''
-
-            tpl.add_condition(
-                "ShouldDoAnything",
-                t.Equals(True, False)
+            tpl.description = (
+                """Associations for """
+                + self.portfolio_name
+                + '''
+    {"version": "'''
+                + constants.VERSION
+                + """", "framework": "servicecatalog-factory", "role": "portfolio-associations"}"""
             )
 
-            tpl.add_resource(
-                s3.Bucket(
-                    "NoOp",
-                    Condition="ShouldDoAnything"
-                )
-            )
+            tpl.add_condition("ShouldDoAnything", t.Equals(True, False))
+
+            tpl.add_resource(s3.Bucket("NoOp", Condition="ShouldDoAnything"))
 
             for association in self.associations:
                 portfolio_id = create_portfolio_task_output.get("Id")
@@ -61,8 +58,7 @@ class CreatePortfolioAssociationTask(FactoryTask):
 
                 logical_name = "".join(
                     filter(
-                        str.isalnum,
-                        f"{portfolio_id}{principal_arn.split(':')[-1]}",
+                        str.isalnum, f"{portfolio_id}{principal_arn.split(':')[-1]}",
                     )
                 )
                 tpl.add_resource(
@@ -70,21 +66,21 @@ class CreatePortfolioAssociationTask(FactoryTask):
                         logical_name,
                         PortfolioId=portfolio_id,
                         PrincipalARN=t.Sub(principal_arn),
-                        PrincipalType=principal_type
+                        PrincipalType=principal_type,
                     )
                 )
             v1_stack_name = "-".join([self.portfolio_name, "associations"])
             v2_stack_name = "-".join([self.portfolio_name, "associations", "v2"])
-            tags = [dict(Key="ServiceCatalogFactory:Actor", Value="Generated", )]
+            tags = [dict(Key="ServiceCatalogFactory:Actor", Value="Generated",)]
             if self.should_pipelines_inherit_tags:
                 tags += list(self.initialiser_stack_tags)
 
             cloudformation.ensure_deleted(StackName=v1_stack_name)
 
-            print(
-                tpl.to_yaml()
-            )
+            print(tpl.to_yaml())
 
             cloudformation.create_or_update(
-                StackName=v2_stack_name, TemplateBody=tpl.to_yaml(clean_up=True, long_form=True), Tags=tags,
+                StackName=v2_stack_name,
+                TemplateBody=tpl.to_yaml(clean_up=True, long_form=True),
+                Tags=tags,
             )

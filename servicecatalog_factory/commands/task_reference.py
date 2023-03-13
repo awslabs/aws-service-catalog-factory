@@ -163,7 +163,9 @@ def generate_tasks_for_portfolios(
         for portfolio_file in glob.glob(f"{path}/{p_name}/Portfolios/*"):
             if os.path.isdir(portfolio_file):
                 portfolio_name = os.path.basename(portfolio_file)
-                for product_name in os.listdir(f"{path}/{p_name}/Portfolios/{portfolio_name}/Products/"):
+                for product_name in os.listdir(
+                    f"{path}/{p_name}/Portfolios/{portfolio_name}/Products/"
+                ):
                     external_product_dir = f"{path}/{p_name}/Portfolios/{portfolio_name}/Products/{product_name}"
 
                     if not os.path.isdir(external_product_dir):
@@ -171,7 +173,9 @@ def generate_tasks_for_portfolios(
                     for por in file[item_collection_name]:
                         if por.get("DisplayName") == portfolio_name:
                             pro = yaml.safe_load(
-                                open(f"{external_product_dir}/{product_name}.yaml", "r").read()
+                                open(
+                                    f"{external_product_dir}/{product_name}.yaml", "r"
+                                ).read()
                             )
                             pro["Name"] = product_name
                             if not pro.get("Versions"):
