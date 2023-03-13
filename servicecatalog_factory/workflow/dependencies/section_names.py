@@ -15,3 +15,5 @@ ENSURE_PRODUCT_VERSION_DETAILS_CORRECT_TASK = (
     "ensure-product-version-details-correct-task"
 )
 CREATE_CODE_REPO_TASK = "create-code-repo-task"
+ASSOCIATE_PRODUCTS_TASKS = "associate-products-tasks"
+CREATE_PORTFOLIO_CONSTRAINTS_TASK = "create-portfolio-constraints-task"

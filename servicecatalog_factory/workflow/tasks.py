@@ -15,6 +15,7 @@ from servicecatalog_factory import constants
 from servicecatalog_factory.waluigi import tasks as waluigi_tasks
 
 logger = logging.getLogger(__file__)
+from botocore.config import Config
 
 
 class FactoryTask(waluigi_tasks.WaluigiTaskMixin, luigi.Task):
@@ -53,11 +54,21 @@ class FactoryTask(waluigi_tasks.WaluigiTaskMixin, luigi.Task):
             raise Exception("You must export REGION")
         return region
 
-    def client(self, service):
-        return betterboto_client.ClientContextManager(service,)
+    def client(self, service, retry_max_attempts=None):
+        kwargs = dict()
+        if retry_max_attempts is not None:
+            kwargs["config"] = Config(retries={"max_attempts": retry_max_attempts,})
 
-    def regional_client(self, service):
-        return betterboto_client.ClientContextManager(service, region_name=self.region,)
+        return betterboto_client.ClientContextManager(service, **kwargs)
+
+    def regional_client(self, service, retry_max_attempts=None):
+        kwargs = dict()
+        if retry_max_attempts is not None:
+            kwargs["config"] = Config(retries={"max_attempts": retry_max_attempts,})
+
+        return betterboto_client.ClientContextManager(
+            service, region_name=self.region, **kwargs
+        )
 
     def load_from_input(self, input_name):
         with self.input().get(input_name).open("r") as f:
