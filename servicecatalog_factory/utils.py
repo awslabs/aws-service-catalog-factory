@@ -36,14 +36,26 @@ def merge(dict1, dict2):
     return result
 
 
-def unwrap(input):
-    if hasattr(input, "get_wrapped"):
-        result = input.get_wrapped()
-    else:
-        result = input
+def unwrap(what):
+    if hasattr(what, "get_wrapped"):
+        return unwrap(what.get_wrapped())
 
-    if isinstance(result, dict):
-        for k in result.keys():
-            result[k] = unwrap(result.get(k))
+    if isinstance(what, dict):
+        thing = dict()
+        for k, v in what.items():
+            thing[k] = unwrap(v)
+        return thing
 
-    return result
+    if isinstance(what, tuple):
+        thing = list()
+        for v in what:
+            thing.append(unwrap(v))
+        return thing
+
+    if isinstance(what, list):
+        thing = list()
+        for v in what:
+            thing.append(unwrap(v))
+        return thing
+
+    return what

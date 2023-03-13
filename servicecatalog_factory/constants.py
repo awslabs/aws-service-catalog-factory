@@ -29,7 +29,6 @@ NON_RECOVERABLE_STATES = [
 PRODUCT = "product.j2"
 PRODUCT_TERRAFORM = "product-terraform.j2"
 TERRAFORM_TEMPLATE = "terraform.template.yaml.j2"
-ASSOCIATIONS = "associations.j2"
 HOME_REGION = os.environ.get(
     "AWS_REGION", os.environ.get("AWS_DEFAULT_REGION", "eu-west-1")
 )

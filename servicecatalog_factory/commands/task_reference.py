@@ -13,6 +13,7 @@ from servicecatalog_factory.workflow.dependencies import resources_factory
 
 
 GET_BUCKET_TASK_REFERENCE = "get-bucket"
+ASSOCIATE_PRODUCTS_TASK_REFERENCE = "associate-products-task-reference"
 
 
 def create_task_for_combined_pipeline(
@@ -156,6 +157,15 @@ def generate_tasks_for_portfolios(
         region=constants.HOME_REGION,
     )
 
+    if not task_reference.get(ASSOCIATE_PRODUCTS_TASK_REFERENCE):
+        task_reference[ASSOCIATE_PRODUCTS_TASK_REFERENCE] = dict(
+            task_reference=ASSOCIATE_PRODUCTS_TASK_REFERENCE,
+            section_name=section_names.ASSOCIATE_PRODUCTS_TASKS,
+            dependencies_by_reference=[],
+            region=constants.HOME_REGION,
+        )
+    associate_products_task = task_reference[ASSOCIATE_PRODUCTS_TASK_REFERENCE]
+
     for file_name in glob.glob(f"{path}/*.yaml"):
         file = yaml.safe_load(open(file_name, "r").read())
         # Add external defined products and versions
@@ -163,7 +173,9 @@ def generate_tasks_for_portfolios(
         for portfolio_file in glob.glob(f"{path}/{p_name}/Portfolios/*"):
             if os.path.isdir(portfolio_file):
                 portfolio_name = os.path.basename(portfolio_file)
-                for product_name in os.listdir(f"{path}/{p_name}/Portfolios/{portfolio_name}/Products/"):
+                for product_name in os.listdir(
+                    f"{path}/{p_name}/Portfolios/{portfolio_name}/Products/"
+                ):
                     external_product_dir = f"{path}/{p_name}/Portfolios/{portfolio_name}/Products/{product_name}"
 
                     if not os.path.isdir(external_product_dir):
@@ -171,7 +183,9 @@ def generate_tasks_for_portfolios(
                     for por in file[item_collection_name]:
                         if por.get("DisplayName") == portfolio_name:
                             pro = yaml.safe_load(
-                                open(f"{external_product_dir}/{product_name}.yaml", "r").read()
+                                open(
+                                    f"{external_product_dir}/{product_name}.yaml", "r"
+                                ).read()
                             )
                             pro["Name"] = product_name
                             if not pro.get("Versions"):
@@ -271,6 +285,23 @@ def generate_tasks_for_portfolios(
                         tags=item.get("Tags", []),
                     )
 
+                if item.get("Constraints"):
+                    task_reference[
+                        f"create-portfolio-{portfolio_name}-{region}-constraints"
+                    ] = dict(
+                        task_reference=f"create-portfolio-{portfolio_name}-{region}-constraints",
+                        section_name=section_names.CREATE_PORTFOLIO_CONSTRAINTS_TASK,
+                        create_portfolio_task_ref=create_portfolio_task_ref,
+                        dependencies_by_reference=[
+                            create_portfolio_task_ref,
+                            ASSOCIATE_PRODUCTS_TASK_REFERENCE,
+                        ],
+                        region=region,
+                        portfolio_name=portfolio_name,
+                        constraints=item.get("Constraints"),
+                        tags=item.get("Tags", []),
+                    )
+
                 # ADD PRODUCTS FOR THE PORTFOLIO
                 for product in item.get("Components", []) + item.get("Products", []):
                     create_product_task_ref = (
@@ -338,6 +369,9 @@ def generate_tasks_for_portfolios(
                             create_portfolio_task_ref,
                         ],
                         region=region,
+                    )
+                    associate_products_task["dependencies_by_reference"].append(
+                        create_product_association_ref
                     )
 
                     # CREATE LAUNCH ROLE NAME CONSTRAINTS
@@ -463,6 +497,15 @@ def generate_tasks_for_portfolios(
 def generate_tasks_for_product(
     enabled_regions, file_name, product_details, p_name, task_reference
 ):
+    if not task_reference.get(ASSOCIATE_PRODUCTS_TASK_REFERENCE):
+        task_reference[ASSOCIATE_PRODUCTS_TASK_REFERENCE] = dict(
+            task_reference=ASSOCIATE_PRODUCTS_TASK_REFERENCE,
+            section_name=section_names.ASSOCIATE_PRODUCTS_TASKS,
+            dependencies_by_reference=[],
+            region=constants.HOME_REGION,
+        )
+    associate_products_task = task_reference[ASSOCIATE_PRODUCTS_TASK_REFERENCE]
+
     for region in enabled_regions:
         create_product_task_ref = (
             f"create-product-{product_details.get('Name')}-{region}"
@@ -618,6 +661,9 @@ def generate_tasks_for_product(
                         get_portfolio_task_ref,
                     ],
                     region=region,
+                )
+                associate_products_task["dependencies_by_reference"].append(
+                    create_product_association_ref
                 )
 
                 # CREATE LAUNCH ROLE NAME CONSTRAINTS

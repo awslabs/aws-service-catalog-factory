@@ -103,6 +103,15 @@ def create(section_name, parameters_to_use):
                 r.SERVICE_CATALOG_ASSOCIATE_TAG_OPTION_PER_REGION_OF_ACCOUNT,
             ]
 
+    elif section_name == section_names.ASSOCIATE_PRODUCTS_TASKS:
+        resources = []
+
+    elif section_name == section_names.CREATE_PORTFOLIO_CONSTRAINTS_TASK:
+        resources = [
+            r.SERVICE_CATALOG_LIST_PROVISIONING_ARTIFACTS_PER_REGION_OF_ACCOUNT,
+            r.CLOUDFORMATION_CREATE_OR_UPDATE_PER_REGION_OF_ACCOUNT,
+        ]
+
     else:
         raise Exception(f"Unknown section_name: {section_name}")
 

@@ -114,7 +114,7 @@ def create(
                 create_portfolio_association_task,
             )
 
-            factory_version = "XXX"  # TODO implement or remove
+            factory_version = constants.VERSION
 
             return create_portfolio_association_task.CreatePortfolioAssociationTask(
                 **minimum_common_parameters,
@@ -232,5 +232,34 @@ def create(
                     "create_tag_option_task_ref"
                 ),
             )
+    elif section_name == section_names.ASSOCIATE_PRODUCTS_TASKS:
+        from servicecatalog_factory.workflow.portfolios import associate_products_tasks
+
+        return associate_products_tasks.AssociationProductsTasks(
+            **minimum_common_parameters
+        )
+
+    elif section_name == section_names.CREATE_PORTFOLIO_CONSTRAINTS_TASK:
+        if status == "terminated":
+            raise Exception("NOT BUILT YET")
+        else:
+            from servicecatalog_factory.workflow.portfolios import (
+                create_portfolio_constraints_task,
+            )
+
+            factory_version = constants.VERSION
+
+            return create_portfolio_constraints_task.CreatePortfolioConstraintsTask(
+                **minimum_common_parameters,
+                region=parameters_to_use.get("region"),
+                portfolio_name=parameters_to_use.get("portfolio_name"),
+                create_portfolio_task_ref=parameters_to_use.get(
+                    "create_portfolio_task_ref"
+                ),
+                constraints=parameters_to_use.get("constraints"),
+                tags=parameters_to_use.get("tags"),
+                factory_version=factory_version,
+            )
+
     else:
         raise Exception(f"Unknown section_name: {section_name}")
