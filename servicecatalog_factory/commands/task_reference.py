@@ -308,9 +308,8 @@ def generate_tasks_for_portfolios(
                         f"create-product-{product.get('Name')}-{region}"
                     )
                     if task_reference.get(create_product_task_ref):
-                        raise Exception(
-                            f"Product {product.get('Name')} defined within {portfolio_name} {file_name} has already been declared"
-                        )
+                        self.info(f"Skipping product {product.get('Name')} defined within {portfolio_name} {file_name} as has already been declared")
+                        continue
 
                     # CREATE PRODUCT
                     task_reference[create_product_task_ref] = dict(
