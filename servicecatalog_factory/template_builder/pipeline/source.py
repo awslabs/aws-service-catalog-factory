@@ -30,7 +30,7 @@ def get_source_action_for_source(source, source_name_suffix=""):
                 "RepositoryName": source.get("Configuration").get("RepositoryName"),
                 "BranchName": source.get("Configuration").get("BranchName"),
                 "PollForSourceChanges": source.get("Configuration").get(
-                    "PollForSourceChanges", True
+                    "PollForSourceChanges", False
                 ),
             },
         ),
