@@ -340,8 +340,8 @@ Resources:
                   'content-length': str(len(d))
               }
               req = Request(e['ResponseURL'], data=d, method='PUT', headers=h)
-              r = urlopen(req)
-              logger.info("Status message: {} {}".format(r.msg, r.getcode()))
+              with urlopen(req) as r:
+                  logger.info("Status message: {} {}".format(r.msg, r.getcode()))
 
   StartInstall:
     Type: Custom::CustomResource
