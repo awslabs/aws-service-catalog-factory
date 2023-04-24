@@ -675,6 +675,12 @@ def create_or_update_provisioning_artifact_from_codepipeline_id(
 def set_config_value(name, value):
     management_commands.set_config_value(name, value)
 
+@cli.command()
+@click.argument("name")
+@click.argument("value")
+def set_string_config_value(name, value):
+    management_commands.set_string_config_value(name, value)
+
 
 @cli.command()
 @click.argument("p", type=click.Path())
