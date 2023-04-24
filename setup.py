@@ -33,7 +33,7 @@ install_requires = \
  'colorclass>=2.2.0,<3.0.0',
  'deepmerge>=0.3.0,<0.4.0',
  'docutils==0.14',
- 'jinja2==2.11.3',
+ 'jinja2==3.1.2',
  'luigi==2.8.6',
  'networkx==2.6.3',
  'orjson>=3.8.0,<4.0.0',
