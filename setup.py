@@ -37,7 +37,7 @@ install_requires = \
  'luigi==2.8.6',
  'networkx==2.6.3',
  'orjson>=3.8.0,<4.0.0',
- 'requests==2.26.0',
+ 'requests==2.28.2',
  'terminaltables==3.1.0',
  'troposphere==3.1.0',
  'yamale>=3.0.8,<4.0.0']
