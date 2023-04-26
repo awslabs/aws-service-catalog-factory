@@ -19,6 +19,7 @@ Metadata:
         Parameters:
           - ShouldValidate
           - ShouldPipelinesInheritTags
+          - CodeBuildProjectEnvironmentImage
       - Label:
           default: "Source Code Management - choose which one of the following sources you will use:"
         Parameters:
@@ -54,6 +55,11 @@ Metadata:
           - Version
 
 Parameters:
+  CodeBuildProjectEnvironmentImage:
+    Type: String
+    Default: "aws/codebuild/standard:5.0"
+    Description: |
+      Environment Image to use for CodeBuild Projects
   EnabledRegions:
     Type: String
     Description: |
@@ -170,7 +176,7 @@ Resources:
       Environment:
         Type: linuxContainer
         ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/standard:5.0
+        Image: !Ref CodeBuildProjectEnvironmentImage
         EnvironmentVariables:
           - Name: ENABLED_REGIONS
             Type: PLAINTEXT
@@ -220,6 +226,9 @@ Resources:
           - Name: SCT_SHOULD_VALIDATE
             Type: PLAINTEXT
             Value: !Ref ShouldValidate
+          - Name: CODE_BUILD_PROJECT_ENVIRONMENT_IMAGE
+            Type: PLAINTEXT
+            Value: !Ref CodeBuildProjectEnvironmentImage
           - Name: SHOULD_PIPELINES_INHERIT_TAGS
             Type: PLAINTEXT
             Value: !Ref ShouldPipelinesInheritTags
@@ -236,6 +245,7 @@ Resources:
                 - pip install ${VERSION}
                 - servicecatalog-factory --info set-regions ${ENABLED_REGIONS}
                 - servicecatalog-factory set-config-value should_pipelines_inherit_tags ${SHOULD_PIPELINES_INHERIT_TAGS}
+                - servicecatalog-factory set-string-config-value code_build_project_environment_image ${CODE_BUILD_PROJECT_ENVIRONMENT_IMAGE}
             build:
               commands:
                 - servicecatalog-factory --info bootstrap

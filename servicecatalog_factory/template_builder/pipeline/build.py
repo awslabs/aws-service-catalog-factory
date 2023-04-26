@@ -6,7 +6,7 @@ import json
 import troposphere as t
 from troposphere import codepipeline, codebuild
 
-from servicecatalog_factory import constants
+from servicecatalog_factory import constants, config
 from servicecatalog_factory.template_builder import base_template
 from servicecatalog_factory.template_builder.pipeline.utils import translate_category
 from servicecatalog_factory.template_builder.troposphere_contstants import (
@@ -45,7 +45,8 @@ class BuildTemplateMixin:
                         constants.ENVIRONMENT_COMPUTE_TYPE_DEFAULT,
                     ),
                     Image=build_stage.get(
-                        "BuildSpecImage", constants.ENVIRONMENT_IMAGE_DEFAULT
+                        "BuildSpecImage",
+                        config.get_code_build_project_environment_image_name(),
                     ),
                     Type=build_stage.get(
                         "EnvironmentType", constants.ENVIRONMENT_TYPE_DEFAULT

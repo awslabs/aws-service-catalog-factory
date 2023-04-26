@@ -35,3 +35,18 @@ def set_config_value(name, value):
             config[name] = value.upper() == "TRUE"
 
         upload_config(config)
+
+
+def set_string_config_value(name, value):
+    with betterboto_client.ClientContextManager(
+        "ssm", region_name=constants.HOME_REGION
+    ) as ssm:
+        try:
+            response = ssm.get_parameter(Name=constants.CONFIG_PARAM_NAME)
+            config = yaml.safe_load(response.get("Parameter").get("Value"))
+        except ssm.exceptions.ParameterNotFound:
+            config = {}
+
+        config[name] = value
+
+        upload_config(config)

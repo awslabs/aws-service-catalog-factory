@@ -6,7 +6,8 @@ import troposphere as t
 import yaml
 from troposphere import cloudformation
 from troposphere import codebuild
-from servicecatalog_factory import constants
+
+from servicecatalog_factory import constants, config
 
 PREFIX = "sct-synth-output"
 
@@ -34,7 +35,7 @@ def create_cdk_pipeline(
         t.Parameter(
             "CDKSupportCDKDeployImage",
             Type="String",
-            Default="aws/codebuild/standard:5.0",
+            Default=config.get_code_build_project_environment_image_name(),
         )
     )
     template.add_parameter(

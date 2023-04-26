@@ -229,6 +229,11 @@ def bootstrap(
                     "ParameterValue": constants.VERSION,
                     "UsePreviousValue": False,
                 },
+                {
+                    "ParameterKey": "CodeBuildProjectEnvironmentImage",
+                    "ParameterValue": config.get_code_build_project_environment_image_name(),
+                    "UsePreviousValue": False,
+                },
             ],
             Tags=initialiser_stack_tags,
         )

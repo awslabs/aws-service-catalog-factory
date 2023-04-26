@@ -10,6 +10,11 @@ Parameters:
   Version:
     Type: String
     Default: "{{ VERSION }}"
+  CodeBuildProjectEnvironmentImage:
+    Type: String
+    Default: "aws/codebuild/standard:5.0"
+    Description: |
+      Environment Image to use for CodeBuild Projects
 
 Resources:
   Param:
@@ -110,7 +115,7 @@ Resources:
       Environment:
         Type: linuxContainer
         ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/standard:5.0
+        Image: !Ref CodeBuildProjectEnvironmentImage
         EnvironmentVariables:
           - Name: PARTITION
             Type: PLAINTEXT
@@ -162,7 +167,7 @@ Resources:
       Environment:
         Type: linuxContainer
         ComputeType: BUILD_GENERAL1_SMALL
-        Image: aws/codebuild/standard:5.0
+        Image: !Ref CodeBuildProjectEnvironmentImage
         EnvironmentVariables:
           - Name: PARTITION
             Type: PLAINTEXT

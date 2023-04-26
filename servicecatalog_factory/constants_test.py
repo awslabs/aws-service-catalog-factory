@@ -89,10 +89,7 @@ def test_constants():
     assert sut.STATUS_TERMINATED == "terminated"
     assert sut.STATUS_DEFAULT == sut.STATUS_ACTIVE
 
-    assert sut.PACKAGE_BUILD_SPEC_IMAGE_DEFAULT == "aws/codebuild/standard:5.0"
-
     assert sut.ENVIRONMENT_COMPUTE_TYPE_DEFAULT == "BUILD_GENERAL1_SMALL"
-    assert sut.ENVIRONMENT_IMAGE_DEFAULT == "aws/codebuild/standard:5.0"
     assert sut.ENVIRONMENT_TYPE_DEFAULT == "LINUX_CONTAINER"
 
     assert sut.BUILDSPEC_RUNTIME_VERSIONS_NODEJS_DEFAULT == "12"
