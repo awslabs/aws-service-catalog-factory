@@ -1043,4 +1043,4 @@ pyyaml = "*"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.7,<4"
-content-hash = "7e315cf3c9e00b7bdfb0bfd1922d980bd69254eb0d82bc268083abefdcde83d4"
+content-hash = "d43aaf9d4fef54feb9a3fc55146e0e6cd8dce715cf59774bf0c32de8c1459ba4"

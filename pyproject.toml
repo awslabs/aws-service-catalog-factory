@@ -22,13 +22,11 @@ servicecatalog-factory = "servicecatalog_factory.cli:cli"
 issues = "https://github.com/awslabs/aws-service-catalog-factory-framework/issues"
 
 [tool.poetry.dev-dependencies]
-codecov = "==2.0.22"
+codecov = "==2.1.13"
 pylint = "*"
 black = "^19.10b0"
 nose2 = "^0.10.0"
 
-[tool.poetry.group.dev.dependencies]
-codecov = "2.1.13"
 
 [tool.dephell.main]
 versioning = "semver"
