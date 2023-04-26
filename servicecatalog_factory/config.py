@@ -82,3 +82,21 @@ def get_aws_url_suffix():
     return os.getenv(
         environmental_variables.AWS_URL_SUFFIX, constants.AWS_URL_SUFFIX_DEFAULT
     )
+
+
+def get_code_build_project_environment_image_name():
+    value = os.getenv(environmental_variables.CODE_BUILD_PROJECT_ENVIRONMENT_IMAGE)
+    if value is None:
+        with betterboto_client.ClientContextManager(
+            "ssm", region_name=constants.HOME_REGION
+        ) as ssm:
+            response = ssm.get_parameter(Name=constants.CONFIG_PARAM_NAME)
+            config = yaml.safe_load(response.get("Parameter").get("Value"))
+            value = config.get(
+                constants.CODE_BUILD_PROJECT_ENVIRONMENT_IMAGE_SSM_PARAMETER_NAME,
+                constants.CODE_BUILD_PROJECT_ENVIRONMENT_IMAGE_DEFAULT_VALUE,
+            )  # OK
+            os.environ[
+                environmental_variables.CODE_BUILD_PROJECT_ENVIRONMENT_IMAGE
+            ] = value
+    return value

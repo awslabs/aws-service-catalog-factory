@@ -108,7 +108,8 @@ class DeployTemplateMixin:
                 Environment=codebuild.Environment(
                     ComputeType=constants.ENVIRONMENT_COMPUTE_TYPE_DEFAULT,
                     Image=stages.get("Build", {}).get(
-                        "BuildSpecImage", constants.ENVIRONMENT_IMAGE_DEFAULT
+                        "BuildSpecImage",
+                        config.get_code_build_project_environment_image_name(),
                     ),
                     Type=constants.ENVIRONMENT_TYPE_DEFAULT,
                     EnvironmentVariables=[
@@ -304,7 +305,7 @@ class DeployTemplateMixin:
                     TimeoutInMinutes=60,
                     Environment=codebuild.Environment(
                         ComputeType=constants.ENVIRONMENT_COMPUTE_TYPE_DEFAULT,
-                        Image=constants.ENVIRONMENT_IMAGE_DEFAULT,
+                        Image=config.get_code_build_project_environment_image_name(),
                         Type=constants.ENVIRONMENT_TYPE_DEFAULT,
                         EnvironmentVariables=[
                             codebuild.EnvironmentVariable(

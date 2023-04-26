@@ -7,7 +7,7 @@ import troposphere as t
 import yaml
 from troposphere import codebuild, codepipeline
 
-from servicecatalog_factory import constants
+from servicecatalog_factory import constants, config
 from servicecatalog_factory.template_builder import base_template
 from servicecatalog_factory.template_builder.pipeline.utils import translate_category
 from servicecatalog_factory.template_builder.troposphere_contstants import (
@@ -40,7 +40,7 @@ class TestTemplateMixin:
                 TimeoutInMinutes=60,
                 Environment=codebuild.Environment(
                     ComputeType=constants.ENVIRONMENT_COMPUTE_TYPE_DEFAULT,
-                    Image=constants.ENVIRONMENT_IMAGE_DEFAULT,
+                    Image=config.get_code_build_project_environment_image_name(),
                     Type=constants.ENVIRONMENT_TYPE_DEFAULT,
                     EnvironmentVariables=[
                         codebuild.EnvironmentVariable(

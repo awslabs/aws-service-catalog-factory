@@ -5,6 +5,7 @@ from datetime import datetime
 
 import yaml
 
+from servicecatalog_factory import config
 from servicecatalog_factory import environmental_variables
 from servicecatalog_factory.commands import bootstrap as bootstrap_commands
 from servicecatalog_factory.commands import configuration_management
@@ -42,12 +43,16 @@ def cli(info, info_line_numbers):
             datefmt="%Y-%m-%d:%H:%M:%S",
             level=logging.INFO,
         )
+    config.get_code_build_project_environment_image_name()
 
 
 @cli.command()
 @click.argument("p", type=click.Path(exists=True))
 def validate(p):
     validate_commands.validate(p)
+
+
+# code_build_project_environment_image: aws/codebuild/standard:5.0
 
 
 def setup_config():
@@ -674,6 +679,7 @@ def create_or_update_provisioning_artifact_from_codepipeline_id(
 @click.argument("value")
 def set_config_value(name, value):
     management_commands.set_config_value(name, value)
+
 
 @cli.command()
 @click.argument("name")

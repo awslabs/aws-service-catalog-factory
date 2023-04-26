@@ -36,6 +36,7 @@ def set_config_value(name, value):
 
         upload_config(config)
 
+
 def set_string_config_value(name, value):
     with betterboto_client.ClientContextManager(
         "ssm", region_name=constants.HOME_REGION

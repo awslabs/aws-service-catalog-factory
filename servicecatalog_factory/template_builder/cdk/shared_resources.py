@@ -37,7 +37,7 @@ def get_resources() -> list:
             TimeoutInMinutes=60,
             Environment=codebuild.Environment(
                 ComputeType=constants.ENVIRONMENT_COMPUTE_TYPE_DEFAULT,
-                Image=constants.ENVIRONMENT_IMAGE_DEFAULT,
+                Image=config.get_code_build_project_environment_image_name(),
                 Type=constants.ENVIRONMENT_TYPE_DEFAULT,
                 EnvironmentVariables=[
                     {
@@ -106,7 +106,7 @@ def get_resources() -> list:
             TimeoutInMinutes=60,
             Environment=codebuild.Environment(
                 ComputeType=constants.ENVIRONMENT_COMPUTE_TYPE_DEFAULT,
-                Image=constants.ENVIRONMENT_IMAGE_DEFAULT,
+                Image=config.get_code_build_project_environment_image_name(),
                 Type=constants.ENVIRONMENT_TYPE_DEFAULT,
                 EnvironmentVariables=[
                     codebuild.EnvironmentVariable(
