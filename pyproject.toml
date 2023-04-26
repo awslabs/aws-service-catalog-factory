@@ -27,6 +27,9 @@ pylint = "*"
 black = "^19.10b0"
 nose2 = "^0.10.0"
 
+[tool.poetry.group.dev.dependencies]
+codecov = "2.1.13"
+
 [tool.dephell.main]
 versioning = "semver"
 from = {format = "poetrylock", path = "poetry.lock"}
