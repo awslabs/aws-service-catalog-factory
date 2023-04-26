@@ -52,9 +52,6 @@ def validate(p):
     validate_commands.validate(p)
 
 
-# code_build_project_environment_image: aws/codebuild/standard:5.0
-
-
 def setup_config():
     if os.environ.get(environmental_variables.CACHE_INVALIDATOR):
         click.echo(
