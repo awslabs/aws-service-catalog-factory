@@ -43,7 +43,6 @@ def cli(info, info_line_numbers):
             datefmt="%Y-%m-%d:%H:%M:%S",
             level=logging.INFO,
         )
-    config.get_code_build_project_environment_image_name()
 
 
 @cli.command()
@@ -59,6 +58,7 @@ def setup_config():
         )
     else:
         os.environ[environmental_variables.CACHE_INVALIDATOR] = str(datetime.now())
+    config.get_code_build_project_environment_image_name()
 
 
 @cli.command()
