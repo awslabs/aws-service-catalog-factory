@@ -4,7 +4,7 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: |
   Initialiser template used to bring up the install ServiceCatalog-Factory
-  {"version": "0.90.0", "framework": "servicecatalog-factory", "role": "initialiser"}
+  {"version": "0.101.0", "framework": "servicecatalog-factory", "role": "initialiser"}
 
 
 Metadata:
