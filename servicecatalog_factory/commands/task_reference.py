@@ -6,7 +6,8 @@ import os
 import yaml
 
 from servicecatalog_factory.workflow.dependencies import section_names
-from servicecatalog_factory import constants
+from servicecatalog_factory.template_builder import base_template
+from servicecatalog_factory import constants, config
 from deepmerge import always_merger
 
 from servicecatalog_factory.workflow.dependencies import resources_factory
@@ -140,6 +141,74 @@ def generate_pipeline_task(
 
     else:
         raise Exception(f"Unsupported pipeline_mode: {pipeline_mode}")
+
+
+def extrapolate_version(input, product_name):
+    version_name = input.get("Name")
+    if input.get("Template"):
+        template = input["Template"]
+        configuration = template.get("Configuration", {})
+
+        if not input.get("Stages"):
+            input["Stages"] = dict()
+        stages = input.get("Stages")
+        runtime_versions = dict(
+            nodejs=constants.BUILDSPEC_RUNTIME_VERSIONS_NODEJS_DEFAULT,
+        )
+        if configuration.get("runtime-versions"):
+            runtime_versions.update(configuration.get("runtime-versions"))
+
+        extra_commands = list(configuration.get("install", {}).get("commands", []))
+
+        if not stages.get("Build"):
+            stages["Build"] = dict(
+                BuildSpecImage=config.get_code_build_project_environment_image_name(),
+                BuildSpec=yaml.safe_dump(
+                    dict(
+                        version=0.2,
+                        phases=dict(
+                            install={
+                                "runtime-versions": runtime_versions,
+                                "commands": [
+                                    f"pip install {constants.VERSION}"
+                                    if "http" in constants.VERSION
+                                    else f"pip install aws-service-catalog-factory=={constants.VERSION}",
+                                ]
+                                + extra_commands,
+                            },
+                            pre_build={
+                                "commands": [
+                                    "npm install",
+                                    "npm run cdk synth -- --output sct-synth-output",
+                                ],
+                            },
+                            build={
+                                "commands": [
+                                    f'servicecatalog-factory generate-template "CDK" "1.0.0" "{product_name}" "{version_name}" . > product.template.yaml',
+                                ]
+                            },
+                        ),
+                        artifacts={
+                            "name": base_template.BUILD_OUTPUT_ARTIFACT,
+                            "files": ["*", "**/*"],
+                            "exclude-paths": ["sct-synth-output/*"],
+                        },
+                    )
+                ),
+            )
+    return input
+
+
+def extrapolate_versions(input, product_name):
+    return [extrapolate_version(v, product_name) for v in input]
+
+
+def extrapolate_product(input):
+    if any([v.get("Template") for v in input.get("Versions", [])]):
+        input["Versions"] = extrapolate_versions(
+            input.get("Versions"), input.get("Name")
+        )
+    return input
 
 
 def generate_tasks_for_portfolios(
@@ -304,6 +373,7 @@ def generate_tasks_for_portfolios(
 
                 # ADD PRODUCTS FOR THE PORTFOLIO
                 for product in item.get("Components", []) + item.get("Products", []):
+                    product = extrapolate_product(product)
                     create_product_task_ref = (
                         f"create-product-{product.get('Name')}-{region}"
                     )
@@ -487,6 +557,7 @@ def generate_tasks_for_portfolios(
 
         # READ THE products FROM THE ROOT
         for item in file.get("Products", []) + file.get("Components", []):
+            item = extrapolate_product(item)
             generate_tasks_for_product(
                 enabled_regions, file_name, item, p_name, task_reference,
             )
