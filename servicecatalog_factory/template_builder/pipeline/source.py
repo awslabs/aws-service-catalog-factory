@@ -5,6 +5,7 @@ import troposphere as t
 from troposphere import codepipeline
 
 from servicecatalog_factory.template_builder import base_template
+from deepmerge import always_merger
 
 
 def get_source_action_for_source(source, source_name_suffix=""):
@@ -112,3 +113,56 @@ def get_source_action_for_source(source, source_name_suffix=""):
             },
         ),
     ).get(source.get("Provider", "").lower())
+
+
+def add_custom_provider_details_to_tpl(source, tpl):
+    if source.get("Provider", "").lower() == "custom":
+        if source.get("Configuration").get("GitWebHookIpAddress") is not None:
+            webhook = codepipeline.Webhook(
+                "Webhook",
+                Authentication="IP",
+                TargetAction="Source",
+                AuthenticationConfiguration=codepipeline.WebhookAuthConfiguration(
+                    AllowedIPRange=source.get("Configuration").get(
+                        "GitWebHookIpAddress"
+                    )
+                ),
+                Filters=[
+                    codepipeline.WebhookFilterRule(
+                        JsonPath="$.changes[0].ref.id",
+                        MatchEquals="refs/heads/{Branch}",
+                    )
+                ],
+                TargetPipelineVersion=1,
+                TargetPipeline=t.Sub("${AWS::StackName}-pipeline"),
+            )
+            tpl.add_resource(webhook)
+            values_for_sub = {
+                "GitUrl": source.get("Configuration").get("GitUrl"),
+                "WebhookUrl": t.GetAtt(webhook, "Url"),
+            }
+        else:
+            values_for_sub = {
+                "GitUrl": source.get("Configuration").get("GitUrl"),
+                "WebhookUrl": "GitWebHookIpAddress was not defined in manifests Configuration",
+            }
+        output_to_add = t.Output("WebhookUrl")
+        output_to_add.Value = t.Sub("${GitUrl}||${WebhookUrl}", **values_for_sub)
+        output_to_add.Export = t.Export(t.Sub("${AWS::StackName}-pipeline"))
+        tpl.add_output(output_to_add)
+
+
+class SourceTemplateMixin:
+    def generate_source_stage(self, tpl, item, versions) -> codepipeline.Stages:
+        actions = list()
+        for version in versions:
+            source = always_merger.merge(
+                item.get("Source", {}), version.get("Source", {})
+            )
+            add_custom_provider_details_to_tpl(source, tpl)
+            actions.append(
+                get_source_action_for_source(
+                    source, source_name_suffix=f'_{version.get("Name")}'
+                )
+            )
+        return codepipeline.Stages(Name="Source", Actions=actions,)
