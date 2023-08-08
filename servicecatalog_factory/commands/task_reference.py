@@ -1,6 +1,7 @@
 #  Copyright 2022 Amazon.com, Inc. or its affiliates. All Rights Reserved.
 #  SPDX-License-Identifier: Apache-2.0
 import glob
+import json
 import os
 
 import yaml
@@ -160,6 +161,8 @@ def extrapolate_version(input, product_name):
 
         extra_commands = list(configuration.get("install", {}).get("commands", []))
 
+        configuration = json.dumps(input.get("Template").get("Configuration"))
+
         if not stages.get("Build"):
             stages["Build"] = dict(
                 BuildSpecImage=constants.CODE_BUILD_PROJECT_ENVIRONMENT_IMAGE_CDK_TEMPLATE_DEFAULT_VALUE,
@@ -179,11 +182,12 @@ def extrapolate_version(input, product_name):
                             },
                             pre_build={
                                 "commands": [
-                                    "cdk synth -- --output sct-synth-output",
+                                    "cdk synth --output sct-synth-output",
                                 ],
                             },
                             build={
                                 "commands": [
+                                    f"echo '{configuration}' > configuration.json",
                                     f'servicecatalog-factory generate-template "CDK" "1.0.0" "{product_name}" "{version_name}" . > product.template.yaml',
                                 ]
                             },

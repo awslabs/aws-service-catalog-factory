@@ -647,12 +647,13 @@ def update_provisioned_product(region, name, product_id, description, template_u
 @click.argument("product_name")
 @click.argument("product_version")
 @click.argument("p", type=click.Path(exists=True))
+@click.argument("configuration", type=click.File())
 def generate_template(
-    provisioner_name, provisioner_version, product_name, product_version, p
+    provisioner_name, provisioner_version, product_name, product_version, p, configuration
 ):
     click.echo(
         portfolios.generate_template(
-            provisioner_name, provisioner_version, product_name, product_version, p
+            provisioner_name, provisioner_version, product_name, product_version, p, configuration
         )
     )
 
