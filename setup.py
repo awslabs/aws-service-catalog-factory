@@ -25,7 +25,7 @@ package_data = \
  'servicecatalog_factory': ['portfolios/*', 'schema/*', 'templates/*']}
 
 install_requires = \
-['PyYAML==5.4',
+['PyYAML==6.0.1',
  'better-boto==0.43.0',
  'boto3==1.19.2',
  'cfn-flip==1.2.3',

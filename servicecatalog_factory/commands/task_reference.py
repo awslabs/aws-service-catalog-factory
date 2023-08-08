@@ -162,7 +162,7 @@ def extrapolate_version(input, product_name):
 
         if not stages.get("Build"):
             stages["Build"] = dict(
-                BuildSpecImage=config.get_code_build_project_environment_image_name(),
+                BuildSpecImage=constants.CODE_BUILD_PROJECT_ENVIRONMENT_IMAGE_CDK_TEMPLATE_DEFAULT_VALUE,
                 BuildSpec=yaml.safe_dump(
                     dict(
                         version=0.2,
@@ -173,13 +173,13 @@ def extrapolate_version(input, product_name):
                                     f"pip install {constants.VERSION}"
                                     if "http" in constants.VERSION
                                     else f"pip install aws-service-catalog-factory=={constants.VERSION}",
+                                    "npm install -g aws-cdk",
                                 ]
                                 + extra_commands,
                             },
                             pre_build={
                                 "commands": [
-                                    "npm install",
-                                    "npm run cdk synth -- --output sct-synth-output",
+                                    "cdk synth -- --output sct-synth-output",
                                 ],
                             },
                             build={
