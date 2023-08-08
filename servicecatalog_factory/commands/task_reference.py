@@ -188,6 +188,7 @@ def extrapolate_version(input, product_name):
                             build={
                                 "commands": [
                                     f"echo '{configuration}' > configuration.json",
+                                    "cat configuration.json",
                                     f'servicecatalog-factory generate-template "CDK" "1.0.0" "{product_name}" "{version_name}" . configuration.json > product.template.yaml',
                                 ]
                             },

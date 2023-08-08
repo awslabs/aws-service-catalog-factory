@@ -13,11 +13,10 @@ PREFIX = "sct-synth-output"
 
 
 def create_cdk_pipeline(
-    name, version, product_name, product_version, template_config, p
+    name, version, product_name, product_version, configuration, p
 ) -> t.Template:
     description = f"""Builds a cdk pipeline
 {{"version": "{constants.VERSION}", "framework": "servicecatalog-factory", "role": "product-pipeline", "type": "{name}", "version": "{version}"}}"""
-    configuration = template_config.get("Configuration")
     template = t.Template(Description=description)
 
     template.add_parameter(t.Parameter("PuppetAccountId", Type="String"))
