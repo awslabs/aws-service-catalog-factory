@@ -34,7 +34,7 @@ install_requires = \
  'deepmerge>=0.3.0,<0.4.0',
  'docutils==0.14',
  'jinja2==3.1.2',
- 'luigi==2.8.6',
+ 'luigi==3.3.0',
  'networkx==2.6.3',
  'orjson>=3.8.0,<4.0.0',
  'requests==2.31.0',
