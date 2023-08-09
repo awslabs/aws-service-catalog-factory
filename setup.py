@@ -25,7 +25,7 @@ package_data = \
  'servicecatalog_factory': ['portfolios/*', 'schema/*', 'templates/*']}
 
 install_requires = \
-['PyYAML==5.4',
+['PyYAML==6.0.1',
  'better-boto==0.43.0',
  'boto3==1.19.2',
  'cfn-flip==1.2.3',
@@ -34,10 +34,10 @@ install_requires = \
  'deepmerge>=0.3.0,<0.4.0',
  'docutils==0.14',
  'jinja2==3.1.2',
- 'luigi==2.8.6',
+ 'luigi==3.3.0',
  'networkx==2.6.3',
  'orjson>=3.8.0,<4.0.0',
- 'requests==2.28.2',
+ 'requests==2.31.0',
  'terminaltables==3.1.0',
  'troposphere==3.1.0',
  'yamale>=3.0.8,<4.0.0']

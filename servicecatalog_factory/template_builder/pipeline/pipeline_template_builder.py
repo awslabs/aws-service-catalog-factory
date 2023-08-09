@@ -2,7 +2,6 @@
 #  SPDX-License-Identifier: Apache-2.0
 
 import troposphere as t
-from deepmerge import always_merger
 from troposphere import codepipeline
 
 from servicecatalog_factory.template_builder import base_template
@@ -11,51 +10,16 @@ from servicecatalog_factory.template_builder.pipeline.deploy import DeployTempla
 from servicecatalog_factory.template_builder.pipeline.package import (
     PackageTemplateMixin,
 )
-from servicecatalog_factory.template_builder.pipeline.source import (
-    get_source_action_for_source,
-)
+from servicecatalog_factory.template_builder.pipeline.source import SourceTemplateMixin
 from servicecatalog_factory.template_builder.pipeline.test import TestTemplateMixin
 
 
-def add_custom_provider_details_to_tpl(source, tpl):
-    if source.get("Provider", "").lower() == "custom":
-        if source.get("Configuration").get("GitWebHookIpAddress") is not None:
-            webhook = codepipeline.Webhook(
-                "Webhook",
-                Authentication="IP",
-                TargetAction="Source",
-                AuthenticationConfiguration=codepipeline.WebhookAuthConfiguration(
-                    AllowedIPRange=source.get("Configuration").get(
-                        "GitWebHookIpAddress"
-                    )
-                ),
-                Filters=[
-                    codepipeline.WebhookFilterRule(
-                        JsonPath="$.changes[0].ref.id",
-                        MatchEquals="refs/heads/{Branch}",
-                    )
-                ],
-                TargetPipelineVersion=1,
-                TargetPipeline=t.Sub("${AWS::StackName}-pipeline"),
-            )
-            tpl.add_resource(webhook)
-            values_for_sub = {
-                "GitUrl": source.get("Configuration").get("GitUrl"),
-                "WebhookUrl": t.GetAtt(webhook, "Url"),
-            }
-        else:
-            values_for_sub = {
-                "GitUrl": source.get("Configuration").get("GitUrl"),
-                "WebhookUrl": "GitWebHookIpAddress was not defined in manifests Configuration",
-            }
-        output_to_add = t.Output("WebhookUrl")
-        output_to_add.Value = t.Sub("${GitUrl}||${WebhookUrl}", **values_for_sub)
-        output_to_add.Export = t.Export(t.Sub("${AWS::StackName}-pipeline"))
-        tpl.add_output(output_to_add)
-
-
 class PipelineTemplate(
-    TestTemplateMixin, BuildTemplateMixin, PackageTemplateMixin, DeployTemplateMixin
+    SourceTemplateMixin,
+    TestTemplateMixin,
+    BuildTemplateMixin,
+    PackageTemplateMixin,
+    DeployTemplateMixin,
 ):
     def __init__(self, category, pipeline_mode) -> None:
         super().__init__()
@@ -136,17 +100,3 @@ class PipelineTemplate(
         if self.is_cloudformation_based():
             return options.get("ShouldParseAsJinja2Template", False)
         return False
-
-    def generate_source_stage(self, tpl, item, versions) -> codepipeline.Stages:
-        actions = list()
-        for version in versions:
-            source = always_merger.merge(
-                item.get("Source", {}), version.get("Source", {})
-            )
-            add_custom_provider_details_to_tpl(source, tpl)
-            actions.append(
-                get_source_action_for_source(
-                    source, source_name_suffix=f'_{version.get("Name")}'
-                )
-            )
-        return codepipeline.Stages(Name="Source", Actions=actions,)

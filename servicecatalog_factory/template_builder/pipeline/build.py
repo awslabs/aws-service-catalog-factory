@@ -67,6 +67,14 @@ class BuildTemplateMixin:
                         codebuild.EnvironmentVariable(
                             Name="SOURCE_PATH", Type="PLAINTEXT", Value=".",
                         ),
+                        codebuild.EnvironmentVariable(
+                            Name="ACCOUNT_ID",
+                            Type="PLAINTEXT",
+                            Value=t.Ref("AWS::AccountId"),
+                        ),
+                        codebuild.EnvironmentVariable(
+                            Name="REGION", Type="PLAINTEXT", Value=t.Ref("AWS::Region"),
+                        ),
                     ],
                 ),
                 Source=codebuild.Source(
