@@ -107,7 +107,7 @@ class DeployTemplateMixin:
                 TimeoutInMinutes=60,
                 Environment=codebuild.Environment(
                     ComputeType=constants.ENVIRONMENT_COMPUTE_TYPE_DEFAULT,
-                    Image=stages.get("Build", {}).get(
+                    Image=stages.get("Deploy", {}).get(
                         "BuildSpecImage",
                         config.get_code_build_project_environment_image_name(),
                     ),
