@@ -201,12 +201,13 @@ files = [
 
 [[package]]
 name = "colorclass"
-version = "2.2.0"
+version = "2.2.2"
 description = "Colorful worry-free console applications for Linux, Mac OS X, and Windows."
 optional = false
-python-versions = "*"
+python-versions = ">=2.6"
 files = [
-    {file = "colorclass-2.2.0.tar.gz", hash = "sha256:b05c2a348dfc1aff2d502527d78a5b7b7e2f85da94a96c5081210d8e9ee8e18b"},
+    {file = "colorclass-2.2.2-py2.py3-none-any.whl", hash = "sha256:6f10c273a0ef7a1150b1120b6095cbdd68e5cf36dfd5d0fc957a2500bbf99a55"},
+    {file = "colorclass-2.2.2.tar.gz", hash = "sha256:6d4fe287766166a98ca7bc6f6312daf04a0481b1eda43e7173484051c0ab4366"},
 ]
 
 [[package]]
@@ -1021,4 +1022,4 @@ pyyaml = "*"
 [metadata]
 lock-version = "2.0"
 python-versions = ">=3.7,<4"
-content-hash = "e7e86e7c69d61950f5b55d62452af0a99ca8ed041782136d4071a8a0dc808fd4"
+content-hash = "d514fe1f350c62ac673e9f5f14c4799131e3fe66f39b76b97bd107cc69df5fab"
