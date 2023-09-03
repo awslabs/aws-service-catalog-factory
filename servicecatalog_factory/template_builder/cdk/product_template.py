@@ -39,7 +39,7 @@ def create_cdk_pipeline(
     )
     template.add_parameter(
         t.Parameter(
-            "CDKSupportCDKToolkitStackName", Type="String", Default="CDKToolKit"
+            "CDKSupportCDKToolkitStackName", Type="String", Default="CDKToolkit"
         )
     )
     template.add_parameter(
